@@ -422,5 +422,9 @@
     "Schedule not found": "Schedule not found",
     "Report template not found": "Report template not found",
     "Day": "Day",
-    "Daily Sales Report": "Daily Sales Report"
+    "Daily Sales Report": "Daily Sales Report",
+    "Manufacturing": "Manufacturing",
+    "Bills of Materials": "Bills of Materials",
+    "Production Orders": "Production Orders",
+    "Work Centers": "Work Centers"
 }

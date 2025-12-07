@@ -395,5 +395,9 @@
     "Schedule not found": "الجدولة غير موجودة",
     "Report template not found": "قالب التقرير غير موجود",
     "Day": "اليوم",
-    "Daily Sales Report": "تقرير المبيعات اليومي"
+    "Daily Sales Report": "تقرير المبيعات اليومي",
+    "Manufacturing": "التصنيع",
+    "Bills of Materials": "قوائم المواد",
+    "Production Orders": "أوامر الإنتاج",
+    "Work Centers": "مراكز العمل"
 }

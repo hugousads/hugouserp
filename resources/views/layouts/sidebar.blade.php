@@ -248,6 +248,38 @@
         </a>
         @endif
 
+        {{-- Manufacturing Module --}}
+        @if($canAccess('manufacturing.view'))
+        <div class="space-y-1">
+            <a href="{{ route('manufacturing.boms.index') }}"
+               class="sidebar-link bg-gradient-to-r from-gray-500 to-gray-600 {{ $isActive('manufacturing') ? 'active ring-2 ring-white/30' : '' }}">
+                <span class="text-lg">🏭</span>
+                <span class="text-sm font-medium">{{ __('Manufacturing') }}</span>
+                @if($isActive('manufacturing'))
+                    <span class="ms-auto w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                @endif
+            </a>
+            
+            <a href="{{ route('manufacturing.boms.index') }}"
+               class="sidebar-link-secondary ms-4 {{ $isActive('manufacturing.boms') ? 'active' : '' }}">
+                <span class="text-base">📋</span>
+                <span class="text-sm">{{ __('Bills of Materials') }}</span>
+            </a>
+            
+            <a href="{{ route('manufacturing.production-orders.index') }}"
+               class="sidebar-link-secondary ms-4 {{ $isActive('manufacturing.production-orders') ? 'active' : '' }}">
+                <span class="text-base">⚙️</span>
+                <span class="text-sm">{{ __('Production Orders') }}</span>
+            </a>
+            
+            <a href="{{ route('manufacturing.work-centers.index') }}"
+               class="sidebar-link-secondary ms-4 {{ $isActive('manufacturing.work-centers') ? 'active' : '' }}">
+                <span class="text-base">🔧</span>
+                <span class="text-sm">{{ __('Work Centers') }}</span>
+            </a>
+        </div>
+        @endif
+
         {{-- HR Module --}}
         @if($canAccess('hrm.employees.view'))
         <a href="{{ route('hrm.employees.index') }}"
