@@ -67,12 +67,9 @@ class FixedAsset extends Model
 
         static::creating(function ($asset) {
             if (!$asset->asset_code) {
-                $asset->asset_code = 'FA-' . date('Ymd') . '-' . str_pad(
-                    static::max('id') + 1,
-                    4,
-                    '0',
-                    STR_PAD_LEFT
-                );
+                // Generate unique asset code using timestamp and random component
+                // Format: FA-YYYYMMDD-HHMMSS-RAND
+                $asset->asset_code = 'FA-' . date('Ymd-His') . '-' . strtoupper(substr(uniqid(), -4));
             }
             
             if (!$asset->book_value) {

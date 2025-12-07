@@ -35,6 +35,8 @@ return new class extends Migration
             $table->index(['product_id', 'warehouse_id']);
             $table->index(['branch_id', 'status']);
             $table->index('expiry_date');
+            // Batch number is unique per product-warehouse combination
+            // This ensures same batch can exist in different warehouses for same product
             $table->unique(['product_id', 'warehouse_id', 'batch_number'], 'batch_unique');
         });
     }

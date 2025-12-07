@@ -184,18 +184,26 @@ class CostingService
             $batchNumber = 'BATCH-' . date('Ymd') . '-' . uniqid();
         }
 
-        return InventoryBatch::updateOrCreate(
-            [
-                'product_id' => $productId,
-                'warehouse_id' => $warehouseId,
-                'batch_number' => $batchNumber,
-            ],
-            array_merge([
+        $batch = InventoryBatch::firstOrNew([
+            'product_id' => $productId,
+            'warehouse_id' => $warehouseId,
+            'batch_number' => $batchNumber,
+        ]);
+        
+        if ($batch->exists) {
+            // Update existing batch - increment quantity
+            $batch->quantity = $batch->quantity + $quantity;
+        } else {
+            // New batch
+            $batch->fill(array_merge([
                 'branch_id' => $branchId,
-                'quantity' => DB::raw("quantity + {$quantity}"),
+                'quantity' => $quantity,
                 'unit_cost' => $unitCost,
                 'status' => 'active',
-            ], $batchData)
-        );
+            ], $batchData));
+        }
+        
+        $batch->save();
+        return $batch;
     }
 }

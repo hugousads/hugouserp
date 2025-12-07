@@ -94,6 +94,18 @@ class BankTransaction extends Model
     }
 
     /**
+     * Get signed amount (positive for deposits, negative for withdrawals)
+     */
+    public function getSignedAmount(): float
+    {
+        if ($this->isDeposit() || $this->type === 'interest') {
+            return $this->amount;
+        }
+        
+        return -$this->amount;
+    }
+
+    /**
      * Scope for unreconciled transactions
      */
     public function scopeUnreconciled($query)

@@ -25,13 +25,8 @@ class BankingService
             
             $transaction = BankTransaction::create($data);
             
-            // Update bank account balance
-            if ($transaction->isDeposit() || $transaction->type === 'interest') {
-                $bankAccount->current_balance += $transaction->amount;
-            } elseif ($transaction->isWithdrawal() || $transaction->type === 'fee') {
-                $bankAccount->current_balance -= $transaction->amount;
-            }
-            
+            // Update bank account balance using signed amount
+            $bankAccount->current_balance += $transaction->getSignedAmount();
             $transaction->balance_after = $bankAccount->current_balance;
             $transaction->save();
             

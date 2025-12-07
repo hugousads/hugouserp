@@ -189,8 +189,9 @@ class DepreciationService
     /**
      * Post depreciation entries to accounting
      * Creates journal entries for depreciation
+     * TODO: Implement actual journal entry creation via AccountingService
      */
-    public function postDepreciationToAccounting(AssetDepreciation $depreciation, AccountingService $accountingService): void
+    public function postDepreciationToAccounting(AssetDepreciation $depreciation): void
     {
         if ($depreciation->isPosted()) {
             throw new \Exception('Depreciation already posted to accounting');
@@ -198,16 +199,16 @@ class DepreciationService
 
         $asset = $depreciation->asset;
         
-        // This would create a journal entry like:
+        // TODO: Create a journal entry like:
         // DR: Depreciation Expense
         // CR: Accumulated Depreciation
+        // This requires AccountMapping configuration for fixed assets
         
-        // Actual implementation would depend on the AccountMapping system
         // For now, we just mark as posted
         DB::transaction(function () use ($depreciation) {
             $depreciation->update([
                 'status' => 'posted',
-                // 'journal_entry_id' would be set here after creating the entry
+                // TODO: Set journal_entry_id after creating the entry
             ]);
         });
     }
