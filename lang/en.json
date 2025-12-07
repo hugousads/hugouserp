@@ -426,5 +426,20 @@
     "Manufacturing": "Manufacturing",
     "Bills of Materials": "Bills of Materials",
     "Production Orders": "Production Orders",
-    "Work Centers": "Work Centers"
+    "Work Centers": "Work Centers",
+    "Costing Method": "Costing Method",
+    "FIFO": "FIFO (First In, First Out)",
+    "LIFO": "LIFO (Last In, First Out)",
+    "Weighted Average": "Weighted Average",
+    "Standard Cost": "Standard Cost",
+    "Batch Tracking": "Batch Tracking",
+    "Serial Tracking": "Serial Tracking",
+    "Batch Number": "Batch Number",
+    "Serial Number": "Serial Number",
+    "Manufacturing Date": "Manufacturing Date",
+    "Expiry Date": "Expiry Date",
+    "Warranty Start": "Warranty Start",
+    "Warranty End": "Warranty End",
+    "Available Quantity": "Available Quantity",
+    "Unit Cost": "Unit Cost"
 }

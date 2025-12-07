@@ -399,5 +399,20 @@
     "Manufacturing": "التصنيع",
     "Bills of Materials": "قوائم المواد",
     "Production Orders": "أوامر الإنتاج",
-    "Work Centers": "مراكز العمل"
+    "Work Centers": "مراكز العمل",
+    "Costing Method": "طريقة التكلفة",
+    "FIFO": "الوارد أولاً صادر أولاً",
+    "LIFO": "الوارد أخيراً صادر أولاً",
+    "Weighted Average": "المتوسط المرجح",
+    "Standard Cost": "التكلفة القياسية",
+    "Batch Tracking": "تتبع الدفعات",
+    "Serial Tracking": "تتبع الأرقام التسلسلية",
+    "Batch Number": "رقم الدفعة",
+    "Serial Number": "الرقم التسلسلي",
+    "Manufacturing Date": "تاريخ الإنتاج",
+    "Expiry Date": "تاريخ انتهاء الصلاحية",
+    "Warranty Start": "بداية الضمان",
+    "Warranty End": "نهاية الضمان",
+    "Available Quantity": "الكمية المتاحة",
+    "Unit Cost": "تكلفة الوحدة"
 }
