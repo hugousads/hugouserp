@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -83,47 +84,47 @@ class Product extends BaseModel
         return $this->belongsTo(Product::class, 'parent_product_id');
     }
 
-    public function tax()
+    public function tax(): BelongsTo
     {
         return $this->belongsTo(Tax::class, 'tax_id');
     }
 
-    public function priceGroup()
+    public function priceGroup(): BelongsTo
     {
         return $this->belongsTo(PriceGroup::class, 'price_list_id');
     }
 
-    public function stockMovements()
+    public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
     }
 
-    public function saleItems()
+    public function saleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class);
     }
 
-    public function purchaseItems()
+    public function purchaseItems(): HasMany
     {
         return $this->hasMany(PurchaseItem::class);
     }
 
-    public function transferItems()
+    public function transferItems(): HasMany
     {
         return $this->hasMany(TransferItem::class);
     }
 
-    public function adjustmentItems()
+    public function adjustmentItems(): HasMany
     {
         return $this->hasMany(AdjustmentItem::class);
     }
 
-    public function createdBy()
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updatedBy()
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
@@ -153,7 +154,7 @@ class Product extends BaseModel
         return $this->hasMany(ProductCompatibility::class);
     }
 
-    public function compatibleVehicles()
+    public function compatibleVehicles(): BelongsToMany
     {
         return $this->belongsToMany(VehicleModel::class, 'product_compatibilities')
             ->withPivot(['oem_number', 'position', 'notes', 'is_verified'])

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Purchase extends BaseModel
@@ -41,37 +43,37 @@ class Purchase extends BaseModel
         });
     }
 
-    public function supplier()
+    public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
     }
 
-    public function warehouse()
+    public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
     }
 
-    public function items()
+    public function items(): HasMany
     {
         return $this->hasMany(PurchaseItem::class);
     }
 
-    public function payments()
+    public function payments(): HasMany
     {
         return $this->hasMany(Receipt::class);
     }
 
-    public function returnNotes()
+    public function returnNotes(): HasMany
     {
         return $this->hasMany(ReturnNote::class);
     }
 
-    public function createdBy()
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updatedBy()
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
