@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'laravel/laravel',
-        'pretty_version' => 'dev-main',
-        'version' => 'dev-main',
-        'reference' => '5ace0326e9c901aa4f53de9b5393cf62c1a7158b',
+        'pretty_version' => 'dev-copilot/refactor-erp-system-quality',
+        'version' => 'dev-copilot/refactor-erp-system-quality',
+        'reference' => 'a60ccfb69f7b1552e39e1b04f997e49eba43cf7a',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -410,9 +410,9 @@
             'dev_requirement' => false,
         ),
         'laravel/laravel' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
-            'reference' => '5ace0326e9c901aa4f53de9b5393cf62c1a7158b',
+            'pretty_version' => 'dev-copilot/refactor-erp-system-quality',
+            'version' => 'dev-copilot/refactor-erp-system-quality',
+            'reference' => 'a60ccfb69f7b1552e39e1b04f997e49eba43cf7a',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
