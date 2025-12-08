@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Product extends BaseModel
@@ -275,6 +276,6 @@ class Product extends BaseModel
 
     public function getThumbnailUrlAttribute(): ?string
     {
-        return $this->thumbnail ? \Illuminate\Support\Facades\Storage::url($this->thumbnail) : null;
+        return $this->thumbnail ? Storage::url($this->thumbnail) : null;
     }
 }
