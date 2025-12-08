@@ -217,6 +217,168 @@ class ProductService implements ProductServiceInterface
         );
     }
 
+    /**
+     * Create a product for a specific module with module-aware validation and fields
+     * 
+     * @param Module $module The module to create the product for
+     * @param array $data Product data including basic fields and custom fields
+     * @param \Illuminate\Http\UploadedFile|null $thumbnail Optional thumbnail file
+     * @return Product
+     * @throws \Exception If module doesn't support items
+     */
+    public function createProductForModule(\App\Models\Module $module, array $data, $thumbnail = null): Product
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($module, $data, $thumbnail) {
+                // Verify module supports items
+                if (!$module->supportsItems()) {
+                    throw new \Exception("Module {$module->key} does not support items/products");
+                }
+
+                DB::beginTransaction();
+
+                try {
+                    // Extract custom fields from data
+                    $customFields = $data['custom_fields'] ?? [];
+                    unset($data['custom_fields']);
+
+                    // Create the product
+                    $product = new Product();
+                    $product->fill([
+                        'name' => $data['name'],
+                        'sku' => $data['sku'] ?? null,
+                        'barcode' => $data['barcode'] ?? null,
+                        'default_price' => $data['price'] ?? 0,
+                        'standard_cost' => $data['cost'] ?? 0,
+                        'price_currency' => $data['price_currency'] ?? 'EGP',
+                        'cost_currency' => $data['cost_currency'] ?? 'EGP',
+                        'status' => $data['status'] ?? 'active',
+                        'type' => $module->is_service ? 'service' : ($data['type'] ?? 'stock'),
+                        'branch_id' => $data['branch_id'],
+                        'module_id' => $module->id,
+                        'created_by' => auth()->id(),
+                    ]);
+
+                    // Handle thumbnail upload if provided
+                    if ($thumbnail) {
+                        $product->thumbnail = $thumbnail->store('products/thumbnails', 'public');
+                    }
+
+                    $product->save();
+
+                    // Save custom fields if module supports them
+                    if ($module->supports_custom_fields && !empty($customFields)) {
+                        $this->saveCustomFields($product, $module, $customFields);
+                    }
+
+                    DB::commit();
+
+                    $this->logServiceInfo('createProductForModule', 'Product created for module', [
+                        'product_id' => $product->id,
+                        'module_key' => $module->key,
+                    ]);
+
+                    return $product;
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    throw $e;
+                }
+            },
+            operation: 'createProductForModule',
+            context: ['module_key' => $module->key, 'data' => $data]
+        );
+    }
+
+    /**
+     * Update a product with module-aware validation
+     * 
+     * @param Product $product The product to update
+     * @param array $data Updated product data
+     * @param \Illuminate\Http\UploadedFile|null $thumbnail Optional new thumbnail file
+     * @return Product
+     */
+    public function updateProductForModule(Product $product, array $data, $thumbnail = null): Product
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($product, $data, $thumbnail) {
+                DB::beginTransaction();
+
+                try {
+                    // Extract custom fields from data
+                    $customFields = $data['custom_fields'] ?? [];
+                    unset($data['custom_fields']);
+
+                    // Update basic fields
+                    $product->fill([
+                        'name' => $data['name'] ?? $product->name,
+                        'sku' => $data['sku'] ?? $product->sku,
+                        'barcode' => $data['barcode'] ?? $product->barcode,
+                        'default_price' => $data['price'] ?? $product->default_price,
+                        'standard_cost' => $data['cost'] ?? $product->standard_cost,
+                        'price_currency' => $data['price_currency'] ?? $product->price_currency,
+                        'cost_currency' => $data['cost_currency'] ?? $product->cost_currency,
+                        'status' => $data['status'] ?? $product->status,
+                        'type' => $data['type'] ?? $product->type,
+                        'updated_by' => auth()->id(),
+                    ]);
+
+                    // Handle thumbnail update
+                    if ($thumbnail) {
+                        // Delete old thumbnail if exists
+                        if ($product->thumbnail) {
+                            Storage::delete($product->thumbnail);
+                        }
+                        $product->thumbnail = $thumbnail->store('products/thumbnails', 'public');
+                    }
+
+                    $product->save();
+
+                    // Update custom fields if module supports them
+                    if ($product->module && $product->module->supports_custom_fields && !empty($customFields)) {
+                        $this->saveCustomFields($product, $product->module, $customFields);
+                    }
+
+                    DB::commit();
+
+                    return $product;
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    throw $e;
+                }
+            },
+            operation: 'updateProductForModule',
+            context: ['product_id' => $product->id, 'data' => $data]
+        );
+    }
+
+    /**
+     * Save custom fields for a product
+     * 
+     * @param Product $product
+     * @param \App\Models\Module $module
+     * @param array $customFields
+     */
+    private function saveCustomFields(Product $product, \App\Models\Module $module, array $customFields): void
+    {
+        // Delete existing field values
+        ProductFieldValue::where('product_id', $product->id)->delete();
+
+        // Get module fields
+        $fields = $this->moduleFields->getModuleFields($module->id, true);
+
+        foreach ($fields as $field) {
+            $value = $customFields[$field->field_key] ?? null;
+
+            if ($value !== null && $value !== '') {
+                ProductFieldValue::create([
+                    'product_id' => $product->id,
+                    'module_product_field_id' => $field->id,
+                    'field_value' => is_array($value) ? json_encode($value) : (string) $value,
+                ]);
+            }
+        }
+    }
+
     private function valueOrNull(array $row, array $normalized, string $key): ?string
     {
         if (! isset($normalized[$key])) {

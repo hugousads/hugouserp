@@ -12,26 +12,35 @@
     </div>
 
     <form wire:submit.prevent="save" class="space-y-6">
-        {{-- Module Selection --}}
+        {{-- Module Selection - Required for New Products --}}
         <div class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-white p-4 shadow-sm">
             <h2 class="text-sm font-semibold text-emerald-800 mb-3 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
                 {{ __('Module Selection') }}
+                @if(!$productId)
+                    <span class="text-red-500 text-xs">*{{ __('Required') }}</span>
+                @endif
             </h2>
             <div class="space-y-1">
                 <label class="block text-sm font-medium text-slate-700">
                     {{ __('Product Module') }}
-                    <span class="text-slate-400 text-xs">({{ __('Optional - Select for module-specific fields') }})</span>
+                    @if(!$productId)
+                        <span class="text-red-500">*</span>
+                    @endif
                 </label>
-                <select wire:model.live="selectedModuleId" class="erp-input">
-                    <option value="">{{ __('No specific module (General Product)') }}</option>
+                <select wire:model.live="selectedModuleId" class="erp-input" {{ !$productId ? 'required' : '' }}>
+                    <option value="">{{ __('Select a module that supports items...') }}</option>
                     @foreach($modules as $module)
                         <option value="{{ $module->id }}">
                             {{ $module->name }}
                             @if($module->is_service)
                                 ({{ __('Service') }})
+                            @elseif($module->is_rental)
+                                ({{ __('Rental') }})
+                            @else
+                                ({{ __('Stock Item') }})
                             @endif
                         </option>
                     @endforeach
@@ -39,9 +48,18 @@
                 @error('form.module_id')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
-                <p class="text-xs text-slate-500 mt-1">
-                    {{ __('Select a module to display its specific custom fields (e.g., Wood dimensions, Vehicle specs, etc.)') }}
-                </p>
+                
+                @if(!$productId)
+                    <div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                        <p class="text-xs text-blue-800">
+                            <strong>{{ __('Note') }}:</strong> {{ __('Only modules that support items/products are shown. The selected module will determine available custom fields and behavior.') }}
+                        </p>
+                    </div>
+                @else
+                    <p class="text-xs text-slate-500 mt-1">
+                        {{ __('Module-specific custom fields are loaded based on selection') }}
+                    </p>
+                @endif
             </div>
         </div>
 

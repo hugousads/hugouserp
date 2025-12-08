@@ -43,6 +43,7 @@ class Module extends Model
         'integration_hooks',
         'supports_reporting',
         'supports_custom_fields',
+        'supports_items',
     ];
 
     protected $casts = [
@@ -60,6 +61,7 @@ class Module extends Model
         'integration_hooks' => 'array',
         'supports_reporting' => 'bool',
         'supports_custom_fields' => 'bool',
+        'supports_items' => 'bool',
     ];
 
     public function branches(): BelongsToMany
@@ -216,11 +218,27 @@ class Module extends Model
     }
 
     /**
+     * Scope to get modules that support items/products
+     */
+    public function scopeSupportsItems($q)
+    {
+        return $q->where('supports_items', true);
+    }
+
+    /**
      * Check if module is data-oriented
      */
     public function isDataOriented(): bool
     {
         return $this->module_type === 'data';
+    }
+
+    /**
+     * Check if module supports items/products
+     */
+    public function supportsItems(): bool
+    {
+        return $this->supports_items === true;
     }
 
     /**

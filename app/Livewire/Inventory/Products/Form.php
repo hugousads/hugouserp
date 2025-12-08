@@ -58,10 +58,12 @@ class Form extends Component
     public array $dynamicData = [];
 
     protected ModuleProductService $moduleProductService;
+    protected \App\Services\ProductService $productService;
 
-    public function boot(ModuleProductService $moduleProductService): void
+    public function boot(ModuleProductService $moduleProductService, \App\Services\ProductService $productService): void
     {
         $this->moduleProductService = $moduleProductService;
+        $this->productService = $productService;
     }
 
     public function mount(?int $product = null): void
@@ -230,70 +232,61 @@ class Form extends Component
     {
         $this->validate();
 
-        DB::transaction(function () {
+        try {
+            // Prepare data for service
+            $data = [
+                'name' => $this->form['name'],
+                'sku' => $this->form['sku'] ?: null,
+                'barcode' => $this->form['barcode'] ?: null,
+                'price' => $this->form['price'],
+                'cost' => $this->form['cost'] ?? 0,
+                'price_currency' => $this->form['price_currency'],
+                'cost_currency' => $this->form['cost_currency'],
+                'status' => $this->form['status'],
+                'type' => $this->form['type'],
+                'branch_id' => $this->form['branch_id'],
+                'custom_fields' => $this->dynamicData,
+            ];
+
             if ($this->productId) {
+                // Update existing product
                 $product = Product::findOrFail($this->productId);
+                $this->productService->updateProductForModule(
+                    $product,
+                    $data,
+                    $this->thumbnailFile
+                );
             } else {
-                $product = new Product;
-            }
-
-            $product->name = $this->form['name'];
-            $product->sku = $this->form['sku'] ?: null;
-            $product->barcode = $this->form['barcode'] ?: null;
-            $product->default_price = $this->form['price'];
-            $product->standard_cost = $this->form['cost'] ?? 0;
-            $product->price_currency = $this->form['price_currency'];
-            $product->cost_currency = $this->form['cost_currency'];
-            $product->status = $this->form['status'];
-            $product->type = $this->form['type'];
-            $product->branch_id = $this->form['branch_id'];
-            $product->module_id = $this->form['module_id'];
-            $product->extra_attributes = $this->dynamicData;
-
-            // Handle thumbnail upload
-            if ($this->thumbnailFile) {
-                // Delete old thumbnail if exists
-                if ($product->thumbnail) {
-                    Storage::delete($product->thumbnail);
+                // Create new product - require module selection
+                if (!$this->form['module_id']) {
+                    $this->addError('form.module_id', __('Please select a module for this product'));
+                    return;
                 }
-                $product->thumbnail = $this->thumbnailFile->store('products/thumbnails', 'public');
-            }
 
-            if (Auth::check()) {
-                $userId = Auth::id();
-                if (! $this->productId) {
-                    $product->created_by = $userId;
+                $module = Module::findOrFail($this->form['module_id']);
+                
+                // Verify module supports items
+                if (!$module->supportsItems()) {
+                    $this->addError('form.module_id', __('Selected module does not support items/products'));
+                    return;
                 }
-                $product->updated_by = $userId;
+
+                $this->productService->createProductForModule(
+                    $module,
+                    $data,
+                    $this->thumbnailFile
+                );
             }
 
-            $product->save();
+            session()->flash('status', $this->productId
+                ? __('Product updated successfully.')
+                : __('Product created successfully.')
+            );
 
-            if ($this->form['module_id'] && ! empty($this->dynamicData)) {
-                ProductFieldValue::where('product_id', $product->id)->delete();
-
-                $fields = $this->moduleProductService->getModuleFields((int) $this->form['module_id'], true);
-
-                foreach ($fields as $field) {
-                    $value = $this->dynamicData[$field->field_key] ?? null;
-
-                    if ($value !== null && $value !== '') {
-                        ProductFieldValue::create([
-                            'product_id' => $product->id,
-                            'module_product_field_id' => $field->id,
-                            'field_value' => is_array($value) ? json_encode($value) : (string) $value,
-                        ]);
-                    }
-                }
-            }
-        });
-
-        session()->flash('status', $this->productId
-            ? __('Product updated successfully.')
-            : __('Product created successfully.')
-        );
-
-        $this->redirectRoute('inventory.products.index', navigate: true);
+            $this->redirectRoute('inventory.products.index', navigate: true);
+        } catch (\Exception $e) {
+            $this->addError('save', $e->getMessage());
+        }
     }
 
     #[Layout('layouts.app')]
@@ -311,21 +304,17 @@ class Form extends Component
                 ->toArray();
 
             if (! empty($enabledModuleIds)) {
+                // Only show modules that support items/products
                 $modules = Module::where('is_active', true)
-                    ->where(function ($q) {
-                        $q->where('has_inventory', true)
-                            ->orWhere('is_service', true);
-                    })
+                    ->where('supports_items', true)
                     ->whereIn('id', $enabledModuleIds)
                     ->orderBy('sort_order')
                     ->get();
             }
         } else {
+            // Only show modules that support items/products
             $modules = Module::where('is_active', true)
-                ->where(function ($q) {
-                    $q->where('has_inventory', true)
-                        ->orWhere('is_service', true);
-                })
+                ->where('supports_items', true)
                 ->orderBy('sort_order')
                 ->get();
         }
