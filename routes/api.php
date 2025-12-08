@@ -32,7 +32,6 @@ Route::prefix('v1')->group(function () {
 
     // Global POS session management routes
     Route::prefix('pos')->middleware(['auth:sanctum', 'throttle:api'])->group(function () {
-        Route::post('/checkout', [POSController::class, 'checkout']);
         Route::get('/session', [POSController::class, 'getCurrentSession']);
         Route::post('/session/open', [POSController::class, 'openSession']);
         Route::post('/session/{sessionId}/close', [POSController::class, 'closeSession']);

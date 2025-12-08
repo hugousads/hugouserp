@@ -40,6 +40,8 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\AssignGuard::class.':sanctum',
             \App\Http\Middleware\EnsureBranchAccess::class,
             \App\Http\Middleware\Authenticate::class,
+            // Note: 2FA enforcement should be added here or on sensitive routes explicitly
+            // using ->middleware('2fa') to ensure users with 2FA enabled complete the challenge
         ]);
 
         $middleware->group('pos-protected', [

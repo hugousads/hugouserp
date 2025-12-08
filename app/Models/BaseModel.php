@@ -80,11 +80,11 @@ abstract class BaseModel extends Model
 
     protected function usesUuid(): bool
     {
-        return \array_key_exists('uuid', $this->attributes ?? []);
+        return in_array('uuid', $this->getFillable(), true);
     }
 
     protected function usesCode(): bool
     {
-        return \array_key_exists('code', $this->attributes ?? []);
+        return in_array('code', $this->getFillable(), true);
     }
 }

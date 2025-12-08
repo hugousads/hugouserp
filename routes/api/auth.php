@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\Route;
 
 // Public auth routes (no auth middleware here)
 Route::prefix('auth')->group(function () {
-    Route::post('login', [AuthController::class, 'login'])->name('auth.login');
+    Route::post('login', [AuthController::class, 'login'])->name('auth.login')
+        ->middleware('throttle:5,1');
     Route::post('refresh', [AuthController::class, 'refresh'])->name('auth.refresh');
 });
 

@@ -33,18 +33,32 @@ class BackupDatabaseJob implements ShouldQueue
         if (Artisan::has('db:dump')) {
             Artisan::call('db:dump', ['--path' => $path]);
         } else {
-            // Minimal portable fallback using mysqldump env vars
+            // Minimal portable fallback using mysqldump with environment variable for password
             $db = config('database.connections.mysql');
+            
+            // Set password via environment variable to avoid exposure in process list
+            $env = [
+                'MYSQL_PWD' => $db['password'] ?? '',
+            ];
+            
             $cmd = sprintf(
-                'mysqldump -h%s -u%s -p%s %s | gzip > %s',
+                'mysqldump -h%s -u%s %s | gzip > %s',
                 escapeshellarg($db['host'] ?? '127.0.0.1'),
                 escapeshellarg($db['username'] ?? ''),
-                escapeshellarg($db['password'] ?? ''),
                 escapeshellarg($db['database'] ?? ''),
                 escapeshellarg(storage_path('app/'.$path))
             );
+            
             @mkdir(dirname(storage_path('app/'.$path)), 0775, true);
-            @exec($cmd);
+            
+            // Execute with proper error handling
+            $output = [];
+            $returnCode = 0;
+            exec($cmd, $output, $returnCode);
+            
+            if ($returnCode !== 0) {
+                throw new \RuntimeException('Backup command failed with exit code: '.$returnCode);
+            }
         }
 
         if ($this->verify && ! $disk->exists($path)) {
