@@ -87,7 +87,8 @@ class ApiResponse
     public static function fromException(\Throwable $e, int $status = 500): JsonResponse
     {
         $meta = [];
-        
+        $message = config('app.debug') ? $e->getMessage() : __('Something went wrong.');
+
         if (config('app.debug')) {
             $meta = [
                 'exception' => class_basename($e),
@@ -96,7 +97,7 @@ class ApiResponse
             ];
         }
 
-        return self::error($e->getMessage(), $status, [], $meta);
+        return self::error($message, $status, [], $meta);
     }
 
     private static function toArray(array|Arrayable $data): array

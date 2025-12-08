@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // WARNING: Trusting all proxies ('*') can allow IP spoofing.
         // In production, configure specific proxy IPs via APP_TRUSTED_PROXIES env var
-        $middleware->trustProxies(at: '*');
+        $middleware->trustProxies(at: env('APP_TRUSTED_PROXIES', '*'));
 
         $middleware->web(append: [
             \App\Http\Middleware\SecurityHeaders::class,
@@ -42,8 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\AssignGuard::class.':sanctum',
             \App\Http\Middleware\EnsureBranchAccess::class,
             \App\Http\Middleware\Authenticate::class,
-            // Note: 2FA enforcement should be added here or on sensitive routes explicitly
-            // using ->middleware('2fa') to ensure users with 2FA enabled complete the challenge
+            \App\Http\Middleware\Require2FA::class,
         ]);
 
         $middleware->group('pos-protected', [

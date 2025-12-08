@@ -49,11 +49,11 @@ class SyncOfflinePosJob implements ShouldQueue
                     \App\Models\SaleItem::query()->updateOrCreate(
                         ['sale_id' => $sale->getKey(), 'product_id' => $it['product_id']],
                         [
-                            'qty' => $it['qty'] ?? 0,
-                            'price' => $it['price'] ?? 0,
+                            'qty' => $it['qty'] ?? $it['quantity'] ?? 0,
+                            'unit_price' => $it['unit_price'] ?? $it['price'] ?? 0,
                             'discount' => $it['discount'] ?? 0,
                             'tax_id' => $it['tax_id'] ?? null,
-                            'total' => $it['total'] ?? 0,
+                            'line_total' => $it['line_total'] ?? $it['total'] ?? 0,
                         ]
                     );
                 }

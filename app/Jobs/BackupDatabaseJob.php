@@ -34,27 +34,32 @@ class BackupDatabaseJob implements ShouldQueue
             Artisan::call('db:dump', ['--path' => $path]);
         } else {
             // Minimal portable fallback using mysqldump with environment variable for password
-            // Note: MYSQL_PWD reduces but doesn't eliminate password exposure risk.
+            // Using MYSQL_PWD env var to avoid password exposure in process list
             // For production, consider using spatie/laravel-backup or .my.cnf config files
             $db = config('database.connections.mysql');
-            
+
+            // Set password via environment variable instead of command line
+            putenv('MYSQL_PWD='.($db['password'] ?? ''));
+
             // All values are from config and properly escaped - no user input
             $cmd = sprintf(
-                'MYSQL_PWD=%s mysqldump -h%s -u%s %s | gzip > %s',
-                escapeshellarg($db['password'] ?? ''),
+                'mysqldump -h%s -u%s %s | gzip > %s',
                 escapeshellarg($db['host'] ?? '127.0.0.1'),
                 escapeshellarg($db['username'] ?? ''),
                 escapeshellarg($db['database'] ?? ''),
                 escapeshellarg(storage_path('app/'.$path))
             );
-            
+
             @mkdir(dirname(storage_path('app/'.$path)), 0775, true);
-            
+
             // Execute with proper error handling
             $output = [];
             $returnCode = 0;
             exec($cmd, $output, $returnCode);
-            
+
+            // Clear the password from environment
+            putenv('MYSQL_PWD');
+
             if ($returnCode !== 0) {
                 throw new \RuntimeException('Backup command failed with exit code: '.$returnCode);
             }
