@@ -42,7 +42,7 @@ class Show extends Component
         $document->logActivity('viewed', auth()->user());
     }
 
-    public function download(): void
+    public function download()
     {
         $this->authorize('documents.download');
 

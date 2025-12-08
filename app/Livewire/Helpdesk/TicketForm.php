@@ -86,7 +86,7 @@ class TicketForm extends Component
         $this->tags = array_values(array_filter($this->tags, fn($t) => $t !== $tag));
     }
 
-    public function save(): void
+    public function save()
     {
         $data = [
             'subject' => $this->subject,

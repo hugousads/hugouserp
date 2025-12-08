@@ -57,7 +57,7 @@ class Form extends Component
         }
     }
 
-    public function save(): void
+    public function save()
     {
         if ($this->isEdit) {
             $this->validate([
