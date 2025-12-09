@@ -20,23 +20,43 @@ return new class extends Migration
     {
         $driver = DB::connection()->getDriverName();
 
-        // Drop the existing unique constraint on external_order_id
-        if ($driver === 'mysql') {
-            DB::statement('ALTER TABLE store_orders DROP INDEX store_orders_external_order_id_unique');
-        } elseif ($driver === 'pgsql') {
-            DB::statement('ALTER TABLE store_orders DROP CONSTRAINT store_orders_external_order_id_unique');
-        } elseif ($driver === 'sqlite') {
-            // SQLite requires recreating the table for this change
-            // For now, we'll skip the constraint drop on SQLite
+        if ($driver === 'sqlite') {
+            // SQLite doesn't support dropping constraints directly
+            // We need to check if we're in test mode (in-memory database)
+            // In that case, the table won't have existing data
+            Schema::dropIfExists('store_orders');
+            Schema::create('store_orders', function (Blueprint $table): void {
+                $table->id();
+                $table->string('external_order_id', 191);
+                $table->string('status', 50)->default('pending')->index();
+                $table->unsignedBigInteger('branch_id')->index();
+                $table->string('currency', 10)->nullable();
+                $table->decimal('total', 15, 2)->default(0);
+                $table->decimal('discount_total', 15, 2)->default(0);
+                $table->decimal('shipping_total', 15, 2)->default(0);
+                $table->decimal('tax_total', 15, 2)->default(0);
+                $table->json('payload');
+                $table->timestamps();
+                
+                // Composite unique constraint
+                $table->unique(['external_order_id', 'branch_id'], 'store_orders_external_id_branch_unique');
+            });
+        } else {
+            // Drop the existing unique constraint on external_order_id
+            if ($driver === 'mysql') {
+                DB::statement('ALTER TABLE store_orders DROP INDEX store_orders_external_order_id_unique');
+            } elseif ($driver === 'pgsql') {
+                DB::statement('ALTER TABLE store_orders DROP CONSTRAINT store_orders_external_order_id_unique');
+            }
+
+            Schema::table('store_orders', function (Blueprint $table): void {
+                // Make branch_id not nullable since it's now required
+                $table->unsignedBigInteger('branch_id')->nullable(false)->change();
+
+                // Add composite unique constraint on (external_order_id, branch_id)
+                $table->unique(['external_order_id', 'branch_id'], 'store_orders_external_id_branch_unique');
+            });
         }
-
-        Schema::table('store_orders', function (Blueprint $table): void {
-            // Make branch_id not nullable since it's now required
-            $table->unsignedBigInteger('branch_id')->nullable(false)->change();
-
-            // Add composite unique constraint on (external_order_id, branch_id)
-            $table->unique(['external_order_id', 'branch_id'], 'store_orders_external_id_branch_unique');
-        });
     }
 
     /**
