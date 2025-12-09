@@ -556,6 +556,91 @@
         @endif
     </nav>
 
+    {{-- Favorites Section --}}
+    @php
+        $favorites = [];
+        if (class_exists('\App\Models\UserFavorite')) {
+            $favorites = \App\Models\UserFavorite::forUser()->ordered()->limit(5)->get();
+        }
+    @endphp
+    @if(!empty($favorites) && $favorites->count() > 0)
+    <div class="border-t border-slate-700 px-3 py-3">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-xs uppercase tracking-wide text-slate-500">{{ __('Favorites') }}</p>
+            <button class="text-amber-400 hover:text-amber-300 transition">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+            </button>
+        </div>
+        <ul class="space-y-1">
+            @foreach($favorites as $favorite)
+            <li>
+                <a href="{{ $favorite->route_name ? route($favorite->route_name) : '#' }}" 
+                   class="sidebar-link-secondary group">
+                    <span class="text-amber-400 group-hover:text-amber-300 transition">★</span>
+                    <span class="text-xs truncate">{{ $favorite->label }}</span>
+                </a>
+            </li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
+    {{-- Tools Section --}}
+    @if($canAccess('import.manage') || $canAccess('export.manage') || $canAccess('logs.audit.view') || $canAccess('system.health.view'))
+    <div class="border-t border-slate-700 px-3 py-3">
+        <p class="text-xs uppercase tracking-wide text-slate-500 mb-2">{{ __('Tools') }}</p>
+        <ul class="space-y-1">
+            @if($canAccess('import.manage'))
+            <li>
+                <a href="{{ route('admin.tools.import') ?? '#' }}" 
+                   class="sidebar-link-secondary {{ $isActive('admin.tools.import') ? 'active' : '' }}">
+                    <span class="text-base">📥</span>
+                    <span class="text-xs">{{ __('Imports') }}</span>
+                </a>
+            </li>
+            @endif
+            @if($canAccess('export.manage'))
+            <li>
+                <a href="{{ route('admin.tools.export') ?? '#' }}" 
+                   class="sidebar-link-secondary {{ $isActive('admin.tools.export') ? 'active' : '' }}">
+                    <span class="text-base">📤</span>
+                    <span class="text-xs">{{ __('Exports') }}</span>
+                </a>
+            </li>
+            @endif
+            @if($canAccess('logs.audit.view'))
+            <li>
+                <a href="{{ route('admin.logs.audit') }}" 
+                   class="sidebar-link-secondary {{ $isActive('admin.logs.audit') ? 'active' : '' }}">
+                    <span class="text-base">📋</span>
+                    <span class="text-xs">{{ __('Audit Logs') }}</span>
+                </a>
+            </li>
+            @endif
+            @if($canAccess('system.health.view'))
+            <li>
+                <a href="{{ route('admin.system.health') ?? '#' }}" 
+                   class="sidebar-link-secondary {{ $isActive('admin.system.health') ? 'active' : '' }}">
+                    <span class="text-base">🏥</span>
+                    <span class="text-xs">{{ __('System Health') }}</span>
+                </a>
+            </li>
+            @endif
+            @if($canAccess('jobs.monitor'))
+            <li>
+                <a href="{{ route('admin.jobs.monitor') ?? '#' }}" 
+                   class="sidebar-link-secondary {{ $isActive('admin.jobs.monitor') ? 'active' : '' }}">
+                    <span class="text-base">⚡</span>
+                    <span class="text-xs">{{ __('Background Jobs') }}</span>
+                </a>
+            </li>
+            @endif
+        </ul>
+    </div>
+    @endif
+
     {{-- Language Switcher --}}
     <div class="border-t border-slate-700 p-3">
         <div class="flex items-center justify-center gap-2">
