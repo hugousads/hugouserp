@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete();
+            $table->foreignId('client_id')->nullable()->constrained('customers')->nullOnDelete();
             $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
             $table->enum('status', ['planning', 'active', 'on_hold', 'completed', 'cancelled'])->default('planning');
             $table->date('start_date')->nullable();

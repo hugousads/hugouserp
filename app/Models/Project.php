@@ -19,15 +19,16 @@ class Project extends Model
         'description',
         'client_id',
         'branch_id',
-        'manager_id',
+        'project_manager_id',  // Changed from 'manager_id'
         'status',
         'priority',
         'start_date',
         'end_date',
-        'budget',
-        'currency_id',
+        'budget_amount',       // Changed from 'budget'
+        'currency',            // Changed from 'currency_id' - migration uses string, not FK
         'progress',
         'notes',
+        'metadata',            // Added to match migration
         'created_by',
         'updated_by',
     ];
@@ -35,8 +36,9 @@ class Project extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'budget' => 'decimal:2',
+        'budget_amount' => 'decimal:2',  // Changed from 'budget'
         'progress' => 'integer',
+        'metadata' => 'array',           // Added to match migration
     ];
 
     protected static function boot()
@@ -68,12 +70,17 @@ class Project extends Model
 
     public function manager(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'manager_id');
+        return $this->belongsTo(User::class, 'project_manager_id');  // Changed from 'manager_id'
     }
 
     public function currency(): BelongsTo
     {
-        return $this->belongsTo(Currency::class);
+        // Note: The migration uses 'currency' as a string column (3-char code like 'USD', 'EUR')
+        // This relationship assumes a 'currencies' table exists with a 'code' column.
+        // If the currencies table doesn't have a 'code' column or doesn't exist,
+        // this relationship may not work. Consider using an accessor instead:
+        // public function getCurrencyCodeAttribute() { return $this->currency; }
+        return $this->belongsTo(Currency::class, 'currency', 'code');
     }
 
     public function tasks(): HasMany
@@ -120,7 +127,7 @@ class Project extends Model
     public function scopeOverBudget($query)
     {
         return $query->whereRaw('COALESCE((SELECT SUM(hours * hourly_rate) FROM project_time_logs WHERE project_id = projects.id), 0) + 
-                                 (SELECT COALESCE(SUM(amount), 0) FROM project_expenses WHERE project_id = projects.id AND status = "approved") > budget');
+                                 (SELECT COALESCE(SUM(amount), 0) FROM project_expenses WHERE project_id = projects.id AND status = "approved") > budget_amount');
     }
 
     public function scopeOverdue($query)
@@ -145,7 +152,7 @@ class Project extends Model
 
     public function getTotalBudget(): float
     {
-        return (float) $this->budget;
+        return (float) $this->budget_amount;  // Changed from 'budget'
     }
 
     public function getTotalActualCost(): float

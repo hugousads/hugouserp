@@ -69,8 +69,8 @@ class MotorcycleService implements MotorcycleServiceInterface
                     ['vehicle_id' => $vehicleId],
                     [
                         'provider' => $payload['provider'] ?? 'default',
-                        'start_at' => $payload['start_at'] ?? now(),
-                        'end_at' => $payload['end_at'] ?? now()->addYear(),
+                        'start_date' => $payload['start_date'] ?? $payload['start_at'] ?? now(),
+                        'end_date' => $payload['end_date'] ?? $payload['end_at'] ?? now()->addYear(),
                         'notes' => $payload['notes'] ?? null,
                     ]
                 );

@@ -8,36 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Ticket categories table
-        Schema::create('ticket_categories', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->foreignId('parent_id')->nullable()->constrained('ticket_categories')->nullOnDelete();
-            $table->foreignId('default_assignee_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('sla_policy_id')->nullable()->constrained('ticket_sla_policies')->nullOnDelete();
-            $table->boolean('is_active')->default(true);
-            $table->integer('display_order')->default(0);
-            $table->timestamps();
-
-            $table->index('parent_id');
-        });
-
-        // Ticket priorities table
-        Schema::create('ticket_priorities', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->string('color', 7)->default('#3B82F6');
-            $table->integer('level')->unique(); // 1=lowest, higher=more urgent
-            $table->integer('response_time_hours')->default(24);
-            $table->integer('resolution_time_hours')->default(72);
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
-
-        // Ticket SLA policies table
+        // Ticket SLA policies table - Create first (no dependencies)
         Schema::create('ticket_sla_policies', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -53,6 +24,35 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Ticket priorities table - Create second (no dependencies)
+        Schema::create('ticket_priorities', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->string('color', 7)->default('#3B82F6');
+            $table->integer('level')->unique(); // 1=lowest, higher=more urgent
+            $table->integer('response_time_hours')->default(24);
+            $table->integer('resolution_time_hours')->default(72);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
+        // Ticket categories table - Create third (depends on ticket_sla_policies)
+        Schema::create('ticket_categories', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            $table->foreignId('parent_id')->nullable()->constrained('ticket_categories')->nullOnDelete();
+            $table->foreignId('default_assignee_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('sla_policy_id')->nullable()->constrained('ticket_sla_policies')->nullOnDelete();
+            $table->boolean('is_active')->default(true);
+            $table->integer('display_order')->default(0);
+            $table->timestamps();
+
+            $table->index('parent_id');
+        });
+
         // Tickets table
         Schema::create('tickets', function (Blueprint $table) {
             $table->id();
@@ -63,7 +63,7 @@ return new class extends Migration
             $table->foreignId('priority_id')->constrained('ticket_priorities');
             $table->foreignId('category_id')->constrained('ticket_categories');
             $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
-            $table->foreignId('customer_id')->nullable()->constrained('clients')->nullOnDelete();
+            $table->foreignId('customer_id')->nullable()->constrained('customers')->nullOnDelete();
             $table->string('customer_email')->nullable();
             $table->string('customer_phone')->nullable();
             $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
