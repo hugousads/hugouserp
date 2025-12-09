@@ -19,8 +19,8 @@ return new class extends Migration
                     ->references('id')
                     ->on('branches')
                     ->nullOnDelete();
-            } catch (\Exception $e) {
-                // Foreign key might already exist
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Foreign key might already exist - only catch query exceptions
             }
         });
 
@@ -38,8 +38,8 @@ return new class extends Migration
                     ->references('id')
                     ->on('store_orders')
                     ->nullOnDelete();
-            } catch (\Exception $e) {
-                // Foreign key might already exist
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Foreign key might already exist - only catch query exceptions
             }
         });
     }
