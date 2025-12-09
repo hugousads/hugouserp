@@ -127,6 +127,7 @@ class VehicleModels extends Component
 
     public function delete(int $id): void
     {
+        $this->authorize('spares.compatibility.manage');
         VehicleModel::where('id', $id)->delete();
         session()->flash('status', __('Vehicle model deleted successfully.'));
     }

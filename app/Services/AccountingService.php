@@ -205,6 +205,9 @@ class AccountingService
                 JournalEntryLine::create($lineData);
             }
 
+            // Update purchase with journal entry
+            $purchase->update(['journal_entry_id' => $entry->id]);
+
             return $entry->fresh('lines');
         });
     }

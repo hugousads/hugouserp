@@ -4,6 +4,7 @@ namespace App\Livewire\Purchases\GRN;
 
 use App\Models\GoodsReceivedNote;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\RedirectResponse;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -60,7 +61,7 @@ class Inspection extends Component
         $this->inspectionData[$itemId][$field] = $value;
     }
 
-    public function acceptGRN(): void
+    public function acceptGRN(): ?RedirectResponse
     {
         $this->authorize('grn.approve');
         
@@ -73,7 +74,7 @@ class Inspection extends Component
 
         if (!$allVerified) {
             session()->flash('error', __('Please complete all inspection checklist items before accepting.'));
-            return;
+            return null;
         }
 
         // Update GRN status
@@ -100,7 +101,7 @@ class Inspection extends Component
         return redirect()->route('purchases.grn.index');
     }
 
-    public function rejectGRN(): void
+    public function rejectGRN(): ?RedirectResponse
     {
         $this->authorize('grn.reject');
         
@@ -120,7 +121,7 @@ class Inspection extends Component
         return redirect()->route('purchases.grn.index');
     }
 
-    public function partialAccept(): void
+    public function partialAccept(): ?RedirectResponse
     {
         $this->authorize('grn.approve');
         
@@ -137,12 +138,12 @@ class Inspection extends Component
 
         if ($passedItems === 0) {
             session()->flash('error', __('No items passed inspection. Please reject the GRN instead.'));
-            return;
+            return null;
         }
 
         if ($passedItems === $totalItems) {
             session()->flash('error', __('All items passed. Please use full accept instead.'));
-            return;
+            return null;
         }
 
         // Update GRN status to partial

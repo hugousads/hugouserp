@@ -159,11 +159,15 @@ class RentalService implements RentalServiceInterface
             callback: function () use ($invoiceId, $amount, $method, $reference) {
                 $i = RentalInvoice::findOrFail($invoiceId);
 
+                // Get branch_id from contract, ensure it's set
+                $branchId = $i->contract->branch_id ?? null;
+                abort_if(!$branchId, 422, __('Branch context is required'));
+
                 // Create payment record
                 \App\Models\RentalPayment::create([
                     'invoice_id' => $i->id,
                     'contract_id' => $i->contract_id,
-                    'branch_id' => $i->contract->branch_id ?? null,
+                    'branch_id' => $branchId,
                     'amount' => $amount,
                     'method' => $method,
                     'reference' => $reference,

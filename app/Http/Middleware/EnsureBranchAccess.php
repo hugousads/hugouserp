@@ -37,6 +37,13 @@ class EnsureBranchAccess
             return $next($request);
         }
 
+        // Permission-based bypass (e.g., wildcard permission or specific access-all permission)
+        if (method_exists($user, 'hasPermissionTo')) {
+            if ($user->hasPermissionTo('*') || $user->hasPermissionTo('access-all-branches')) {
+                return $next($request);
+            }
+        }
+
         // Generic relationship checks (adjust to your schema)
         $can = false;
 

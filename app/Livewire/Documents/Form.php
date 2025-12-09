@@ -10,6 +10,7 @@ use App\Models\Document;
 use App\Models\DocumentTag;
 use App\Services\DocumentService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\RedirectResponse;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -57,7 +58,7 @@ class Form extends Component
         }
     }
 
-    public function save()
+    public function save(): RedirectResponse
     {
         if ($this->isEdit) {
             $this->validate([

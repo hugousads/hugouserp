@@ -56,6 +56,7 @@ class Index extends Component
 
     public function delete(int $id): void
     {
+        $this->authorize('income.delete');
         Income::findOrFail($id)->delete();
         Cache::forget('income_stats_'.(auth()->user()?->branch_id ?? 'all'));
         session()->flash('success', __('Income deleted successfully'));

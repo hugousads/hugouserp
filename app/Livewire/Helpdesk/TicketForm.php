@@ -14,6 +14,7 @@ use App\Models\TicketSLAPolicy;
 use App\Models\User;
 use App\Services\HelpdeskService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\RedirectResponse;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -86,7 +87,7 @@ class TicketForm extends Component
         $this->tags = array_values(array_filter($this->tags, fn($t) => $t !== $tag));
     }
 
-    public function save()
+    public function save(): RedirectResponse
     {
         $data = [
             'subject' => $this->subject,

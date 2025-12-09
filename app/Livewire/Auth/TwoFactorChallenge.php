@@ -23,14 +23,15 @@ class TwoFactorChallenge extends Component
         $this->twoFactorService = $twoFactorService;
     }
 
-    public function mount()
+    public function mount(): void
     {
         if (! Auth::check() || ! Auth::user()->hasTwoFactorEnabled()) {
-            return redirect()->route('dashboard');
+            $this->redirect(route('dashboard'));
+            return;
         }
 
         if (session('2fa_verified')) {
-            return redirect()->route('dashboard');
+            $this->redirect(route('dashboard'));
         }
     }
 
