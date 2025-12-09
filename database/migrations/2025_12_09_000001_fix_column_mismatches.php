@@ -68,6 +68,9 @@ return new class extends Migration
             'transfer_items',
             'deliveries',
             'return_notes',
+            'receipts',
+            'rental_invoices',
+            'rental_payments',
         ];
 
         foreach ($tables as $tableName) {
@@ -126,6 +129,9 @@ return new class extends Migration
             'transfer_items',
             'deliveries',
             'return_notes',
+            'receipts',
+            'rental_invoices',
+            'rental_payments',
         ];
 
         foreach ($tables as $tableName) {
