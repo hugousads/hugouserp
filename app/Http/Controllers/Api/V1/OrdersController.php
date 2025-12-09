@@ -41,7 +41,7 @@ class OrdersController extends BaseApiController
         $store = $this->getStore($request);
 
         $order = Sale::query()
-            ->with(['customer', 'items.product', 'user:id,name'])
+            ->with(['customer', 'items.product', 'createdBy:id,name'])
             ->when($store?->branch_id, fn ($q) => $q->where('branch_id', $store->branch_id))
             ->find($id);
 

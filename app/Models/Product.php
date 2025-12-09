@@ -97,6 +97,11 @@ class Product extends BaseModel
         return $this->belongsTo(PriceGroup::class, 'price_list_id');
     }
 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ProductCategory::class, 'category_id');
+    }
+
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);

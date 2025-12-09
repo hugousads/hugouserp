@@ -84,7 +84,7 @@ class ProductsController extends BaseApiController
             return $this->errorResponse(__('Product not found'), 404);
         }
 
-        $product->load(['category', 'warehouse']);
+        $product->load(['category']);
 
         $mapping = null;
         if ($store) {

@@ -13,14 +13,20 @@ class ProjectExpense extends Model
 
     protected $fillable = [
         'project_id',
+        'task_id',
         'category',
         'description',
         'amount',
+        'currency',
         'currency_id',
+        'expense_date',
         'date',
         'vendor',
+        'user_id',
+        'billable',
         'status',
         'approved_by',
+        'approved_date',
         'approved_at',
         'rejection_reason',
         'is_reimbursable',
@@ -28,16 +34,20 @@ class ProjectExpense extends Model
         'reimbursed_at',
         'receipt_path',
         'notes',
+        'metadata',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
+        'expense_date' => 'date',
         'date' => 'date',
         'amount' => 'decimal:2',
+        'approved_date' => 'date',
         'approved_at' => 'datetime',
         'reimbursed_at' => 'datetime',
         'is_reimbursable' => 'boolean',
+        'metadata' => 'array',
     ];
 
     // Relationships
@@ -137,5 +147,15 @@ class ProjectExpense extends Model
         return $this->is_reimbursable && 
                $this->status === 'approved' && 
                is_null($this->reimbursed_at);
+    }
+
+    // Helper method for backwards compatibility
+    public function getExpenseDateAttribute($value)
+    {
+        // If expense_date has a value, return it; otherwise fall back to date
+        if ($value !== null) {
+            return $value;
+        }
+        return $this->getRawOriginal('date');
     }
 }

@@ -12,8 +12,11 @@ class TicketPriority extends Model
     protected $fillable = [
         'name',
         'name_ar',
+        'slug',
         'level',
         'color',
+        'response_time_hours',
+        'resolution_time_hours',
         'response_time_minutes',
         'resolution_time_minutes',
         'is_active',
@@ -22,6 +25,8 @@ class TicketPriority extends Model
 
     protected $casts = [
         'level' => 'integer',
+        'response_time_hours' => 'integer',
+        'resolution_time_hours' => 'integer',
         'response_time_minutes' => 'integer',
         'resolution_time_minutes' => 'integer',
         'is_active' => 'boolean',
@@ -102,5 +107,16 @@ class TicketPriority extends Model
     public function isLow(): bool
     {
         return $this->level === 1;
+    }
+
+    // Helper methods for converting between units
+    public function getResponseTimeInMinutes(): int
+    {
+        return $this->response_time_minutes ?? (($this->response_time_hours ?? 0) * 60);
+    }
+
+    public function getResolutionTimeInMinutes(): int
+    {
+        return $this->resolution_time_minutes ?? (($this->resolution_time_hours ?? 0) * 60);
     }
 }

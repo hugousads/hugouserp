@@ -14,22 +14,29 @@ class ProjectTimeLog extends Model
     protected $fillable = [
         'project_id',
         'task_id',
+        'user_id',
         'employee_id',
+        'log_date',
         'date',
         'hours',
         'hourly_rate',
+        'billable',
         'is_billable',
         'description',
         'notes',
+        'metadata',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
+        'log_date' => 'date',
         'date' => 'date',
         'hours' => 'decimal:2',
         'hourly_rate' => 'decimal:2',
+        'billable' => 'boolean',
         'is_billable' => 'boolean',
+        'metadata' => 'array',
     ];
 
     // Relationships
@@ -88,5 +95,24 @@ class ProjectTimeLog extends Model
     public function isBillable(): bool
     {
         return (bool) $this->is_billable;
+    }
+
+    // Helper methods for backwards compatibility
+    public function getLogDateAttribute($value)
+    {
+        // If log_date has a value, return it; otherwise fall back to date
+        if ($value !== null) {
+            return $value;
+        }
+        return $this->getRawOriginal('date');
+    }
+
+    public function getUserIdAttribute($value)
+    {
+        // If user_id has a value, return it; otherwise fall back to employee_id
+        if ($value !== null) {
+            return $value;
+        }
+        return $this->getRawOriginal('employee_id');
     }
 }

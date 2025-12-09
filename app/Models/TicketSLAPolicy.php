@@ -15,22 +15,35 @@ class TicketSLAPolicy extends Model
     protected $fillable = [
         'name',
         'description',
+        'first_response_time_hours',
+        'resolution_time_hours',
         'response_time_minutes',
         'resolution_time_minutes',
+        'business_hours',
         'business_hours_only',
         'business_hours_start',
         'business_hours_end',
         'working_days',
+        'exclude_weekends',
+        'excluded_dates',
+        'auto_escalate',
+        'escalate_to_user_id',
         'is_active',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
+        'first_response_time_hours' => 'integer',
+        'resolution_time_hours' => 'integer',
         'response_time_minutes' => 'integer',
         'resolution_time_minutes' => 'integer',
-        'business_hours_only' => 'boolean',
+        'business_hours' => 'array',
         'working_days' => 'array',
+        'excluded_dates' => 'array',
+        'business_hours_only' => 'boolean',
+        'exclude_weekends' => 'boolean',
+        'auto_escalate' => 'boolean',
         'is_active' => 'boolean',
     ];
 
