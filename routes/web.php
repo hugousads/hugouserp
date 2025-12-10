@@ -622,6 +622,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/{income}/edit', \App\Livewire\Income\Form::class)
             ->name('edit')
             ->middleware('can:income.manage');
+
+        Route::get('/categories', \App\Livewire\Income\Categories\Index::class)
+            ->name('categories.index')
+            ->middleware('can:income.manage');
     });
 
     // CUSTOMERS & SUPPLIERS (business contacts)
