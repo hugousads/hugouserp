@@ -223,12 +223,14 @@ return new class extends Migration
      */
     private function indexExists(string $table, string $indexName): bool
     {
-        $connection = Schema::getConnection();
-        $schemaManager = $connection->getDoctrineSchemaManager();
-        
         try {
-            $indexes = $schemaManager->listTableIndexes($table);
-            return isset($indexes[$indexName]) || isset($indexes[strtolower($indexName)]);
+            $indexes = Schema::getIndexes($table);
+            foreach ($indexes as $index) {
+                if (strcasecmp($index['name'], $indexName) === 0) {
+                    return true;
+                }
+            }
+            return false;
         } catch (\Exception $e) {
             return false;
         }
@@ -243,13 +245,10 @@ return new class extends Migration
      */
     private function foreignKeyExists(string $table, string $foreignKey): bool
     {
-        $connection = Schema::getConnection();
-        $schemaManager = $connection->getDoctrineSchemaManager();
-        
         try {
-            $foreignKeys = $schemaManager->listTableForeignKeys($table);
+            $foreignKeys = Schema::getForeignKeys($table);
             foreach ($foreignKeys as $fk) {
-                if ($fk->getName() === $foreignKey) {
+                if (strcasecmp($fk['name'], $foreignKey) === 0) {
                     return true;
                 }
             }

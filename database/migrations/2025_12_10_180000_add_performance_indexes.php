@@ -56,8 +56,11 @@ return new class extends Migration
 
         // Sale Payments - for payment method analytics
         Schema::table('sale_payments', function (Blueprint $table) {
-            if (! $this->indexExists('sale_payments', 'sale_payments_method_date_idx')) {
-                $table->index(['payment_method', 'payment_date'], 'sale_payments_method_date_idx');
+            if (! $this->indexExists('sale_payments', 'sale_payments_method_idx')) {
+                $table->index('payment_method', 'sale_payments_method_idx');
+            }
+            if (! $this->indexExists('sale_payments', 'sale_payments_created_idx')) {
+                $table->index('created_at', 'sale_payments_created_idx');
             }
         });
 
@@ -111,7 +114,8 @@ return new class extends Migration
         });
 
         Schema::table('sale_payments', function (Blueprint $table) {
-            $this->safeDropIndex($table, 'sale_payments_method_date_idx');
+            $this->safeDropIndex($table, 'sale_payments_method_idx');
+            $this->safeDropIndex($table, 'sale_payments_created_idx');
         });
 
         Schema::table('purchases', function (Blueprint $table) {
@@ -133,12 +137,14 @@ return new class extends Migration
      */
     private function indexExists(string $table, string $indexName): bool
     {
-        $connection = Schema::getConnection();
-        $schemaManager = $connection->getDoctrineSchemaManager();
-
         try {
-            $indexes = $schemaManager->listTableIndexes($table);
-            return isset($indexes[$indexName]) || isset($indexes[strtolower($indexName)]);
+            $indexes = Schema::getIndexes($table);
+            foreach ($indexes as $index) {
+                if (strcasecmp($index['name'], $indexName) === 0) {
+                    return true;
+                }
+            }
+            return false;
         } catch (\Exception $e) {
             return false;
         }
