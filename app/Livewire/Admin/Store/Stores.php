@@ -360,8 +360,8 @@ class Stores extends Component
 
         if ($this->search) {
             $query->where(function ($q) {
-                $q->where('name', 'ilike', '%'.$this->search.'%')
-                    ->orWhere('url', 'ilike', '%'.$this->search.'%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('url', 'like', '%'.$this->search.'%');
             });
         }
 

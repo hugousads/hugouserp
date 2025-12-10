@@ -51,9 +51,9 @@ class GlobalSearch extends Component
             $canEdit = $user->can('inventory.products.manage');
             $products = Product::query()
                 ->where(function ($q) use ($searchTerm) {
-                    $q->where('name', 'ilike', $searchTerm)
-                        ->orWhere('sku', 'ilike', $searchTerm)
-                        ->orWhere('barcode', 'ilike', $searchTerm);
+                    $q->where('name', 'like', $searchTerm)
+                        ->orWhere('sku', 'like', $searchTerm)
+                        ->orWhere('barcode', 'like', $searchTerm);
                 })
                 ->limit(5)
                 ->get(['id', 'name', 'sku']);
@@ -79,9 +79,9 @@ class GlobalSearch extends Component
             $canEdit = $user->can('customers.manage');
             $customers = Customer::query()
                 ->where(function ($q) use ($searchTerm) {
-                    $q->where('name', 'ilike', $searchTerm)
-                        ->orWhere('email', 'ilike', $searchTerm)
-                        ->orWhere('phone', 'ilike', $searchTerm);
+                    $q->where('name', 'like', $searchTerm)
+                        ->orWhere('email', 'like', $searchTerm)
+                        ->orWhere('phone', 'like', $searchTerm);
                 })
                 ->limit(5)
                 ->get(['id', 'name']);
@@ -107,9 +107,9 @@ class GlobalSearch extends Component
             $canEdit = $user->can('suppliers.manage');
             $suppliers = Supplier::query()
                 ->where(function ($q) use ($searchTerm) {
-                    $q->where('name', 'ilike', $searchTerm)
-                        ->orWhere('email', 'ilike', $searchTerm)
-                        ->orWhere('phone', 'ilike', $searchTerm);
+                    $q->where('name', 'like', $searchTerm)
+                        ->orWhere('email', 'like', $searchTerm)
+                        ->orWhere('phone', 'like', $searchTerm);
                 })
                 ->limit(5)
                 ->get(['id', 'name']);
@@ -134,8 +134,8 @@ class GlobalSearch extends Component
         if ($user->can('sales.view')) {
             $sales = Sale::query()
                 ->where(function ($q) use ($searchTerm) {
-                    $q->where('invoice_number', 'ilike', $searchTerm)
-                        ->orWhere('reference_no', 'ilike', $searchTerm);
+                    $q->where('invoice_number', 'like', $searchTerm)
+                        ->orWhere('reference_no', 'like', $searchTerm);
                 })
                 ->limit(5)
                 ->get(['id', 'invoice_number', 'status']);
@@ -159,7 +159,7 @@ class GlobalSearch extends Component
             $canEdit = $user->can('purchases.manage');
             $purchases = Purchase::query()
                 ->where(function ($q) use ($searchTerm) {
-                    $q->where('reference_no', 'ilike', $searchTerm);
+                    $q->where('reference_no', 'like', $searchTerm);
                 })
                 ->limit(5)
                 ->get(['id', 'reference_no', 'status']);

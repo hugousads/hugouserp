@@ -67,9 +67,9 @@ class Index extends Component
     public function render()
     {
         $units = UnitOfMeasure::query()
-            ->when($this->search, fn ($q) => $q->where('name', 'ilike', "%{$this->search}%")
-                ->orWhere('name_ar', 'ilike', "%{$this->search}%")
-                ->orWhere('symbol', 'ilike', "%{$this->search}%"))
+            ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%")
+                ->orWhere('name_ar', 'like', "%{$this->search}%")
+                ->orWhere('symbol', 'like', "%{$this->search}%"))
             ->with('baseUnit')
             ->withCount('products')
             ->orderBy('sort_order')

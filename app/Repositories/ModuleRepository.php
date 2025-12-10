@@ -48,9 +48,9 @@ class ModuleRepository extends EloquentBaseRepository implements ModuleRepositor
         if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function (Builder $q) use ($search) {
-                $q->where('name', 'ilike', "%{$search}%")
-                    ->orWhere('slug', 'ilike', "%{$search}%")
-                    ->orWhere('code', 'ilike', "%{$search}%");
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%");
             });
         }
 

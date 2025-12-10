@@ -168,8 +168,8 @@ class ProductStoreMappings extends Component
 
         if ($this->search) {
             $query->where(function ($q) {
-                $q->where('external_id', 'ilike', '%'.$this->search.'%')
-                    ->orWhere('external_sku', 'ilike', '%'.$this->search.'%');
+                $q->where('external_id', 'like', '%'.$this->search.'%')
+                    ->orWhere('external_sku', 'like', '%'.$this->search.'%');
             });
         }
 

@@ -43,7 +43,7 @@ class RoleRepository extends EloquentBaseRepository implements RoleRepositoryInt
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where('name', 'ilike', "%{$search}%");
+            $query->where('name', 'like', "%{$search}%");
         }
 
         if (! empty($filters['guard_name'])) {

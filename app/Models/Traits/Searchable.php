@@ -25,10 +25,10 @@ trait Searchable
                 if (str_contains($column, '.')) {
                     [$relation, $relationColumn] = explode('.', $column, 2);
                     $q->orWhereHas($relation, function (Builder $relationQuery) use ($search, $relationColumn) {
-                        $relationQuery->where($relationColumn, 'ilike', "%{$search}%");
+                        $relationQuery->where($relationColumn, 'like', "%{$search}%");
                     });
                 } else {
-                    $q->orWhere($column, 'ilike', "%{$search}%");
+                    $q->orWhere($column, 'like', "%{$search}%");
                 }
             }
         });

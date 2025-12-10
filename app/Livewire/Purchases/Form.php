@@ -102,8 +102,8 @@ class Form extends Component
 
         $this->searchResults = Product::query()
             ->where(function ($q) {
-                $q->where('name', 'ilike', "%{$this->productSearch}%")
-                    ->orWhere('sku', 'ilike', "%{$this->productSearch}%");
+                $q->where('name', 'like', "%{$this->productSearch}%")
+                    ->orWhere('sku', 'like', "%{$this->productSearch}%");
             })
             ->limit(10)
             ->get(['id', 'name', 'sku', 'cost_price'])

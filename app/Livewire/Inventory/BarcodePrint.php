@@ -41,9 +41,9 @@ class BarcodePrint extends Component
     public function render()
     {
         $products = Product::query()
-            ->when($this->search, fn ($q) => $q->where('name', 'ilike', "%{$this->search}%")
-                ->orWhere('sku', 'ilike', "%{$this->search}%")
-                ->orWhere('barcode', 'ilike', "%{$this->search}%"))
+            ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%")
+                ->orWhere('sku', 'like', "%{$this->search}%")
+                ->orWhere('barcode', 'like', "%{$this->search}%"))
             ->orderBy('name')
             ->limit(50)
             ->get();

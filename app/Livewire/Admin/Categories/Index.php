@@ -52,8 +52,8 @@ class Index extends Component
     public function render()
     {
         $categories = ProductCategory::query()
-            ->when($this->search, fn ($q) => $q->where('name', 'ilike', "%{$this->search}%")
-                ->orWhere('name_ar', 'ilike', "%{$this->search}%"))
+            ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%")
+                ->orWhere('name_ar', 'like', "%{$this->search}%"))
             ->withCount('products')
             ->orderBy('sort_order')
             ->orderBy('name')

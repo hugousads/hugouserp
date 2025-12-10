@@ -74,8 +74,8 @@ class ProductCompatibility extends Component
         $brands = $this->sparePartsService->getBrands();
 
         $vehicleModelsQuery = VehicleModel::query()
-            ->when($this->search, fn ($q) => $q->where('model', 'ilike', "%{$this->search}%")
-                ->orWhere('brand', 'ilike', "%{$this->search}%"))
+            ->when($this->search, fn ($q) => $q->where('model', 'like', "%{$this->search}%")
+                ->orWhere('brand', 'like', "%{$this->search}%"))
             ->when($this->brandFilter, fn ($q) => $q->where('brand', $this->brandFilter))
             ->orderBy('brand')
             ->orderBy('model');
