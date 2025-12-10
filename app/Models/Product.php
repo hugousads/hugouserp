@@ -30,7 +30,7 @@ class Product extends BaseModel
         'parent_product_id',
         'variation_attributes',
         'custom_fields',
-        'uom', 'uom_factor',
+        'uom', 'uom_factor', 'unit_id',
         'cost_method', 'cost_currency', 'standard_cost', 'cost',
         'tax_id',
         'price_list_id', 'default_price', 'price_currency',
@@ -101,6 +101,11 @@ class Product extends BaseModel
     public function category(): BelongsTo
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(UnitOfMeasure::class, 'unit_id');
     }
 
     public function stockMovements(): HasMany
