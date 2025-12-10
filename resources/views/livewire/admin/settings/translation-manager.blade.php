@@ -97,6 +97,27 @@
         </table>
     </div>
 
+    {{-- Pagination --}}
+    @if($totalCount > $perPage)
+        <div class="mt-4 flex items-center justify-between border-t border-slate-200 dark:border-slate-700 pt-4">
+            <div class="text-sm text-slate-600 dark:text-slate-400">
+                {{ __('Showing') }} {{ ($currentPage - 1) * $perPage + 1 }} - {{ min($currentPage * $perPage, $totalCount) }} {{ __('of') }} {{ $totalCount }}
+            </div>
+            <div class="flex gap-2">
+                @if($hasPrevious)
+                    <button wire:click="previousPage" class="erp-btn-secondary">
+                        {{ __('Previous') }}
+                    </button>
+                @endif
+                @if($hasMore)
+                    <button wire:click="nextPage" class="erp-btn-secondary">
+                        {{ __('Next') }}
+                    </button>
+                @endif
+            </div>
+        </div>
+    @endif
+
     {{-- Add Modal --}}
     @if($showAddModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" wire:click.self="closeAddModal">

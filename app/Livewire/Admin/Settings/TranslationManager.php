@@ -123,6 +123,11 @@ class TranslationManager extends Component
         }, ARRAY_FILTER_USE_BOTH);
     }
 
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
     public function openAddModal(): void
     {
         $this->reset(['newKey', 'newValueAr', 'newValueEn']);
@@ -256,9 +261,28 @@ class TranslationManager extends Component
 
     public function render()
     {
+        $filtered = $this->getFilteredTranslations();
+        $totalCount = count($filtered);
+        
+        // Paginate the filtered translations manually
+        $perPage = 50;
+        $page = $this->getPage();
+        $offset = ($page - 1) * $perPage;
+        
+        $paginated = array_slice($filtered, $offset, $perPage, true);
+        
+        // Calculate pagination data
+        $hasMore = $totalCount > ($offset + $perPage);
+        $hasPrevious = $page > 1;
+        
         return view('livewire.admin.settings.translation-manager', [
-            'filteredTranslations' => $this->getFilteredTranslations(),
-            'totalCount' => count($this->translations),
+            'filteredTranslations' => $paginated,
+            'totalCount' => $totalCount,
+            'perPage' => $perPage,
+            'currentPage' => $page,
+            'hasMore' => $hasMore,
+            'hasPrevious' => $hasPrevious,
+            'lastPage' => (int) ceil($totalCount / $perPage),
         ]);
     }
 }
