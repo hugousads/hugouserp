@@ -36,25 +36,22 @@ class Form extends Component
         'is_active' => true,
     ];
 
-    public function mount(?int $account = null): void
+    public function mount(?Account $account = null): void
     {
         $this->authorize('accounting.create');
 
-        $this->accountId = $account;
+        $this->accountId = $account?->id;
 
-        if ($this->accountId) {
-            /** @var Account $acc */
-            $acc = Account::findOrFail($this->accountId);
-
-            $this->form['account_number'] = $acc->account_number;
-            $this->form['name'] = $acc->name;
-            $this->form['name_ar'] = $acc->name_ar ?? '';
-            $this->form['type'] = $acc->type;
-            $this->form['currency_code'] = $acc->currency_code ?? 'EGP';
-            $this->form['account_category'] = $acc->account_category ?? '';
-            $this->form['description'] = $acc->description ?? '';
-            $this->form['parent_id'] = $acc->parent_id;
-            $this->form['is_active'] = (bool) $acc->is_active;
+        if ($account) {
+            $this->form['account_number'] = $account->account_number;
+            $this->form['name'] = $account->name;
+            $this->form['name_ar'] = $account->name_ar ?? '';
+            $this->form['type'] = $account->type;
+            $this->form['currency_code'] = $account->currency_code ?? 'EGP';
+            $this->form['account_category'] = $account->account_category ?? '';
+            $this->form['description'] = $account->description ?? '';
+            $this->form['parent_id'] = $account->parent_id;
+            $this->form['is_active'] = (bool) $account->is_active;
         }
     }
 

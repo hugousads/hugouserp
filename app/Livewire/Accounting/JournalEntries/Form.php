@@ -38,23 +38,25 @@ class Form extends Component
      */
     public array $lines = [];
 
-    public function mount(?int $journalEntry = null): void
+    public function mount(?JournalEntry $journalEntry = null): void
     {
         $this->authorize('accounting.create');
 
-        $this->journalEntryId = $journalEntry;
+        $this->journalEntryId = $journalEntry?->id;
         $this->form['entry_date'] = now()->format('Y-m-d');
 
-        if ($this->journalEntryId) {
-            /** @var JournalEntry $je */
-            $je = JournalEntry::with('lines')->findOrFail($this->journalEntryId);
+        if ($journalEntry) {
+            // Load lines if not already loaded
+            if (!$journalEntry->relationLoaded('lines')) {
+                $journalEntry->load('lines');
+            }
 
-            $this->form['reference_number'] = $je->reference_number;
-            $this->form['entry_date'] = $je->entry_date?->format('Y-m-d') ?? '';
-            $this->form['description'] = $je->description ?? '';
-            $this->form['status'] = $je->status;
+            $this->form['reference_number'] = $journalEntry->reference_number;
+            $this->form['entry_date'] = $journalEntry->entry_date?->format('Y-m-d') ?? '';
+            $this->form['description'] = $journalEntry->description ?? '';
+            $this->form['status'] = $journalEntry->status;
 
-            foreach ($je->lines as $line) {
+            foreach ($journalEntry->lines as $line) {
                 $this->lines[] = [
                     'account_id' => $line->account_id,
                     'description' => $line->description ?? '',

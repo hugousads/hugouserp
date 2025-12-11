@@ -38,7 +38,7 @@ class Form extends Component
      */
     public array $schema = [];
 
-    public function mount(?int $branch = null): void
+    public function mount(?Branch $branch = null): void
     {
         $user = Auth::user();
 
@@ -46,7 +46,7 @@ class Form extends Component
             abort(403);
         }
 
-        $this->branchId = $branch;
+        $this->branchId = $branch?->id;
 
         $this->schema = [
             ['name' => 'name',      'label' => __('Name'),      'type' => 'text'],
@@ -57,18 +57,15 @@ class Form extends Component
             ['name' => 'currency',  'label' => __('Currency'),  'type' => 'text'],
         ];
 
-        if ($this->branchId) {
-            /** @var Branch $b */
-            $b = Branch::findOrFail($this->branchId);
-
-            $this->form['name'] = $b->name;
-            $this->form['code'] = $b->code ?? '';
-            $this->form['address'] = $b->address ?? '';
-            $this->form['phone'] = $b->phone ?? '';
-            $this->form['timezone'] = $b->timezone ?? config('app.timezone');
-            $this->form['currency'] = $b->currency ?? 'EGP';
-            $this->form['is_active'] = (bool) $b->is_active;
-            $this->form['is_main'] = (bool) $b->is_main;
+        if ($branch) {
+            $this->form['name'] = $branch->name;
+            $this->form['code'] = $branch->code ?? '';
+            $this->form['address'] = $branch->address ?? '';
+            $this->form['phone'] = $branch->phone ?? '';
+            $this->form['timezone'] = $branch->timezone ?? config('app.timezone');
+            $this->form['currency'] = $branch->currency ?? 'EGP';
+            $this->form['is_active'] = (bool) $branch->is_active;
+            $this->form['is_main'] = (bool) $branch->is_main;
         } else {
             $this->form['timezone'] = config('app.timezone');
         }
