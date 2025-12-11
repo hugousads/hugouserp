@@ -13,7 +13,7 @@
             @endcan
             @can('documents.edit')
                 @if($document->uploaded_by === auth()->id())
-                    <a href="{{ route('documents.edit', $document->id) }}" class="erp-btn erp-btn-secondary">{{ __('Edit') }}</a>
+                    <a href="{{ route('app.documents.edit', $document->id) }}" class="erp-btn erp-btn-secondary">{{ __('Edit') }}</a>
                 @endif
             @endcan
         </div>

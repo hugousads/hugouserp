@@ -7,7 +7,7 @@
         </div>
         <div class="flex items-center gap-2">
             @can('projects.create')
-            <a href="{{ route('projects.create') }}" class="erp-btn erp-btn-primary">
+            <a href="{{ route('app.projects.create') }}" class="erp-btn erp-btn-primary">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -158,7 +158,7 @@
                                 {{ __('View') }}
                             </a>
                             @can('projects.edit')
-                            <a href="{{ route('projects.edit', $project->id) }}" class="text-blue-600 hover:text-blue-900 ms-3">
+                            <a href="{{ route('app.projects.edit', $project->id) }}" class="text-blue-600 hover:text-blue-900 ms-3">
                                 {{ __('Edit') }}
                             </a>
                             @endcan

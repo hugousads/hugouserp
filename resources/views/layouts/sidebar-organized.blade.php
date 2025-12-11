@@ -233,7 +233,7 @@
             @endif
             
             @if($canAccess('banking.view'))
-            <a href="{{ route('banking.accounts.index') }}"
+            <a href="{{ route('app.banking.accounts.index') }}"
                class="sidebar-link-secondary {{ $isActive('banking') ? 'active' : '' }}">
                 <span class="text-base">🏦</span>
                 <span class="text-sm">{{ __('Banks') }}</span>

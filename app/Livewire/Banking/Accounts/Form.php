@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Banking\Accounts;
 
 use App\Models\BankAccount;
+use App\Models\Currency;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -29,6 +30,8 @@ class Form extends Component
     public string $opening_date = '';
     public string $notes = '';
 
+    public array $currencies = [];
+
     protected function rules(): array
     {
         return [
@@ -48,6 +51,16 @@ class Form extends Component
 
     public function mount(?BankAccount $account = null): void
     {
+        // Load currencies
+        $this->currencies = Currency::query()
+            ->where('is_active', true)
+            ->pluck('code', 'code')
+            ->toArray();
+
+        if (empty($this->currencies)) {
+            $this->currencies = ['USD' => 'USD', 'EUR' => 'EUR', 'GBP' => 'GBP'];
+        }
+
         if ($account && $account->exists) {
             $this->authorize('banking.edit');
             $this->isEditing = true;
@@ -57,6 +70,12 @@ class Form extends Component
         } else {
             $this->authorize('banking.create');
             $this->opening_date = now()->format('Y-m-d');
+            
+            // Set default currency if available
+            $defaultCurrency = \App\Models\SystemSetting::where('key', 'default_currency')->value('value');
+            if ($defaultCurrency && isset($this->currencies[$defaultCurrency])) {
+                $this->currency = $defaultCurrency;
+            }
         }
     }
 
@@ -104,7 +123,7 @@ class Form extends Component
             session()->flash('success', __('Bank account created successfully'));
         }
 
-        $this->redirect(route('banking.accounts.index'));
+        $this->redirect(route('app.banking.accounts.index'));
     }
 
     #[Layout('layouts.app')]

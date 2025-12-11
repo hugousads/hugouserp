@@ -306,7 +306,7 @@
 
         {{-- Banking Module --}}
         @if($canAccess('banking.view'))
-        <a href="{{ route('banking.accounts.index') }}"
+        <a href="{{ route('app.banking.accounts.index') }}"
            class="sidebar-link bg-gradient-to-r from-sky-500 to-sky-600 {{ $isActive('banking') ? 'active ring-2 ring-white/30' : '' }}">
             <span class="text-lg">🏦</span>
             <span class="text-sm font-medium">{{ __('Banking') }}</span>

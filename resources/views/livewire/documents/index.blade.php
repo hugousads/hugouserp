@@ -7,7 +7,7 @@
         </div>
         <div class="flex items-center gap-2">
             @can('documents.create')
-            <a href="{{ route('documents.create') }}" class="erp-btn erp-btn-primary">
+            <a href="{{ route('app.documents.create') }}" class="erp-btn erp-btn-primary">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 {{ __('Upload Document') }}
             </a>
@@ -110,7 +110,7 @@
                     <a href="{{ route('documents.show', $doc->id) }}" class="text-xs text-blue-600 hover:text-blue-900">{{ __('View') }}</a>
                     @can('documents.edit')
                         @if($doc->uploaded_by === auth()->id())
-                            <a href="{{ route('documents.edit', $doc->id) }}" class="text-xs text-emerald-600 hover:text-emerald-900">{{ __('Edit') }}</a>
+                            <a href="{{ route('app.documents.edit', $doc->id) }}" class="text-xs text-emerald-600 hover:text-emerald-900">{{ __('Edit') }}</a>
                         @endif
                     @endcan
                     @can('documents.delete')

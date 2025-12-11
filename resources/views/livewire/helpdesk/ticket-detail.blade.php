@@ -7,7 +7,7 @@
         </div>
         <div class="flex items-center gap-2">
             @can('helpdesk.edit')
-                <a href="{{ route('helpdesk.edit', $ticket->id) }}" class="erp-btn erp-btn-secondary">
+                <a href="{{ route('app.helpdesk.tickets.edit', $ticket->id) }}" class="erp-btn erp-btn-secondary">
                     {{ __('Edit') }}
                 </a>
             @endcan

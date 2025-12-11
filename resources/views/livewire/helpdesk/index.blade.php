@@ -18,7 +18,7 @@
         </div>
         <div class="flex items-center gap-2">
             @can('helpdesk.create')
-            <a href="{{ route('helpdesk.create') }}" class="erp-btn erp-btn-primary">
+            <a href="{{ route('app.helpdesk.tickets.create') }}" class="erp-btn erp-btn-primary">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 {{ __('New Ticket') }}
             </a>
@@ -200,7 +200,7 @@
                                         {{ __('View') }}
                                     </a>
                                     @can('helpdesk.edit')
-                                        <a href="{{ route('helpdesk.edit', $ticket->id) }}" class="text-emerald-600 hover:text-emerald-900">
+                                        <a href="{{ route('app.helpdesk.tickets.edit', $ticket->id) }}" class="text-emerald-600 hover:text-emerald-900">
                                             {{ __('Edit') }}
                                         </a>
                                     @endcan

@@ -81,7 +81,11 @@
                     <label for="currency" class="block text-sm font-medium text-slate-700 mb-2">
                         {{ __('Currency') }} <span class="text-red-500">*</span>
                     </label>
-                    <input type="text" wire:model="currency" id="currency" class="erp-input @error('currency') border-red-500 @enderror" maxlength="3" placeholder="USD">
+                    <select wire:model="currency" id="currency" class="erp-input @error('currency') border-red-500 @enderror">
+                        @foreach($currencies as $code => $label)
+                            <option value="{{ $code }}">{{ $code }}</option>
+                        @endforeach
+                    </select>
                     @error('currency') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
                 </div>
 

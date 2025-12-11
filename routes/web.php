@@ -492,6 +492,14 @@ Route::middleware('auth')->group(function () {
             ->name('accounts.index')
             ->middleware('can:banking.view');
 
+        Route::get('/accounts/create', \App\Livewire\Banking\Accounts\Form::class)
+            ->name('accounts.create')
+            ->middleware('can:banking.create');
+
+        Route::get('/accounts/{account}/edit', \App\Livewire\Banking\Accounts\Form::class)
+            ->name('accounts.edit')
+            ->middleware('can:banking.edit');
+
         Route::get('/transactions', \App\Livewire\Banking\Transactions\Index::class)
             ->name('transactions.index')
             ->middleware('can:banking.view');
@@ -581,6 +589,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/tickets/{ticket}', \App\Livewire\Helpdesk\Tickets\Show::class)
             ->name('tickets.show')
             ->middleware('can:helpdesk.view');
+
+        Route::get('/tickets/{ticket}/edit', \App\Livewire\Helpdesk\Tickets\Form::class)
+            ->name('tickets.edit')
+            ->middleware('can:helpdesk.edit');
 
         Route::get('/categories', \App\Livewire\Helpdesk\Categories\Index::class)
             ->name('categories.index')
