@@ -106,4 +106,34 @@ class SettingsServiceTest extends TestCase
 
         $this->assertEquals($default, $retrieved);
     }
+
+    /**
+     * Test non-encrypted array settings round-trip correctly without data loss.
+     */
+    public function test_non_encrypted_array_round_trip(): void
+    {
+        $key = 'test.plain.array';
+        $arrayValue = [
+            'option1' => 'value1',
+            'option2' => 'value2',
+            'option3' => 'value3',
+        ];
+
+        // Set non-encrypted array
+        $this->service->set($key, $arrayValue, [
+            'is_encrypted' => false,
+            'type' => 'array',
+            'group' => 'test',
+        ]);
+
+        // Retrieve and verify full array is preserved
+        $retrieved = $this->service->getDecrypted($key);
+
+        $this->assertIsArray($retrieved);
+        $this->assertCount(3, $retrieved);
+        $this->assertEquals($arrayValue, $retrieved);
+        $this->assertEquals('value1', $retrieved['option1']);
+        $this->assertEquals('value2', $retrieved['option2']);
+        $this->assertEquals('value3', $retrieved['option3']);
+    }
 }
