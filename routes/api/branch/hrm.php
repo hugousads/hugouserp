@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Branch\HRM\AttendanceController as BranchAttendanceController;
 use App\Http\Controllers\Branch\HRM\EmployeeController as BranchEmployeeController;
+use App\Http\Controllers\Branch\HRM\ExportImportController as BranchHRMExportImportController;
 use App\Http\Controllers\Branch\HRM\PayrollController as BranchPayrollController;
+use App\Http\Controllers\Branch\HRM\ReportsController as BranchHRMReportsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -64,4 +66,18 @@ Route::prefix('hrm')->group(function () {
 
     Route::post('payroll/{payroll}/pay', [BranchPayrollController::class, 'pay'])
         ->middleware('perm:hrm.payroll.pay');
+
+    // ==================== Export/Import ====================
+    Route::get('export/employees', [BranchHRMExportImportController::class, 'exportEmployees'])
+        ->middleware('perm:hrm.employees.export');
+
+    Route::post('import/employees', [BranchHRMExportImportController::class, 'importEmployees'])
+        ->middleware('perm:hrm.employees.import');
+
+    // ==================== Reports ====================
+    Route::get('reports/attendance', [BranchHRMReportsController::class, 'attendance'])
+        ->middleware('perm:hrm.reports.view');
+
+    Route::get('reports/payroll', [BranchHRMReportsController::class, 'payroll'])
+        ->middleware('perm:hrm.reports.view');
 });

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Branch\Rental\ContractController;
+use App\Http\Controllers\Branch\Rental\ExportImportController as BranchRentalExportImportController;
 use App\Http\Controllers\Branch\Rental\InvoiceController;
 use App\Http\Controllers\Branch\Rental\PropertyController;
+use App\Http\Controllers\Branch\Rental\ReportsController as BranchRentalReportsController;
 use App\Http\Controllers\Branch\Rental\TenantController;
 use App\Http\Controllers\Branch\Rental\UnitController;
 use Illuminate\Support\Facades\Route;
@@ -106,4 +108,27 @@ Route::prefix('modules/rental')->middleware(['module.enabled:rental'])->group(fu
         Route::post('{invoice}/penalty', [InvoiceController::class, 'applyPenalty'])
             ->middleware('perm:rental.invoices.penalty');
     });
+
+    // ==================== Export/Import ====================
+    Route::get('export/units', [BranchRentalExportImportController::class, 'exportUnits'])
+        ->middleware('perm:rental.units.export');
+
+    Route::get('export/tenants', [BranchRentalExportImportController::class, 'exportTenants'])
+        ->middleware('perm:rental.tenants.export');
+
+    Route::get('export/contracts', [BranchRentalExportImportController::class, 'exportContracts'])
+        ->middleware('perm:rental.contracts.export');
+
+    Route::post('import/units', [BranchRentalExportImportController::class, 'importUnits'])
+        ->middleware('perm:rental.units.import');
+
+    Route::post('import/tenants', [BranchRentalExportImportController::class, 'importTenants'])
+        ->middleware('perm:rental.tenants.import');
+
+    // ==================== Reports ====================
+    Route::get('reports/occupancy', [BranchRentalReportsController::class, 'occupancy'])
+        ->middleware('perm:rental.reports.view');
+
+    Route::get('reports/expiring-contracts', [BranchRentalReportsController::class, 'expiringContracts'])
+        ->middleware('perm:rental.reports.view');
 });
