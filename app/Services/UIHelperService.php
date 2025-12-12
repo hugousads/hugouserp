@@ -191,8 +191,18 @@ class UIHelperService
             $i++;
         }
 
-        // Format the value and remove trailing zeros
-        $formatted = rtrim(rtrim(number_format($value, $precision, '.', ''), '0'), '.');
+        // Round before formatting to check for promotion
+        $rounded = round($value, $precision);
+
+        // If rounded value is 1024 or more, promote to next unit
+        if ($rounded >= 1024 && $i < count($units) - 1) {
+            $value = $rounded / 1024.0;
+            $i++;
+            $rounded = round($value, $precision);
+        }
+
+        // Format the value without thousand separators and remove trailing zeros
+        $formatted = rtrim(rtrim(number_format($rounded, $precision, '.', ''), '0'), '.');
 
         return $formatted.' '.$units[$i];
     }
