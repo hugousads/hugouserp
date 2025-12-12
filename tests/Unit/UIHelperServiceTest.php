@@ -105,6 +105,14 @@ class UIHelperServiceTest extends TestCase
     }
 
     /** @test */
+    public function it_handles_lengths_shorter_than_ellipsis(): void
+    {
+        $text = 'Sample';
+
+        $this->assertEquals('Sa', $this->service->truncate($text, 2));
+    }
+
+    /** @test */
     public function it_formats_pagination_summary(): void
     {
         $summary = $this->service->getPaginationSummary(1, 15, 100);

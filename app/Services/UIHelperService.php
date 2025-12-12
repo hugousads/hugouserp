@@ -206,6 +206,10 @@ class UIHelperService
      */
     public function truncate(string $text, int $length = 100, string $ending = '...'): string
     {
+        if ($length <= mb_strlen($ending)) {
+            return mb_substr($text, 0, $length);
+        }
+
         if (mb_strlen($text) <= $length) {
             return $text;
         }
