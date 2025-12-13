@@ -48,7 +48,7 @@ class Login extends Component
     public function mount(): void
     {
         if (Auth::check()) {
-            $this->redirectIntended(route('dashboard'), navigate: true);
+            $this->redirectIntended($this->getDefaultRedirectDestination(), navigate: true);
         }
     }
 
@@ -92,7 +92,18 @@ class Login extends Component
 
         session()->regenerate();
 
-        $this->redirectIntended(route('dashboard'), navigate: true);
+        $this->redirectIntended($this->getDefaultRedirectDestination(), navigate: true);
+    }
+
+    protected function getDefaultRedirectDestination(): string
+    {
+        $dashboardPermission = config('screen_permissions.dashboard', 'dashboard.view');
+
+        if (Auth::user()?->can($dashboardPermission)) {
+            return route('dashboard');
+        }
+
+        return route('profile.edit');
     }
 
     public function render()

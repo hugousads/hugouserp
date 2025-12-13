@@ -227,6 +227,10 @@ class DepreciationService
      */
     public function getDepreciationSchedule(FixedAsset $asset): array
     {
+        if (!$asset->depreciation_start_date) {
+            return [];
+        }
+
         $schedule = [];
         $startDate = Carbon::parse($asset->depreciation_start_date);
         $totalMonths = $asset->getTotalUsefulLifeMonths();

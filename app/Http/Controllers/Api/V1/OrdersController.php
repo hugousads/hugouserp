@@ -71,7 +71,7 @@ class OrdersController extends BaseApiController
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required_without:items.*.external_id|exists:products,id',
             'items.*.external_id' => 'required_without:items.*.product_id|string',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => 'required|numeric|min:0.0001',
             'items.*.price' => 'required|numeric|min:0',
             'items.*.discount' => 'nullable|numeric|min:0',
             'discount' => 'nullable|numeric|min:0',

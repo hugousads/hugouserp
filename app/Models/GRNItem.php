@@ -70,7 +70,9 @@ class GRNItem extends BaseModel
             return 0;
         }
 
-        return (abs($this->qty_ordered - $this->qty_received) / $this->qty_ordered) * 100;
+        $acceptedQty = max(0, $this->qty_received - $this->qty_rejected);
+
+        return (abs($this->qty_ordered - $acceptedQty) / $this->qty_ordered) * 100;
     }
 
     public function isFullyReceived(): bool

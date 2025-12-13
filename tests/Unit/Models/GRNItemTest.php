@@ -38,6 +38,18 @@ class GRNItemTest extends TestCase
         $this->assertEquals(20.0, $percentage);
     }
 
+    public function test_discrepancy_percentage_accounts_for_rejected_items(): void
+    {
+        $item = new GRNItem([
+            'qty_ordered' => 100,
+            'qty_received' => 100,
+            'qty_rejected' => 20,
+        ]);
+
+        $percentage = $item->getDiscrepancyPercentage();
+        $this->assertEquals(20.0, $percentage);
+    }
+
     public function test_discrepancy_percentage_zero_when_exact_match(): void
     {
         $item = new GRNItem([
