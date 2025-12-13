@@ -13,7 +13,7 @@ class RoleController extends Controller
     public function index(Request $request)
     {
         $per = min(max($request->integer('per_page', 50), 1), 200);
-        $q = Role::query()->orderBy('name');
+        $q = Role::query()->where('guard_name', 'web')->orderBy('name');
         if ($s = $request->input('q')) {
             $q->where('name', 'like', '%'.$s.'%');
         }
@@ -23,24 +23,45 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validate($request, ['name' => ['required', 'string', 'max:190', 'unique:roles,name']]);
+        $this->validate($request, [
+            'name' => [
+                'required',
+                'string',
+                'max:190',
+                'unique:roles,name,NULL,id,guard_name,web',
+            ],
+        ]);
 
-        return $this->ok(Role::create($data), __('Created'), 201);
+        $role = Role::create([
+            'name' => $request->input('name'),
+            'guard_name' => 'web',
+        ]);
+
+        return $this->ok($role->toArray(), __('Created'), 201);
     }
 
     public function update(Request $request, int $id)
     {
-        $role = Role::findOrFail($id);
-        $data = $this->validate($request, ['name' => ['required', 'string', 'max:190', 'unique:roles,name,'.$id]]);
-        $role->fill($data)->save();
+        $role = Role::where('guard_name', 'web')->findOrFail($id);
+        
+        $this->validate($request, [
+            'name' => [
+                'required',
+                'string',
+                'max:190',
+                'unique:roles,name,'.$id.',id,guard_name,web',
+            ],
+        ]);
 
-        return $this->ok($role, __('Updated'));
+        $role->update(['name' => $request->input('name')]);
+
+        return $this->ok($role->toArray(), __('Updated'));
     }
 
     public function destroy(int $id)
     {
-        Role::query()->whereKey($id)->delete();
+        Role::where('guard_name', 'web')->whereKey($id)->delete();
 
-        return $this->ok(null, __('Deleted'));
+        return $this->ok([], __('Deleted'));
     }
 }

@@ -41,7 +41,10 @@ class UsersSeeder extends Seeder
         }
 
         /** @var Role|null $superAdmin */
-        $superAdmin = Role::query()->where('name', 'Super Admin')->first();
+        $superAdmin = Role::query()
+            ->where('name', 'Super Admin')
+            ->where('guard_name', 'web')
+            ->first();
 
         if ($superAdmin && method_exists($existing, 'assignRole')) {
             if (! $existing->hasRole($superAdmin->name)) {

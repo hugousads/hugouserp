@@ -20,7 +20,8 @@ return new class extends Migration
 
             $table->bigIncrements('id');
             $table->string('name');
-            $table->string('guard_name')->default('api');
+            // Default 'web' matches config('auth.defaults.guard')
+            $table->string('guard_name')->default('web');
             $table->timestamps();
 
             $table->index('created_at');
@@ -38,7 +39,8 @@ return new class extends Migration
 
             $table->bigIncrements('id');
             $table->string('name');
-            $table->string('guard_name')->default('api');
+            // Default 'web' matches config('auth.defaults.guard')
+            $table->string('guard_name')->default('web');
             $table->timestamps();
 
             $table->index('created_at');
