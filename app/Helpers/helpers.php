@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
 
 if (! function_exists('current_user')) {
     function current_user(): ?\Illuminate\Contracts\Auth\Authenticatable
@@ -15,7 +14,10 @@ if (! function_exists('current_user')) {
 if (! function_exists('current_branch_id')) {
     function current_branch_id(): ?int
     {
-        $req = Request::instance();
+        // Request::instance() is no longer available on the facade in modern Laravel versions
+        // and would trigger a bad method call. Use the request helper to access the current
+        // request instance instead.
+        $req = request();
 
         if ($req && $req->attributes->has('branch_id')) {
             $id = $req->attributes->get('branch_id');

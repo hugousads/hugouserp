@@ -143,6 +143,82 @@ class InventoryService implements InventoryServiceInterface
         );
     }
 
+    public function getStockLevel(int $productId, ?int $warehouseId = null): float
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($productId, $warehouseId) {
+                $query = StockMovement::query()
+                    ->where('product_id', $productId);
+
+                if ($warehouseId !== null) {
+                    $query->where('warehouse_id', $warehouseId);
+                }
+
+                return (float) $query
+                    ->selectRaw("COALESCE(SUM(CASE WHEN direction = 'in' THEN qty ELSE -qty END), 0) as stock")
+                    ->value('stock');
+            },
+            operation: 'getStockLevel',
+            context: ['product_id' => $productId, 'warehouse_id' => $warehouseId],
+            defaultValue: 0.0
+        );
+    }
+
+    public function recordStockAdjustment(array $data): ?StockMovement
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($data) {
+                $payload = [
+                    'product_id' => $data['product_id'] ?? null,
+                    'warehouse_id' => $data['warehouse_id'] ?? null,
+                    'branch_id' => $data['branch_id'] ?? $this->currentBranchId(),
+                    'direction' => $data['direction'] ?? $data['type'] ?? null,
+                    'qty' => $data['qty'] ?? $data['quantity'] ?? null,
+                    'reason' => $data['reason'] ?? null,
+                    'meta' => $data['meta'] ?? [],
+                ];
+
+                $validator = $this->validator->make($payload, [
+                    'product_id' => ['required', 'integer', 'exists:products,id'],
+                    'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
+                    'branch_id' => ['required', 'integer', 'exists:branches,id'],
+                    'direction' => ['required', 'in:in,out'],
+                    'qty' => ['required', 'numeric', 'not_in:0'],
+                ]);
+
+                $validator->validate();
+
+                $payload['created_by'] = $this->currentUser()?->getAuthIdentifier();
+
+                // Normalize quantity to positive (direction field captures the sign)
+                $payload['qty'] = abs((float) $payload['qty']);
+
+                return StockMovement::create($payload);
+            },
+            operation: 'recordStockAdjustment',
+            context: ['payload_keys' => array_keys($data)],
+            defaultValue: null
+        );
+    }
+
+    public function isStockAvailable(int $productId, float $qty, ?int $warehouseId = null): bool
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($productId, $qty, $warehouseId) {
+                if ($qty < 0) {
+                    return false;
+                }
+
+                $currentStock = $this->getStockLevel($productId, $warehouseId);
+
+                return $currentStock >= $qty;
+            },
+            operation: 'isStockAvailable',
+            context: ['product_id' => $productId, 'warehouse_id' => $warehouseId, 'qty' => $qty],
+            defaultValue: false
+        );
+    }
+
     public function transfer(int $productId, float $qty, int $fromWarehouse, int $toWarehouse): array
     {
         return $this->handleServiceOperation(

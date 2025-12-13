@@ -68,20 +68,29 @@ class CurrencyRate extends Model
         $dateKey = $dateObject ? $dateObject->format('Y-m-d') : 'latest';
         $cacheKey = sprintf('currency_rate:%s:%s:%s', $from, $to, $dateKey);
 
-        return Cache::remember($cacheKey, 300, function () use ($from, $to, $dateObject) {
-            $query = static::query()
-                ->where('from_currency', $from)
-                ->where('to_currency', $to)
-                ->where('is_active', true);
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
 
-            if ($dateObject) {
-                $query->whereDate('effective_date', '<=', $dateObject->format('Y-m-d'));
-            }
+        $query = static::query()
+            ->where('from_currency', $from)
+            ->where('to_currency', $to)
+            ->where('is_active', true);
 
-            $rate = $query->orderByDesc('effective_date')->first();
+        if ($dateObject) {
+            $query->whereDate('effective_date', '<=', $dateObject->format('Y-m-d'));
+        }
 
-            return $rate ? (float) $rate->rate : null;
-        });
+        $rate = $query->orderByDesc('effective_date')->first();
+
+        if ($rate === null) {
+            return null;
+        }
+
+        $rateValue = (float) $rate->rate;
+        Cache::put($cacheKey, $rateValue, 300);
+
+        return $rateValue;
     }
 
     public static function convert(float $amount, string $from, string $to, $date = null): ?float
