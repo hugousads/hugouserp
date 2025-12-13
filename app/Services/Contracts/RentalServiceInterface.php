@@ -18,19 +18,19 @@ interface RentalServiceInterface
 
     public function setUnitStatus(int $unitId, string $status): RentalUnit;
 
-    public function createTenant(array $payload): Tenant;
+    public function createTenant(array $payload, ?int $branchId = null): Tenant;
 
-    public function archiveTenant(int $tenantId): Tenant;
+    public function archiveTenant(int $tenantId, ?int $branchId = null): Tenant;
 
-    public function createContract(int $unitId, int $tenantId, array $payload): RentalContract;
+    public function createContract(int $unitId, int $tenantId, array $payload, ?int $branchId = null): RentalContract;
 
-    public function renewContract(int $contractId, array $payload): RentalContract;
+    public function renewContract(int $contractId, array $payload, ?int $branchId = null): RentalContract;
 
-    public function terminateContract(int $contractId): RentalContract;
+    public function terminateContract(int $contractId, ?int $branchId = null): RentalContract;
 
     public function runRecurring(?string $forDate = null): int;
 
-    public function collectPayment(int $invoiceId, float $amount, ?string $method = 'cash', ?string $reference = null): RentalInvoice;
+    public function collectPayment(int $invoiceId, float $amount, ?string $method = 'cash', ?string $reference = null, ?int $branchId = null): RentalInvoice;
 
-    public function applyPenalty(int $invoiceId, float $penalty): RentalInvoice;
+    public function applyPenalty(int $invoiceId, float $penalty, ?int $branchId = null): RentalInvoice;
 }

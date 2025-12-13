@@ -55,11 +55,13 @@ class PaymentTrackingTest extends TestCase
         ]);
 
         $tenant = Tenant::create([
+            'branch_id' => $this->branch->id,
             'name' => 'Test Tenant',
             'phone' => '1234567890',
         ]);
 
         $this->contract = RentalContract::create([
+            'branch_id' => $this->branch->id,
             'unit_id' => $unit->id,
             'tenant_id' => $tenant->id,
             'start_date' => now()->subMonths(1),

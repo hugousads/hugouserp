@@ -10,7 +10,7 @@ class RentalPayment extends BaseModel
 {
     protected ?string $moduleKey = 'rentals';
 
-    protected $fillable = ['contract_id', 'invoice_id', 'method', 'amount', 'paid_at', 'reference', 'extra_attributes'];
+    protected $fillable = ['branch_id', 'contract_id', 'invoice_id', 'created_by', 'method', 'amount', 'paid_at', 'reference', 'extra_attributes'];
 
     protected $casts = ['amount' => 'decimal:2', 'paid_at' => 'datetime'];
 

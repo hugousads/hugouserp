@@ -193,6 +193,7 @@ return new class extends Migration
             $table->string('period')->nullable()->comment('period');
             $table->date('due_date')->nullable()->comment('due_date');
             $table->decimal('amount', 18, 2)->default(0)->comment('amount');
+            $table->decimal('paid_total', 18, 2)->default(0)->comment('paid_total');
             $table->string('status')->default('unpaid')->comment('status');
             $table->timestamps();
             $table->index('created_at');
@@ -208,8 +209,10 @@ return new class extends Migration
             $table->charset = 'utf8mb4';
             $table->collation = 'utf8mb4_unicode_ci';
             $table->bigIncrements('id')->comment('id');
+            $table->unsignedBigInteger('branch_id')->comment('branch_id');
             $table->unsignedBigInteger('contract_id')->comment('contract_id');
             $table->unsignedBigInteger('invoice_id')->nullable()->comment('invoice_id');
+            $table->unsignedBigInteger('created_by')->nullable()->comment('created_by');
             $table->string('method')->nullable()->comment('method');
             $table->decimal('amount', 18, 2)->comment('amount');
             $table->timestamp('paid_at')->nullable()->comment('paid_at');
@@ -220,8 +223,11 @@ return new class extends Migration
             $table->softDeletes();
             $table->index('deleted_at');
 
+            $table->foreign('branch_id')->references('id')->on('branches')->onDelete('cascade');
             $table->foreign('contract_id')->references('id')->on('rental_contracts')->onDelete('cascade');
             $table->foreign('invoice_id')->references('id')->on('rental_invoices')->onDelete('set null');
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            $table->index('branch_id');
         });
     }
 

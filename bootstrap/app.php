@@ -67,6 +67,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'impersonate' => \App\Http\Middleware\Impersonate::class,
             'api-branch' => \App\Http\Middleware\SetBranchContext::class,
             'module' => \App\Http\Middleware\SetModuleContext::class,
+            'module.enabled' => \App\Http\Middleware\EnsureModuleEnabled::class,
             'perm' => \App\Http\Middleware\EnsurePermission::class,
             'assign.guard' => \App\Http\Middleware\AssignGuard::class,
             'store.token' => \App\Http\Middleware\AuthenticateStoreToken::class,
