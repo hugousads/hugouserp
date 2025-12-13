@@ -144,19 +144,24 @@ class OrdersController extends BaseApiController
                         throw new \Exception(__('Product not available for this branch').': '.($item['product_id'] ?? $item['external_id']));
                     }
 
-                    $lineTotal = ($item['price'] * $item['quantity']) - ($item['discount'] ?? 0);
+                    $lineSubtotal = (float) $item['price'] * (int) $item['quantity'];
+                    $lineDiscount = max(0, (float) ($item['discount'] ?? 0));
+                    $lineDiscount = min($lineDiscount, $lineSubtotal);
+
+                    $lineTotal = $lineSubtotal - $lineDiscount;
                     $subtotal += $lineTotal;
 
                     $itemsData[] = [
                         'product_id' => $product->id,
                         'quantity' => $item['quantity'],
                         'unit_price' => $item['price'],
-                        'discount' => $item['discount'] ?? 0,
+                        'discount' => $lineDiscount,
                         'total' => $lineTotal,
                     ];
                 }
 
-                $discount = $validated['discount'] ?? 0;
+                $discount = max(0, (float) ($validated['discount'] ?? 0));
+                $discount = min($discount, $subtotal);
                 $tax = $validated['tax'] ?? 0;
                 $shipping = $validated['shipping'] ?? 0;
                 $total = $subtotal - $discount + $tax + $shipping;
