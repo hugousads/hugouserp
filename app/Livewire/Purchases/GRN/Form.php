@@ -3,8 +3,8 @@
 namespace App\Livewire\Purchases\GRN;
 
 use App\Models\GoodsReceivedNote;
-use App\Models\GoodsReceivedNoteItem;
-use App\Models\PurchaseOrder;
+use App\Models\GRNItem;
+use App\Models\Purchase;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +20,7 @@ class Form extends Component
 
     public ?int $grnId = null;
 
-    public ?int $purchaseOrderId = null;
+    public ?int $purchaseId = null;
 
     public ?string $receivedDate = null;
 
@@ -45,9 +45,9 @@ class Form extends Component
 
     protected function loadGRN(): void
     {
-        $this->purchaseOrderId = $this->grn->purchase_order_id;
+        $this->purchaseId = $this->grn->purchase_id;
         $this->receivedDate = $this->grn->received_date->format('Y-m-d');
-        $this->inspectorId = $this->grn->inspector_id;
+        $this->inspectorId = $this->grn->inspected_by;
         $this->notes = $this->grn->notes;
 
         $this->items = $this->grn->items->map(function ($item) {
@@ -65,13 +65,13 @@ class Form extends Component
 
     public function loadPOItems(): void
     {
-        if (! $this->purchaseOrderId) {
+        if (! $this->purchaseId) {
             return;
         }
 
-        $po = PurchaseOrder::with('items.product')->findOrFail($this->purchaseOrderId);
+        $purchase = Purchase::with('items.product')->findOrFail($this->purchaseId);
 
-        $this->items = $po->items->map(function ($item) {
+        $this->items = $purchase->items->map(function ($item) {
             return [
                 'product_id' => $item->product_id,
                 'product_name' => $item->product->name ?? '',
@@ -110,7 +110,7 @@ class Form extends Component
     public function save(): ?RedirectResponse
     {
         $this->validate([
-            'purchaseOrderId' => 'required|exists:purchase_orders,id',
+            'purchaseId' => 'required|exists:purchases,id',
             'receivedDate' => 'required|date|before_or_equal:today',
             'inspectorId' => 'nullable|exists:users,id',
             'items' => 'required|array|min:1',
@@ -122,11 +122,11 @@ class Form extends Component
         ]);
 
         $data = [
-            'purchase_order_id' => $this->purchaseOrderId,
+            'purchase_id' => $this->purchaseId,
             'received_date' => $this->receivedDate,
-            'inspector_id' => $this->inspectorId,
+            'inspected_by' => $this->inspectorId,
             'notes' => $this->notes,
-            'status' => 'pending',
+            'status' => 'draft',
         ];
 
         if ($this->grn) {
@@ -160,7 +160,7 @@ class Form extends Component
     {
         // First validate and save
         $this->validate([
-            'purchaseOrderId' => 'required|exists:purchase_orders,id',
+            'purchaseId' => 'required|exists:purchases,id',
             'receivedDate' => 'required|date|before_or_equal:today',
             'inspectorId' => 'nullable|exists:users,id',
             'items' => 'required|array|min:1',
@@ -172,11 +172,11 @@ class Form extends Component
         ]);
 
         $data = [
-            'purchase_order_id' => $this->purchaseOrderId,
+            'purchase_id' => $this->purchaseId,
             'received_date' => $this->receivedDate,
-            'inspector_id' => $this->inspectorId,
+            'inspected_by' => $this->inspectorId,
             'notes' => $this->notes,
-            'status' => 'pending',
+            'status' => 'pending_inspection',
         ];
 
         if ($this->grn) {
@@ -189,15 +189,14 @@ class Form extends Component
         $this->grn->items()->delete();
 
         foreach ($this->items as $item) {
-            GoodsReceivedNoteItem::create([
-                'goods_received_note_id' => $this->grn->id,
+            GRNItem::create([
+                'grn_id' => $this->grn->id,
                 'product_id' => $item['product_id'],
-                'quantity_ordered' => $item['quantity_ordered'],
-                'quantity_received' => $item['quantity_received'],
-                'quality_status' => $item['quality_status'],
-                'quantity_damaged' => $item['quantity_damaged'] ?? 0,
-                'quantity_defective' => $item['quantity_defective'] ?? 0,
-                'inspection_notes' => $item['inspection_notes'] ?? null,
+                'qty_ordered' => $item['quantity_ordered'],
+                'qty_received' => $item['quantity_received'],
+                'qty_accepted' => $item['quantity_received'] - ($item['quantity_damaged'] ?? 0) - ($item['quantity_defective'] ?? 0),
+                'qty_rejected' => ($item['quantity_damaged'] ?? 0) + ($item['quantity_defective'] ?? 0),
+                'notes' => $item['inspection_notes'] ?? null,
             ]);
         }
 
@@ -208,14 +207,14 @@ class Form extends Component
 
     public function render()
     {
-        $purchaseOrders = PurchaseOrder::where('status', 'approved')
+        $purchases = Purchase::where('status', 'approved')
             ->with('supplier')
             ->get();
 
-        $inspectors = User::role('inspector')->get();
+        $inspectors = User::permission('purchases.manage')->get();
 
         return view('livewire.purchases.grn.form', [
-            'purchaseOrders' => $purchaseOrders,
+            'purchases' => $purchases,
             'inspectors' => $inspectors,
         ]);
     }

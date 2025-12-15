@@ -83,12 +83,12 @@ class Index extends Component
     public function render()
     {
         $query = GoodsReceivedNote::query()
-            ->with(['purchaseOrder', 'supplier', 'inspector'])
+            ->with(['purchase', 'supplier', 'inspectedBy'])
             ->when($this->search, function ($q) {
                 $q->where(function ($query) {
-                    $query->where('grn_number', 'like', "%{$this->search}%")
-                        ->orWhereHas('purchaseOrder', function ($q) {
-                            $q->where('po_number', 'like', "%{$this->search}%");
+                    $query->where('code', 'like', "%{$this->search}%")
+                        ->orWhereHas('purchase', function ($q) {
+                            $q->where('invoice_number', 'like', "%{$this->search}%");
                         })
                         ->orWhereHas('supplier', function ($q) {
                             $q->where('name', 'like', "%{$this->search}%");
