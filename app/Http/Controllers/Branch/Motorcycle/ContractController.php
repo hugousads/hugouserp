@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Branch\Motorcycle;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Branch\Concerns\RequiresBranchContext;
 use App\Models\VehicleContract;
 use App\Services\Contracts\MotorcycleServiceInterface as Motos;
 use Illuminate\Http\Request;
 
 class ContractController extends Controller
 {
+    use RequiresBranchContext;
+
     public function __construct(protected Motos $motos) {}
 
     public function index()
@@ -34,11 +37,21 @@ class ContractController extends Controller
 
     public function show(VehicleContract $contract)
     {
+        // Defense-in-depth: Verify contract's vehicle belongs to current branch
+        $branchId = $this->requireBranchId(request());
+        $contract->load('vehicle');
+        abort_if($contract->vehicle?->branch_id !== $branchId, 404, 'Contract not found in this branch');
+        
         return $this->ok($contract);
     }
 
     public function update(Request $request, VehicleContract $contract)
     {
+        // Defense-in-depth: Verify contract's vehicle belongs to current branch
+        $branchId = $this->requireBranchId($request);
+        $contract->load('vehicle');
+        abort_if($contract->vehicle?->branch_id !== $branchId, 404, 'Contract not found in this branch');
+        
         $contract->fill($request->only(['start_date', 'end_date', 'status']))->save();
 
         return $this->ok($contract);

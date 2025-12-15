@@ -53,13 +53,19 @@ class PurchaseController extends Controller
 
     public function show(Request $request, Purchase $purchase)
     {
-        // Note: scopeBindings() in routes ensures Purchase belongs to branch
+        // Defense-in-depth: Verify purchase belongs to current branch
+        $branchId = $this->requireBranchId($request);
+        abort_if($purchase->branch_id !== $branchId, 404, 'Purchase not found in this branch');
+        
         return $this->ok($purchase->load('items'));
     }
 
     public function update(PurchaseUpdateRequest $request, Purchase $purchase)
     {
-        // Note: scopeBindings() in routes ensures Purchase belongs to branch
+        // Defense-in-depth: Verify purchase belongs to current branch
+        $branchId = $this->requireBranchId($request);
+        abort_if($purchase->branch_id !== $branchId, 404, 'Purchase not found in this branch');
+        
         $purchase->fill($request->validated())->save();
 
         return $this->ok($purchase);

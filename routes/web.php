@@ -753,11 +753,13 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/branches/{branch}/edit', BranchFormPage::class)
             ->name('branches.edit')
-            ->middleware('can:'.config('screen_permissions.admin.branches.index', 'branches.view'));
+            ->middleware('can:'.config('screen_permissions.admin.branches.index', 'branches.view'))
+            ->whereNumber('branch');
 
         Route::get('/branches/{branch}/modules', \App\Livewire\Admin\Branches\Modules::class)
             ->name('branches.modules')
-            ->middleware('can:branches.manage');
+            ->middleware('can:branches.manage')
+            ->whereNumber('branch');
 
         // Modules Management
         Route::get('/modules', ModulesIndexPage::class)
@@ -770,15 +772,18 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/modules/{module}/edit', ModuleFormPage::class)
             ->name('modules.edit')
-            ->middleware('can:modules.manage');
+            ->middleware('can:modules.manage')
+            ->whereNumber('module');
 
         Route::get('/modules/{module}/fields', \App\Livewire\Admin\Modules\Fields::class)
             ->name('modules.fields')
-            ->middleware('can:modules.manage');
+            ->middleware('can:modules.manage')
+            ->whereNumber('module');
 
         Route::get('/modules/{module}/rental-periods', \App\Livewire\Admin\Modules\RentalPeriods::class)
             ->name('modules.rental-periods')
-            ->middleware('can:modules.manage');
+            ->middleware('can:modules.manage')
+            ->whereNumber('module');
 
         Route::get('/modules/product-fields/{moduleId?}', \App\Livewire\Admin\Modules\ProductFields::class)
             ->name('modules.product-fields')

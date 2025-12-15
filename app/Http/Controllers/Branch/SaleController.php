@@ -43,13 +43,19 @@ class SaleController extends Controller
 
     public function show(Request $request, Sale $sale)
     {
-        // Note: scopeBindings() in routes ensures Sale belongs to branch
+        // Defense-in-depth: Verify sale belongs to current branch
+        $branchId = $this->requireBranchId($request);
+        abort_if($sale->branch_id !== $branchId, 404, 'Sale not found in this branch');
+        
         return $this->ok($sale->load('items'));
     }
 
     public function update(Request $request, Sale $sale)
     {
-        // Note: scopeBindings() in routes ensures Sale belongs to branch
+        // Defense-in-depth: Verify sale belongs to current branch
+        $branchId = $this->requireBranchId($request);
+        abort_if($sale->branch_id !== $branchId, 404, 'Sale not found in this branch');
+        
         $sale->fill($request->only(['notes']))->save();
 
         return $this->ok($sale);

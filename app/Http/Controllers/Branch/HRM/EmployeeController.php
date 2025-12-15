@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Branch\HRM;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Branch\Concerns\RequiresBranchContext;
 use App\Models\HREmployee;
 use App\Services\Contracts\HRMServiceInterface as HRM;
 use Illuminate\Http\Request;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Schema;
 
 class EmployeeController extends Controller
 {
+    use RequiresBranchContext;
+
     public function __construct(protected HRM $hrm) {}
 
     public function index()
@@ -22,6 +25,10 @@ class EmployeeController extends Controller
 
     public function show(HREmployee $employee)
     {
+        // Defense-in-depth: Verify employee belongs to current branch
+        $branchId = $this->requireBranchId(request());
+        abort_if($employee->branch_id !== $branchId, 404, 'Employee not found in this branch');
+        
         return $this->ok($employee);
     }
 
