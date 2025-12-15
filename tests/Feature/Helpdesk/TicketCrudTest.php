@@ -37,7 +37,7 @@ class TicketCrudTest extends TestCase
             'slug' => 'medium',
             'level' => 2,
             'color' => '#FFA500',
-            'is_default' => true,
+            'is_active' => true,
         ]);
     }
 

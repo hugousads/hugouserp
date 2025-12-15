@@ -16,6 +16,7 @@ class Document extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'code',
         'title',
         'description',
         'file_name',

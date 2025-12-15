@@ -25,30 +25,30 @@ class BankAccountCrudTest extends TestCase
         $this->user = User::factory()->create(['branch_id' => $this->branch->id]);
     }
 
-    public function test_can_create_bank_account(): void
+    protected function createBankAccount(array $overrides = []): BankAccount
     {
-        $account = BankAccount::create([
+        return BankAccount::create(array_merge([
             'account_name' => 'Main Account',
             'account_number' => '1234567890',
             'bank_name' => 'Test Bank',
             'currency' => 'EGP',
-            'balance' => 10000,
+            'current_balance' => 10000,
+            'opening_balance' => 10000,
+            'opening_date' => now(),
             'branch_id' => $this->branch->id,
-        ]);
+        ], $overrides));
+    }
+
+    public function test_can_create_bank_account(): void
+    {
+        $account = $this->createBankAccount();
 
         $this->assertDatabaseHas('bank_accounts', ['account_name' => 'Main Account']);
     }
 
     public function test_can_read_bank_account(): void
     {
-        $account = BankAccount::create([
-            'account_name' => 'Main Account',
-            'account_number' => '1234567890',
-            'bank_name' => 'Test Bank',
-            'currency' => 'EGP',
-            'balance' => 10000,
-            'branch_id' => $this->branch->id,
-        ]);
+        $account = $this->createBankAccount();
 
         $found = BankAccount::find($account->id);
         $this->assertNotNull($found);
@@ -56,29 +56,15 @@ class BankAccountCrudTest extends TestCase
 
     public function test_can_update_bank_account(): void
     {
-        $account = BankAccount::create([
-            'account_name' => 'Main Account',
-            'account_number' => '1234567890',
-            'bank_name' => 'Test Bank',
-            'currency' => 'EGP',
-            'balance' => 10000,
-            'branch_id' => $this->branch->id,
-        ]);
+        $account = $this->createBankAccount();
 
-        $account->update(['balance' => 15000]);
-        $this->assertDatabaseHas('bank_accounts', ['id' => $account->id, 'balance' => 15000]);
+        $account->update(['current_balance' => 15000]);
+        $this->assertDatabaseHas('bank_accounts', ['id' => $account->id, 'current_balance' => 15000]);
     }
 
     public function test_can_delete_bank_account(): void
     {
-        $account = BankAccount::create([
-            'account_name' => 'Main Account',
-            'account_number' => '1234567890',
-            'bank_name' => 'Test Bank',
-            'currency' => 'EGP',
-            'balance' => 10000,
-            'branch_id' => $this->branch->id,
-        ]);
+        $account = $this->createBankAccount();
 
         $account->delete();
         $this->assertSoftDeleted('bank_accounts', ['id' => $account->id]);

@@ -31,10 +31,14 @@ class DocumentCrudTest extends TestCase
         return Document::create(array_merge([
             'title' => 'Test Document',
             'code' => 'DOC-' . Str::random(6),
+            'file_name' => 'test.pdf',
             'file_path' => 'documents/test.pdf',
+            'file_size' => 1024,
             'file_type' => 'pdf',
-            'status' => 'active',
+            'mime_type' => 'application/pdf',
+            'status' => 'published',
             'branch_id' => $this->branch->id,
+            'uploaded_by' => $this->user->id,
         ], $overrides));
     }
 

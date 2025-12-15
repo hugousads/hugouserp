@@ -13,6 +13,7 @@ class TicketCategory extends Model
     protected $fillable = [
         'name',
         'name_ar',
+        'slug',
         'description',
         'parent_id',
         'default_assignee_id',
