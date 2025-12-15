@@ -209,10 +209,15 @@ class LoyaltyService
     {
         $totalPoints = (int) $customer->loyalty_points;
 
+        // Get tier thresholds from config (configurable in admin settings)
+        $premiumThreshold = (int) config('loyalty.tier_thresholds.premium', 10000);
+        $vipThreshold = (int) config('loyalty.tier_thresholds.vip', 5000);
+        $regularThreshold = (int) config('loyalty.tier_thresholds.regular', 1000);
+
         $tier = match (true) {
-            $totalPoints >= 10000 => 'premium',
-            $totalPoints >= 5000 => 'vip',
-            $totalPoints >= 1000 => 'regular',
+            $totalPoints >= $premiumThreshold => 'premium',
+            $totalPoints >= $vipThreshold => 'vip',
+            $totalPoints >= $regularThreshold => 'regular',
             default => 'new',
         };
 

@@ -26,6 +26,12 @@ class BranchSettings extends Component
 
     public function mount(?int $branch = null): void
     {
+        // Authorization check - must have settings.branch permission
+        $user = Auth::user();
+        if (! $user || ! $user->can('settings.branch')) {
+            abort(403, __('Unauthorized access to branch settings'));
+        }
+
         $this->branches = Branch::query()
             ->orderBy('name')
             ->get(['id', 'name'])

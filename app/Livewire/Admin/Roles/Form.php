@@ -33,6 +33,12 @@ class Form extends Component
 
     public function mount(?Role $role = null): void
     {
+        // Authorization check - must have roles.manage permission
+        $user = auth()->user();
+        if (! $user || ! $user->can('roles.manage')) {
+            abort(403, __('Unauthorized access to role management'));
+        }
+
         if ($role && $role->exists) {
             $this->role = $role;
             $this->editMode = true;

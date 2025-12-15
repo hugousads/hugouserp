@@ -42,8 +42,10 @@ class Form extends Component
     {
         $user = Auth::user();
 
-        if (! $user || ! $user->can('branches.view')) {
-            abort(403);
+        // Check appropriate permission based on create/edit mode
+        $requiredPermission = $branch?->id ? 'branches.edit' : 'branches.create';
+        if (! $user || ! $user->can($requiredPermission)) {
+            abort(403, __('Unauthorized access'));
         }
 
         $this->branchId = $branch?->id;

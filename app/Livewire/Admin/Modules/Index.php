@@ -20,6 +20,15 @@ class Index extends Component
 
     protected $queryString = ['search'];
 
+    public function mount(): void
+    {
+        // Authorization check - must have modules.manage permission
+        $user = auth()->user();
+        if (! $user || ! $user->can('modules.manage')) {
+            abort(403, __('Unauthorized access to module management'));
+        }
+    }
+
     public function updatingSearch(): void
     {
         $this->resetPage();

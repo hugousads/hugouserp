@@ -57,6 +57,12 @@ class Form extends Component
 
     public function mount(?Module $module = null): void
     {
+        // Authorization check - must have modules.manage permission
+        $user = auth()->user();
+        if (! $user || ! $user->can('modules.manage')) {
+            abort(403, __('Unauthorized access to module management'));
+        }
+
         if ($module && $module->exists) {
             $this->module = $module;
             $this->editMode = true;
