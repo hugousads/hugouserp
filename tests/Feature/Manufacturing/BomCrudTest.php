@@ -34,28 +34,31 @@ class BomCrudTest extends TestCase
         ]);
     }
 
-    public function test_can_create_bom(): void
+    protected function createBom(array $overrides = []): BillOfMaterial
     {
-        $bom = BillOfMaterial::create([
+        static $counter = 0;
+        $counter++;
+
+        return BillOfMaterial::create(array_merge([
             'product_id' => $this->product->id,
+            'bom_number' => 'BOM-' . str_pad((string) $counter, 6, '0', STR_PAD_LEFT),
             'name' => 'BOM for Product',
             'quantity' => 1,
             'status' => 'active',
             'branch_id' => $this->branch->id,
-        ]);
+        ], $overrides));
+    }
 
-        $this->assertDatabaseHas('bill_of_materials', ['name' => 'BOM for Product']);
+    public function test_can_create_bom(): void
+    {
+        $bom = $this->createBom();
+
+        $this->assertDatabaseHas('bills_of_materials', ['name' => 'BOM for Product']);
     }
 
     public function test_can_read_bom(): void
     {
-        $bom = BillOfMaterial::create([
-            'product_id' => $this->product->id,
-            'name' => 'BOM for Product',
-            'quantity' => 1,
-            'status' => 'active',
-            'branch_id' => $this->branch->id,
-        ]);
+        $bom = $this->createBom();
 
         $found = BillOfMaterial::find($bom->id);
         $this->assertNotNull($found);
@@ -63,29 +66,17 @@ class BomCrudTest extends TestCase
 
     public function test_can_update_bom(): void
     {
-        $bom = BillOfMaterial::create([
-            'product_id' => $this->product->id,
-            'name' => 'BOM for Product',
-            'quantity' => 1,
-            'status' => 'active',
-            'branch_id' => $this->branch->id,
-        ]);
+        $bom = $this->createBom();
 
         $bom->update(['status' => 'archived']);
-        $this->assertDatabaseHas('bill_of_materials', ['id' => $bom->id, 'status' => 'archived']);
+        $this->assertDatabaseHas('bills_of_materials', ['id' => $bom->id, 'status' => 'archived']);
     }
 
     public function test_can_delete_bom(): void
     {
-        $bom = BillOfMaterial::create([
-            'product_id' => $this->product->id,
-            'name' => 'BOM for Product',
-            'quantity' => 1,
-            'status' => 'active',
-            'branch_id' => $this->branch->id,
-        ]);
+        $bom = $this->createBom();
 
         $bom->delete();
-        $this->assertSoftDeleted('bill_of_materials', ['id' => $bom->id]);
+        $this->assertSoftDeleted('bills_of_materials', ['id' => $bom->id]);
     }
 }

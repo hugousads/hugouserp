@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Hrm;
 
 use App\Models\Branch;
-use App\Models\HrEmployee;
+use App\Models\HREmployee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -27,56 +27,41 @@ class EmployeeCrudTest extends TestCase
 
     public function test_can_create_employee(): void
     {
-        $employee = HrEmployee::create([
-            'employee_code' => 'EMP001',
+        $employee = HREmployee::create([
+            'code' => 'EMP001',
             'name' => 'John Doe',
-            'email' => 'john@example.com',
-            'phone' => '1234567890',
-            'hire_date' => now(),
             'position' => 'Developer',
             'salary' => 5000,
-            'salary_type' => 'monthly',
-            'employment_type' => 'full_time',
-            'status' => 'active',
+            'is_active' => true,
             'branch_id' => $this->branch->id,
         ]);
 
-        $this->assertDatabaseHas('hr_employees', ['employee_code' => 'EMP001']);
+        $this->assertDatabaseHas('hr_employees', ['code' => 'EMP001']);
     }
 
     public function test_can_read_employee(): void
     {
-        $employee = HrEmployee::create([
-            'employee_code' => 'EMP001',
+        $employee = HREmployee::create([
+            'code' => 'EMP002',
             'name' => 'John Doe',
-            'email' => 'john@example.com',
-            'phone' => '1234567890',
-            'hire_date' => now(),
             'position' => 'Developer',
             'salary' => 5000,
-            'salary_type' => 'monthly',
-            'employment_type' => 'full_time',
-            'status' => 'active',
+            'is_active' => true,
             'branch_id' => $this->branch->id,
         ]);
 
-        $found = HrEmployee::find($employee->id);
+        $found = HREmployee::find($employee->id);
         $this->assertNotNull($found);
     }
 
     public function test_can_update_employee(): void
     {
-        $employee = HrEmployee::create([
-            'employee_code' => 'EMP001',
+        $employee = HREmployee::create([
+            'code' => 'EMP003',
             'name' => 'John Doe',
-            'email' => 'john@example.com',
-            'phone' => '1234567890',
-            'hire_date' => now(),
             'position' => 'Developer',
             'salary' => 5000,
-            'salary_type' => 'monthly',
-            'employment_type' => 'full_time',
-            'status' => 'active',
+            'is_active' => true,
             'branch_id' => $this->branch->id,
         ]);
 
@@ -86,17 +71,12 @@ class EmployeeCrudTest extends TestCase
 
     public function test_can_delete_employee(): void
     {
-        $employee = HrEmployee::create([
-            'employee_code' => 'EMP001',
+        $employee = HREmployee::create([
+            'code' => 'EMP004',
             'name' => 'John Doe',
-            'email' => 'john@example.com',
-            'phone' => '1234567890',
-            'hire_date' => now(),
             'position' => 'Developer',
             'salary' => 5000,
-            'salary_type' => 'monthly',
-            'employment_type' => 'full_time',
-            'status' => 'active',
+            'is_active' => true,
             'branch_id' => $this->branch->id,
         ]);
 

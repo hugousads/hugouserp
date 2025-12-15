@@ -7,6 +7,7 @@ namespace Tests\Feature\Projects;
 use App\Models\Branch;
 use App\Models\Project;
 use App\Models\ProjectExpense;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,12 +16,14 @@ class ProjectOverBudgetTest extends TestCase
     use RefreshDatabase;
 
     protected Branch $branch;
+    protected User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->branch = Branch::create(['name' => 'Test Branch', 'code' => 'TB001']);
+        $this->user = User::factory()->create();
     }
 
     public function test_project_with_approved_expenses_and_no_time_logs_is_over_budget(): void
@@ -44,6 +47,7 @@ class ProjectOverBudgetTest extends TestCase
             'amount' => 800.00,
             'status' => 'approved',
             'expense_date' => now(),
+            'user_id' => $this->user->id,
         ]);
 
         ProjectExpense::create([
@@ -53,6 +57,7 @@ class ProjectOverBudgetTest extends TestCase
             'amount' => 700.00,
             'status' => 'approved',
             'expense_date' => now(),
+            'user_id' => $this->user->id,
         ]);
 
         // Do NOT create any time logs - this tests the COALESCE fix
@@ -106,6 +111,7 @@ class ProjectOverBudgetTest extends TestCase
             'amount' => 1500.00,
             'status' => 'pending',
             'expense_date' => now(),
+            'user_id' => $this->user->id,
         ]);
 
         // Query using the overBudget scope
