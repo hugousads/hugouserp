@@ -39,9 +39,9 @@ class LoginActivity extends Model
             'event' => 'login',
             'ip_address' => $ip,
             'user_agent' => $userAgent,
-            'browser' => $parsed['browser'],
-            'platform' => $parsed['platform'],
-            'device_type' => $parsed['device_type'],
+            'browser' => $parsed['browser'] ?? 'Unknown',
+            'platform' => $parsed['platform'] ?? 'Unknown',
+            'device_type' => $parsed['device_type'] ?? 'Desktop',
         ]);
     }
 
@@ -64,9 +64,9 @@ class LoginActivity extends Model
             'event' => 'failed',
             'ip_address' => $ip,
             'user_agent' => $userAgent,
-            'browser' => $parsed['browser'],
-            'platform' => $parsed['platform'],
-            'device_type' => $parsed['device_type'],
+            'browser' => $parsed['browser'] ?? 'Unknown',
+            'platform' => $parsed['platform'] ?? 'Unknown',
+            'device_type' => $parsed['device_type'] ?? 'Desktop',
             'failure_reason' => $reason,
         ]);
     }
