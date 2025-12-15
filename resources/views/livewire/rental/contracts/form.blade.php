@@ -138,7 +138,74 @@
             @endif
         </div>
 
-        <div class="flex justify-end gap-2">
+        {{-- File Upload Section --}}
+        <div class="space-y-4 border-t border-slate-200 dark:border-slate-700 pt-6">
+            <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {{ __('Contract Documents & Images') }}
+            </h2>
+            
+            <div class="space-y-1">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    {{ __('Upload Files') }}
+                </label>
+                <input type="file" wire:model="contractFiles" multiple 
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                    class="block w-full text-sm text-slate-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100
+                        dark:file:bg-blue-900 dark:file:text-blue-200">
+                <p class="mt-1 text-xs text-slate-500">
+                    {{ __('Accepted: PDF, DOC, DOCX, JPG, PNG, GIF (Max: 10MB per file)') }}
+                </p>
+                @error('contractFiles.*') 
+                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p> 
+                @enderror
+            </div>
+
+            {{-- Existing Files --}}
+            @if(!empty($existingFiles))
+                <div class="space-y-2">
+                    <h3 class="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase">
+                        {{ __('Uploaded Files') }}
+                    </h3>
+                    @foreach($existingFiles as $index => $file)
+                        <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                        {{ $file['original_name'] ?? 'Unknown' }}
+                                    </p>
+                                    <p class="text-xs text-slate-500">
+                                        {{ isset($file['size']) ? number_format($file['size'] / 1024, 2) . ' KB' : '' }}
+                                        {{ isset($file['uploaded_at']) ? '• ' . \Carbon\Carbon::parse($file['uploaded_at'])->diffForHumans() : '' }}
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="button" wire:click="removeExistingFile({{ $index }})" 
+                                wire:confirm="{{ __('Are you sure you want to remove this file?') }}"
+                                class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
+            {{-- Uploading Progress --}}
+            <div wire:loading wire:target="contractFiles" class="text-sm text-blue-600 dark:text-blue-400">
+                {{ __('Uploading files...') }}
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4">
             <a href="{{ route('app.rental.contracts.index') }}"
                class="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800">
                 {{ __('Cancel') }}

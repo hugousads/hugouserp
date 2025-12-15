@@ -23,8 +23,8 @@ class StockAlerts extends Component
     {
         $query = Product::query()
             ->with(['branch', 'category', 'unit'])
-            ->where('track_stock_alerts', true)
-            ->where('status', 'active')
+            ->where('products.track_stock_alerts', true)
+            ->where('products.status', 'active')
             ->leftJoin('stock_movements', 'products.id', '=', 'stock_movements.product_id')
             ->select('products.*')
             ->selectRaw('

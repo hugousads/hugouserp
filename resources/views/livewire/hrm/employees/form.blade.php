@@ -57,7 +57,11 @@
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
                     {{ __('Branch') }}
                 </label>
-                <input type="number" wire:model.defer="form.branch_id" class="erp-input" readonly>
+                <select wire:model.defer="form.branch_id" class="erp-input">
+                    @foreach(\App\Models\Branch::where('is_active', true)->orderBy('name')->get(['id', 'name']) as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
                 @error('form.branch_id')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror

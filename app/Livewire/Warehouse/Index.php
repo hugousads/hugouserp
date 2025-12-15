@@ -66,7 +66,7 @@ class Index extends Component
                 'total_warehouses' => $warehouseQuery->count(),
                 'active_warehouses' => Warehouse::query()
                     ->when($user && $user->branch_id, fn ($q) => $q->where('branch_id', $user->branch_id))
-                    ->where('is_active', true)->count(),
+                    ->where('status', 'active')->count(),
                 'total_stock' => $totalStock,
                 'stock_value' => $totalValue,
                 'recent_movements' => StockMovement::query()

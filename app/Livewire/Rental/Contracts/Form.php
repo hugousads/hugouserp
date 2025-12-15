@@ -10,13 +10,31 @@ use App\Models\RentalUnit;
 use App\Models\Tenant;
 use App\Services\Contracts\ModuleFieldServiceInterface;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Form extends Component
 {
+    use WithFileUploads;
+
     public ?int $contractId = null;
+
+    /**
+     * Uploaded contract files (documents, images).
+     *
+     * @var array
+     */
+    public array $contractFiles = [];
+
+    /**
+     * Existing files (for edit mode).
+     *
+     * @var array
+     */
+    public array $existingFiles = [];
 
     /**
      * @var array{branch_id:int,unit_id:int,tenant_id:int,rental_period_id:?int,custom_days:?int,start_date:?string,end_date:?string,rent:float,deposit:float,status:string}
@@ -169,6 +187,9 @@ class Form extends Component
             }
 
             $this->dynamicData = (array) ($model->extra_attributes ?? []);
+            
+            // Load existing files
+            $this->existingFiles = $model->extra_attributes['attachments'] ?? [];
         } else {
             foreach ($this->dynamicSchema as $field) {
                 $name = $field['name'] ?? null;
@@ -262,6 +283,35 @@ class Form extends Component
         $this->dynamicData = $data;
     }
 
+    public function removeExistingFile(int $index): void
+    {
+        if (isset($this->existingFiles[$index])) {
+            $file = $this->existingFiles[$index];
+            
+            // Delete from storage
+            if (isset($file['path']) && Storage::disk('private')->exists($file['path'])) {
+                Storage::disk('private')->delete($file['path']);
+            }
+            
+            // Remove from array
+            unset($this->existingFiles[$index]);
+            $this->existingFiles = array_values($this->existingFiles);
+            
+            // Update contract if it exists
+            if ($this->contractId) {
+                $contract = RentalContract::find($this->contractId);
+                if ($contract) {
+                    $attributes = $contract->extra_attributes ?? [];
+                    $attributes['attachments'] = $this->existingFiles;
+                    $contract->extra_attributes = $attributes;
+                    $contract->save();
+                }
+            }
+            
+            session()->flash('success', __('File removed successfully'));
+        }
+    }
+
     public function save(): void
     {
         $user = Auth::user();
@@ -294,6 +344,35 @@ class Form extends Component
         $contract->extra_attributes = $this->dynamicData;
 
         $contract->save();
+
+        // Handle file uploads
+        if (! empty($this->contractFiles)) {
+            $uploadedFiles = [];
+            
+            foreach ($this->contractFiles as $file) {
+                // Store file in rental-contracts directory
+                $path = $file->store('rental-contracts/' . $contract->id, 'private');
+                
+                $uploadedFiles[] = [
+                    'original_name' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'size' => $file->getSize(),
+                    'mime_type' => $file->getMimeType(),
+                    'uploaded_at' => now()->toIso8601String(),
+                ];
+            }
+            
+            // Merge with existing files
+            $existingAttachments = $contract->extra_attributes['attachments'] ?? [];
+            $contract->extra_attributes = array_merge(
+                $contract->extra_attributes ?? [],
+                ['attachments' => array_merge($existingAttachments, $uploadedFiles)]
+            );
+            $contract->save();
+            
+            // Clear uploaded files
+            $this->contractFiles = [];
+        }
 
         $this->contractId = $contract->id;
 

@@ -11,6 +11,7 @@ use App\Models\StoreSyncLog;
 use App\Services\Store\StoreSyncService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -100,9 +101,15 @@ class Stores extends Component
             abort(403);
         }
 
+        // Select name_ar only if column exists (defensive for older schemas)
+        $columns = ['id', 'name'];
+        if (Schema::hasColumn('branches', 'name_ar')) {
+            $columns[] = 'name_ar';
+        }
+        
         $this->branches = Branch::where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'name_ar'])
+            ->get($columns)
             ->toArray();
     }
 
