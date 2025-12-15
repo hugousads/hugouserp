@@ -42,6 +42,12 @@ class CurrencyRates extends Component
 
     public function mount(): void
     {
+        // Authorization check - must have settings.view permission
+        $user = auth()->user();
+        if (! $user || ! $user->can('settings.view')) {
+            abort(403, __('Unauthorized access to currency rates'));
+        }
+
         $this->effectiveDate = now()->format('Y-m-d');
     }
 

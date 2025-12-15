@@ -47,6 +47,15 @@ class ScheduledReports extends Component
         $this->reportService = $reportService;
     }
 
+    public function mount(): void
+    {
+        // Authorization check - must have reports.manage permission
+        $user = auth()->user();
+        if (! $user || ! $user->can('reports.manage')) {
+            abort(403, __('Unauthorized access to scheduled reports'));
+        }
+    }
+
     public function render()
     {
         $templates = ReportTemplate::active()->orderBy('name')->get();

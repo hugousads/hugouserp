@@ -19,6 +19,15 @@ class StockAlerts extends Component
     public string $search = '';
     public string $alertType = 'all'; // all, low, out, expiring
 
+    public function mount(): void
+    {
+        // Authorization check - must have inventory.view permission
+        $user = auth()->user();
+        if (! $user || ! $user->can('inventory.view')) {
+            abort(403, __('Unauthorized access to stock alerts'));
+        }
+    }
+
     public function render()
     {
         // Using subquery approach to avoid column ambiguity issues with joins
