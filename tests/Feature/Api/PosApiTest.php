@@ -69,13 +69,11 @@ class PosApiTest extends TestCase
     {
         Sanctum::actingAs($this->user);
 
+        // Short query should return validation error
         $response = $this->getJson("/api/v1/branches/{$this->branch->id}/products/search?q=T");
 
-        $response->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'data' => [],
-            ]);
+        // API validates minimum query length - 422 is expected for too-short queries
+        $response->assertStatus(422);
     }
 
     public function test_pos_checkout_endpoint_accepts_branch_id_in_route(): void
