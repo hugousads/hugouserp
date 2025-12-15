@@ -26,25 +26,26 @@ class EnsureApiEnabled
     public function handle(Request $request, Closure $next): Response
     {
         $apiEnabled = Cache::remember('api_enabled_setting', 300, function () {
-            $setting = SystemSetting::where('key', 'advanced.enable_api')->first();
+            // Use value() to only retrieve the value column for better performance
+            $value = SystemSetting::where('key', 'advanced.enable_api')->value('value');
             
             // Default to true if setting doesn't exist
-            if (!$setting) {
+            if ($value === null) {
                 return true;
             }
             
-            // Handle various possible stored values
-            $value = $setting->value;
-            
+            // Handle various possible stored values with explicit whitelist
             if (is_bool($value)) {
                 return $value;
             }
             
             if (is_string($value)) {
-                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                // Explicit whitelist for truthy values - unknown values default to false for security
+                return in_array(strtolower(trim($value)), ['1', 'true', 'on', 'yes'], true);
             }
             
-            return (bool) $value;
+            // Numeric or other types - 1 is true, everything else is false
+            return $value === 1 || $value === '1';
         });
 
         if (!$apiEnabled) {
