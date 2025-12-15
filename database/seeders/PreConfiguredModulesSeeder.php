@@ -295,9 +295,9 @@ class PreConfiguredModulesSeeder extends Seeder
     protected function createSparePartsModule(): void
     {
         $module = Module::updateOrCreate(
-            ['key' => 'spare_parts'],
+            ['key' => 'spares'],
             [
-                'slug' => 'spare-parts',
+                'slug' => 'spares',
                 'name' => 'Spare Parts',
                 'name_ar' => 'قطع الغيار',
                 'description' => 'Automotive and machinery spare parts management',
@@ -423,15 +423,15 @@ class PreConfiguredModulesSeeder extends Seeder
             );
         }
 
-        $this->createModuleReports($module, 'spare_parts');
+        $this->createModuleReports($module, 'spares');
     }
 
     protected function createMotorcyclesModule(): void
     {
         $module = Module::updateOrCreate(
-            ['key' => 'motorcycles'],
+            ['key' => 'motorcycle'],
             [
-                'slug' => 'motorcycles',
+                'slug' => 'motorcycle',
                 'name' => 'Motorcycles',
                 'name_ar' => 'الموتوسيكلات',
                 'description' => 'Motorcycle sales and inventory management',
@@ -589,7 +589,7 @@ class PreConfiguredModulesSeeder extends Seeder
             );
         }
 
-        $this->createModuleReports($module, 'motorcycles');
+        $this->createModuleReports($module, 'motorcycle');
     }
 
     protected function createModuleReports(Module $module, string $moduleKey): void

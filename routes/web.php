@@ -185,11 +185,13 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/{sale}', \App\Livewire\Sales\Show::class)
             ->name('show')
-            ->middleware('can:sales.view');
+            ->middleware('can:sales.view')
+            ->whereNumber('sale');
 
         Route::get('/{sale}/edit', \App\Livewire\Sales\Form::class)
             ->name('edit')
-            ->middleware('can:sales.manage');
+            ->middleware('can:sales.manage')
+            ->whereNumber('sale');
     });
 
     // PURCHASES MODULE
