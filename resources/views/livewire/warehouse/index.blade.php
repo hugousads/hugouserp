@@ -160,8 +160,8 @@
                                     <td class="font-mono text-slate-600">{{ $warehouse->code ?? '-' }}</td>
                                     <td class="text-slate-600">{{ $warehouse->address ?? '-' }}</td>
                                     <td>
-                                        <span class="px-2 py-1 text-xs rounded-full {{ ($warehouse->is_active ?? true) ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">
-                                            {{ ($warehouse->is_active ?? true) ? __('Active') : __('Inactive') }}
+                                        <span class="px-2 py-1 text-xs rounded-full {{ ($warehouse->status === 'active') ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">
+                                            {{ ($warehouse->status === 'active') ? __('Active') : __('Inactive') }}
                                         </span>
                                     </td>
                                     <td>

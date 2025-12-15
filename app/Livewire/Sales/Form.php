@@ -253,7 +253,7 @@ class Form extends Component
     public function render()
     {
         $customers = Customer::where('is_active', true)->orderBy('name')->get(['id', 'name']);
-        $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $warehouses = Warehouse::where('status', 'active')->orderBy('name')->get(['id', 'name']);
         $currencies = \App\Models\Currency::active()->ordered()->get(['code', 'name', 'symbol']);
 
         return view('livewire.sales.form', [
