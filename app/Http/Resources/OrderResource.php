@@ -27,7 +27,7 @@ class OrderResource extends JsonResource
             'paid_amount' => (float) ($this->paid_total ?? 0),
             'due_amount' => (float) $this->due_total,
             'status' => $this->status,
-            'payment_status' => $this->isPaid() ? 'paid' : ($this->paid_total > 0 ? 'partial' : 'unpaid'),
+            'payment_status' => $this->computePaymentStatus(),
             'payment_method' => $this->payment_method,
             'source' => $this->channel ?? 'pos',
             'external_reference' => $this->external_reference,
@@ -35,5 +35,30 @@ class OrderResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Compute payment status safely, handling models with or without isPaid() method.
+     */
+    protected function computePaymentStatus(): string
+    {
+        // Check if the underlying model has isPaid method
+        if (method_exists($this->resource, 'isPaid')) {
+            return $this->resource->isPaid() ? 'paid' : ($this->paid_total > 0 ? 'partial' : 'unpaid');
+        }
+
+        // Fallback: compute from paid_total and grand_total
+        $paidTotal = (float) ($this->paid_total ?? 0);
+        $grandTotal = (float) ($this->grand_total ?? 0);
+
+        if ($grandTotal <= 0) {
+            return 'unpaid';
+        }
+
+        if ($paidTotal >= $grandTotal) {
+            return 'paid';
+        }
+
+        return $paidTotal > 0 ? 'partial' : 'unpaid';
     }
 }
