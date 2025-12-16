@@ -29,7 +29,7 @@ return new class extends Migration
 
             $table->index(['branch_id', 'searchable_type']);
             $table->index('module');
-            $table->index(['title', 'content']); // Regular index as fallback
+            $table->index('title'); // Index on title only; fulltext covers title+content
             $table->unique(['searchable_type', 'searchable_id', 'branch_id'], 'search_index_unique');
         });
 
