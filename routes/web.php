@@ -309,6 +309,10 @@ Route::middleware('auth')->group(function () {
             ->name('batches.create')
             ->middleware('can:inventory.manage');
 
+        Route::get('/batches/{batch}/edit', \App\Livewire\Inventory\Batches\Form::class)
+            ->name('batches.edit')
+            ->middleware('can:inventory.manage');
+
         // Serials
         Route::get('/serials', \App\Livewire\Inventory\Serials\Index::class)
             ->name('serials.index')
@@ -316,6 +320,10 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/serials/create', \App\Livewire\Inventory\Serials\Form::class)
             ->name('serials.create')
+            ->middleware('can:inventory.manage');
+
+        Route::get('/serials/{serial}/edit', \App\Livewire\Inventory\Serials\Form::class)
+            ->name('serials.edit')
             ->middleware('can:inventory.manage');
 
         // Barcode printing

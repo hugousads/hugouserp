@@ -18,7 +18,7 @@ return new class extends Migration
                 $table->foreign('branch_id')
                     ->references('id')
                     ->on('branches')
-                    ->nullOnDelete();
+                    ->cascadeOnDelete();
             } catch (\Illuminate\Database\QueryException $e) {
                 // Foreign key might already exist - only catch query exceptions
             }

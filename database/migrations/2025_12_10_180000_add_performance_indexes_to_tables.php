@@ -76,8 +76,8 @@ return new class extends Migration
 
         // Customers - commonly searched
         Schema::table('customers', function (Blueprint $table) {
-            if (! $this->indexExists('customers', 'customers_active_branch_idx')) {
-                $table->index(['is_active', 'branch_id'], 'customers_active_branch_idx');
+            if (! $this->indexExists('customers', 'customers_status_branch_idx')) {
+                $table->index(['status', 'branch_id'], 'customers_status_branch_idx');
             }
         });
 
@@ -124,7 +124,7 @@ return new class extends Migration
         });
 
         Schema::table('customers', function (Blueprint $table) {
-            $this->safeDropIndex($table, 'customers_active_branch_idx');
+            $this->safeDropIndex($table, 'customers_status_branch_idx');
         });
 
         Schema::table('suppliers', function (Blueprint $table) {

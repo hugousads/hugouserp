@@ -5,7 +5,7 @@
             <p class="text-gray-600 mt-1">{{ __('Manage custom fields for products in this module') }}</p>
         </div>
         <div class="flex gap-3">
-            <a href="{{ route('admin.modules') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">
+            <a href="{{ route('admin.modules.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">
                 {{ __('Back to Modules') }}
             </a>
             <button wire:click="openAddModal" class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition flex items-center gap-2">

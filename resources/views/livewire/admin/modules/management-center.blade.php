@@ -147,12 +147,16 @@
                         <a href="{{ route('admin.modules.fields', $selectedModule['id']) }}" class="erp-btn-secondary text-sm">
                             {{ __('Manage Fields') }}
                         </a>
+                        @if(Route::has('admin.modules.settings'))
                         <a href="{{ route('admin.modules.settings', $selectedModule['id']) }}" class="erp-btn-secondary text-sm">
                             {{ __('Module Settings') }}
                         </a>
+                        @endif
+                        @if(Route::has('admin.modules.permissions'))
                         <a href="{{ route('admin.modules.permissions', $selectedModule['id']) }}" class="erp-btn-secondary text-sm">
                             {{ __('Permissions') }}
                         </a>
+                        @endif
                     </div>
                 </div>
 
