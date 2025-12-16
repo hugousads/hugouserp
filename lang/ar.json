@@ -1092,5 +1092,17 @@
     "Today": "اليوم",
     "Contracts by status": "العقود حسب الحالة",
     "Latest sales": "أحدث المبيعات",
-    "Contracts expiring soon": "العقود المنتهية قريباً"
+    "Contracts expiring soon": "العقود المنتهية قريباً",
+    "OK": "موافق",
+    "Request succeeded": "نجح الطلب",
+    "Resource created successfully": "تم إنشاء المورد بنجاح",
+    "Invalid request parameters": "معلمات الطلب غير صالحة",
+    "Missing or invalid authentication": "المصادقة مفقودة أو غير صالحة",
+    "Insufficient permissions": "صلاحيات غير كافية",
+    "Resource not found": "المورد غير موجود",
+    "Validation errors": "أخطاء التحقق",
+    "Rate limit exceeded": "تم تجاوز حد المعدل",
+    "Internal server error": "خطأ داخلي في الخادم",
+    "English": "الإنجليزية",
+    "Arabic": "العربية"
 }

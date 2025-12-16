@@ -129,47 +129,47 @@
                                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                                     <tr>
                                         <td class="px-4 py-3 text-sm text-green-600 font-mono">200</td>
-                                        <td class="px-4 py-3 text-sm">OK</td>
+                                        <td class="px-4 py-3 text-sm">{{ __('OK') }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ __('Request succeeded') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="px-4 py-3 text-sm text-green-600 font-mono">201</td>
-                                        <td class="px-4 py-3 text-sm">Created</td>
+                                        <td class="px-4 py-3 text-sm">{{ __('Created') }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ __('Resource created successfully') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="px-4 py-3 text-sm text-yellow-600 font-mono">400</td>
-                                        <td class="px-4 py-3 text-sm">Bad Request</td>
+                                        <td class="px-4 py-3 text-sm">{{ __('Bad Request') }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ __('Invalid request parameters') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="px-4 py-3 text-sm text-red-600 font-mono">401</td>
-                                        <td class="px-4 py-3 text-sm">Unauthorized</td>
+                                        <td class="px-4 py-3 text-sm">{{ __('Unauthorized') }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ __('Missing or invalid authentication') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="px-4 py-3 text-sm text-red-600 font-mono">403</td>
-                                        <td class="px-4 py-3 text-sm">Forbidden</td>
+                                        <td class="px-4 py-3 text-sm">{{ __('Forbidden') }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ __('Insufficient permissions') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="px-4 py-3 text-sm text-red-600 font-mono">404</td>
-                                        <td class="px-4 py-3 text-sm">Not Found</td>
+                                        <td class="px-4 py-3 text-sm">{{ __('Not Found') }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ __('Resource not found') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="px-4 py-3 text-sm text-red-600 font-mono">422</td>
-                                        <td class="px-4 py-3 text-sm">Unprocessable Entity</td>
+                                        <td class="px-4 py-3 text-sm">{{ __('Unprocessable Entity') }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ __('Validation errors') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="px-4 py-3 text-sm text-orange-600 font-mono">429</td>
-                                        <td class="px-4 py-3 text-sm">Too Many Requests</td>
+                                        <td class="px-4 py-3 text-sm">{{ __('Too Many Requests') }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ __('Rate limit exceeded') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="px-4 py-3 text-sm text-red-600 font-mono">500</td>
-                                        <td class="px-4 py-3 text-sm">Server Error</td>
+                                        <td class="px-4 py-3 text-sm">{{ __('Server Error') }}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ __('Internal server error') }}</td>
                                     </tr>
                                 </tbody>

@@ -1092,5 +1092,17 @@
     "Today": "Today",
     "Contracts by status": "Contracts by Status",
     "Latest sales": "Latest Sales",
-    "Contracts expiring soon": "Contracts Expiring Soon"
+    "Contracts expiring soon": "Contracts Expiring Soon",
+    "OK": "OK",
+    "Request succeeded": "Request succeeded",
+    "Resource created successfully": "Resource created successfully",
+    "Invalid request parameters": "Invalid request parameters",
+    "Missing or invalid authentication": "Missing or invalid authentication",
+    "Insufficient permissions": "Insufficient permissions",
+    "Resource not found": "Resource not found",
+    "Validation errors": "Validation errors",
+    "Rate limit exceeded": "Rate limit exceeded",
+    "Internal server error": "Internal server error",
+    "English": "English",
+    "Arabic": "Arabic"
 }
