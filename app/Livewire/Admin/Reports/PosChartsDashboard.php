@@ -43,7 +43,7 @@ class PosChartsDashboard extends Component
         $sales = $query->orderBy('created_at')->get();
 
         $totalSales = $sales->count();
-        $totalRevenue = (float) $sales->sum('total');
+        $totalRevenue = (float) $sales->sum('grand_total');
 
         $groupedByDay = $sales->groupBy(function (Sale $sale): string {
             return optional($sale->created_at)->toDateString() ?? '';

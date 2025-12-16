@@ -364,8 +364,8 @@ class DashboardService
             ->select(
                 'products.id',
                 'products.name',
-                DB::raw('SUM(sale_items.quantity) as total_quantity'),
-                DB::raw('SUM(sale_items.total) as total_revenue')
+                DB::raw('SUM(sale_items.qty) as total_quantity'),
+                DB::raw('SUM(sale_items.line_total) as total_revenue')
             )
             ->where('sales.status', '!=', 'cancelled')
             ->whereBetween('sales.created_at', [now()->subDays(30), now()])

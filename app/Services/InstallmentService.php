@@ -28,7 +28,7 @@ class InstallmentService
     ): InstallmentPlan {
         return $this->handleServiceOperation(
             callback: function () use ($sale, $customer, $numInstallments, $downPayment, $interestRate, $startDate, $userId) {
-                $totalAmount = (float) $sale->total;
+                $totalAmount = (float) $sale->grand_total;
 
                 if ($numInstallments < 1) {
                     throw new InvalidArgumentException(__('Number of installments must be at least 1'));

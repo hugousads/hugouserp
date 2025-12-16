@@ -125,7 +125,7 @@ class Form extends Component
             $this->items = $requisition->items->map(function ($item) {
                 return [
                     'product_id' => $item->product_id,
-                    'quantity' => $item->quantity,
+                    'quantity' => $item->qty,
                     'unit_price' => $item->product->selling_price ?? 0,
                     'tax_percentage' => 0,
                     'notes' => $item->specifications,

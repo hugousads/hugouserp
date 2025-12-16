@@ -37,14 +37,14 @@ class ReportService implements ReportServiceInterface
                     ->where('branch_id', $branchId)
                     ->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to)
-                    ->select(DB::raw('COALESCE(SUM(total), 0) as total'), DB::raw('COALESCE(SUM(paid_total), 0) as paid'))
+                    ->select(DB::raw('COALESCE(SUM(grand_total), 0) as total'), DB::raw('COALESCE(SUM(paid_total), 0) as paid'))
                     ->first();
 
                 $purchases = DB::table('purchases')
                     ->where('branch_id', $branchId)
                     ->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to)
-                    ->select(DB::raw('COALESCE(SUM(total), 0) as total'), DB::raw('COALESCE(SUM(paid_total), 0) as paid'))
+                    ->select(DB::raw('COALESCE(SUM(grand_total), 0) as total'), DB::raw('COALESCE(SUM(paid_total), 0) as paid'))
                     ->first();
 
                 return [
@@ -200,14 +200,14 @@ class ReportService implements ReportServiceInterface
                     $query->whereIn('sales.branch_id', $branchIds);
                 }
 
-                $this->applyDateFilters($query, $filters, 'sales.sale_date');
+                $this->applyDateFilters($query, $filters, 'sales.created_at');
                 $this->applyBranchFilter($query, $filters, 'sales.branch_id');
 
                 if (! empty($filters['status'])) {
                     $query->where('sales.status', $filters['status']);
                 }
 
-                $items = $query->orderBy('sales.sale_date', 'desc')->get();
+                $items = $query->orderBy('sales.created_at', 'desc')->get();
 
                 $summary = [
                     'total_sales' => $items->count(),
@@ -239,10 +239,10 @@ class ReportService implements ReportServiceInterface
                     $query->whereIn('purchases.branch_id', $branchIds);
                 }
 
-                $this->applyDateFilters($query, $filters, 'purchases.purchase_date');
+                $this->applyDateFilters($query, $filters, 'purchases.created_at');
                 $this->applyBranchFilter($query, $filters, 'purchases.branch_id');
 
-                $items = $query->orderBy('purchases.purchase_date', 'desc')->get();
+                $items = $query->orderBy('purchases.created_at', 'desc')->get();
 
                 return [
                     'items' => $items,
@@ -398,14 +398,14 @@ class ReportService implements ReportServiceInterface
                 $salesByBranch = DB::table('sales')
                     ->select('branch_id', DB::raw('COUNT(*) as count'), DB::raw('SUM(grand_total) as total'))
                     ->whereIn('branch_id', $branches->pluck('id'))
-                    ->whereBetween('sale_date', [$dateFrom, $dateTo])
+                    ->whereBetween('created_at', [$dateFrom, $dateTo])
                     ->groupBy('branch_id')
                     ->get()->keyBy('branch_id');
 
                 $purchasesByBranch = DB::table('purchases')
                     ->select('branch_id', DB::raw('COUNT(*) as count'), DB::raw('SUM(grand_total) as total'))
                     ->whereIn('branch_id', $branches->pluck('id'))
-                    ->whereBetween('purchase_date', [$dateFrom, $dateTo])
+                    ->whereBetween('created_at', [$dateFrom, $dateTo])
                     ->groupBy('branch_id')
                     ->get()->keyBy('branch_id');
 

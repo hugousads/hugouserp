@@ -75,8 +75,8 @@ class Form extends Component
             return [
                 'product_id' => $item->product_id,
                 'product_name' => $item->product->name ?? '',
-                'quantity_ordered' => $item->quantity,
-                'quantity_received' => $item->quantity, // Default to ordered quantity
+                'quantity_ordered' => $item->qty,
+                'quantity_received' => $item->qty, // Default to ordered quantity
                 'quality_status' => 'good',
                 'quantity_damaged' => 0,
                 'quantity_defective' => 0,
