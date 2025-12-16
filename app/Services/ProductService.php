@@ -108,7 +108,7 @@ class ProductService implements ProductServiceInterface
 
                         $price = $this->valueOrNull($row, $normalized, 'price');
                         if ($price !== null) {
-                            $product->price = (float) $price;
+                            $product->default_price = (float) $price;
                         }
 
                         $cost = $this->valueOrNull($row, $normalized, 'cost');
@@ -173,7 +173,7 @@ class ProductService implements ProductServiceInterface
                         $row = [
                             $p->sku,
                             $p->name,
-                            $p->price,
+                            $p->default_price,
                             $p->cost,
                             $p->barcode,
                         ];

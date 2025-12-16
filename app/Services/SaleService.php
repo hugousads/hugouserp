@@ -74,7 +74,7 @@ class SaleService implements SaleServiceInterface
                             continue;
                         }
                         
-                        $line = $qty * (float) $si->price;
+                        $line = $qty * (float) $si->unit_price;
                         $refund += $line;
                     }
 
