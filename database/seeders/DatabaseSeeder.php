@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             VehicleModelsSeeder::class,
             ReportTemplatesSeeder::class,
             PreConfiguredModulesSeeder::class,
+            RentalPeriodsSeeder::class,
         ]);
     }
 }

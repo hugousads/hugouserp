@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Expenses\Categories;
 
 use App\Models\ExpenseCategory;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -14,6 +15,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class Index extends Component
 {
+    use AuthorizesRequests;
     use WithPagination;
 
     public string $search = '';
