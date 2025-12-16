@@ -114,13 +114,16 @@ class Index extends Component
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:shifts,code' . ($this->editingId ? ',' . $this->editingId : ''),
             'startTime' => 'required|date_format:H:i',
-            'endTime' => 'required|date_format:H:i',
+            'endTime' => 'required|date_format:H:i|after:startTime',
             'gracePeriodMinutes' => 'required|integer|min:0|max:120',
             'workingDays' => 'array',
             'description' => 'nullable|string|max:1000',
         ];
 
         $this->validate($rules);
+
+        // Ensure branch_id is set from authenticated user
+        $branchId = auth()->user()?->branch_id ?? $this->branchId;
 
         $data = [
             'name' => $this->name,
@@ -131,7 +134,7 @@ class Index extends Component
             'working_days' => $this->workingDays,
             'description' => $this->description,
             'is_active' => $this->isActive,
-            'branch_id' => $this->branchId,
+            'branch_id' => $branchId,
         ];
 
         if ($this->editingId) {

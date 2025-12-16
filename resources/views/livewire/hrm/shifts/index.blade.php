@@ -183,8 +183,8 @@
                             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ __('Working Days') }}</label>
                             <div class="flex flex-wrap gap-2">
                                 @foreach($daysOfWeek as $day => $name)
-                                    <label class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition {{ in_array($day, $workingDays) ? 'ring-2 ring-emerald-500' : '' }}">
-                                        <input type="checkbox" wire:model="workingDays" value="{{ $day }}" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                                    <label for="day-{{ $day }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition {{ in_array($day, $workingDays) ? 'ring-2 ring-emerald-500' : '' }}">
+                                        <input type="checkbox" id="day-{{ $day }}" wire:model="workingDays" value="{{ $day }}" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                                         <span class="text-sm text-slate-700 dark:text-slate-300">{{ __($name) }}</span>
                                     </label>
                                 @endforeach
@@ -198,8 +198,8 @@
                         </div>
 
                         <div class="flex items-center">
-                            <label class="inline-flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" wire:model="isActive" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                            <label for="shift-active" class="inline-flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="shift-active" wire:model="isActive" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                                 <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('Active') }}</span>
                             </label>
                         </div>
