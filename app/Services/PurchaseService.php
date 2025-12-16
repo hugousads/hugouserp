@@ -55,12 +55,20 @@ class PurchaseService implements PurchaseServiceInterface
                     'paid_total' => 0, 'due_total' => 0,
                 ]);
                 foreach ($payload['items'] ?? [] as $it) {
+                    // Skip invalid items without required fields
+                    if (!isset($it['product_id']) || !isset($it['qty'])) {
+                        continue;
+                    }
+                    
+                    $qty = (float) $it['qty'];
+                    $unitCost = (float) ($it['price'] ?? 0);
+                    
                     PurchaseItem::create([
                         'purchase_id' => $p->getKey(),
                         'product_id' => $it['product_id'],
-                        'qty' => (float) $it['qty'],
-                        'unit_cost' => (float) ($it['price'] ?? 0),
-                        'line_total' => (float) ($it['qty'] * ($it['price'] ?? 0)),
+                        'qty' => $qty,
+                        'unit_cost' => $unitCost,
+                        'line_total' => $qty * $unitCost,
                     ]);
                 }
                 $p->sub_total = (float) $p->items()->sum('line_total');

@@ -75,6 +75,10 @@ class ManufacturingService
             if (isset($data['items'])) {
                 $bom->items()->delete();
                 foreach ($data['items'] as $item) {
+                    // Validate required item fields
+                    if (!isset($item['product_id']) || !isset($item['quantity'])) {
+                        continue;
+                    }
                     $bom->items()->create($item);
                 }
             }
@@ -83,6 +87,10 @@ class ManufacturingService
             if (isset($data['operations'])) {
                 $bom->operations()->delete();
                 foreach ($data['operations'] as $operation) {
+                    // Validate required operation fields
+                    if (!isset($operation['work_center_id']) || !isset($operation['operation_name'])) {
+                        continue;
+                    }
                     $bom->operations()->create($operation);
                 }
             }

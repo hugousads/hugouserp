@@ -299,23 +299,25 @@ class RentalService implements RentalServiceInterface
                     continue;
                 }
 
-                // Generate invoice code
-                $lastInvoice = RentalInvoice::orderBy('id', 'desc')->first();
-                $nextNumber = $lastInvoice ? (intval(substr($lastInvoice->code, -6)) + 1) : 1;
-                $code = 'RI-'.str_pad((string) $nextNumber, 6, '0', STR_PAD_LEFT);
+                // Generate invoice code and create invoice atomically to prevent race conditions
+                $invoice = DB::transaction(function () use ($contract, $period, $forMonth) {
+                    $lastInvoice = RentalInvoice::lockForUpdate()->orderBy('id', 'desc')->first();
+                    $nextNumber = $lastInvoice ? (intval(substr($lastInvoice->code, -6)) + 1) : 1;
+                    $code = 'RI-'.str_pad((string) $nextNumber, 6, '0', STR_PAD_LEFT);
 
-                // Calculate due date (typically start of month + grace period)
-                $dueDate = $forMonth->copy()->startOfMonth()->addDays(7);
+                    // Calculate due date (typically start of month + grace period)
+                    $dueDate = $forMonth->copy()->startOfMonth()->addDays(7);
 
-                // Create invoice
-                $invoice = RentalInvoice::create([
-                    'contract_id' => $contract->id,
-                    'code' => $code,
-                    'period' => $period,
-                    'due_date' => $dueDate,
-                    'amount' => $contract->rent,
-                    'status' => 'pending',
-                ]);
+                    // Create invoice
+                    return RentalInvoice::create([
+                        'contract_id' => $contract->id,
+                        'code' => $code,
+                        'period' => $period,
+                        'due_date' => $dueDate,
+                        'amount' => $contract->rent,
+                        'status' => 'pending',
+                    ]);
+                });
 
                 $generated[] = $invoice;
             } catch (\Exception $e) {

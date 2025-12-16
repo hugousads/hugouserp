@@ -14,7 +14,8 @@ class CurrencyRatesSeeder extends Seeder
         // Updated indicative FX rates as of 2025-11-27 (static seed, no external API).
         // These should be treated as baseline seed data only – real production systems
         // should update rates via scheduled jobs or integrations.
-        $effectiveDate = now()->format('Y-m-d');
+        // Use startOfDay() to ensure consistent datetime format for unique constraint matching
+        $effectiveDate = now()->startOfDay();
 
         $rates = [
             // EGP base vs other currencies

@@ -84,7 +84,14 @@ class UnitOfMeasure extends Model
         }
 
         $baseValue = $value * (float) $this->conversion_factor;
+        
+        $targetFactor = (float) $targetUnit->conversion_factor;
+        
+        // Prevent division by zero - conversion factors should be positive for inventory units
+        if ($targetFactor == 0) {
+            throw new \InvalidArgumentException('Target unit conversion factor cannot be zero');
+        }
 
-        return $baseValue / (float) $targetUnit->conversion_factor;
+        return $baseValue / $targetFactor;
     }
 }

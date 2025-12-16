@@ -272,6 +272,8 @@ class ProductFields extends Component
 
     public function toggleActive(int $fieldId): void
     {
+        $this->authorize('modules.manage');
+        
         $field = ModuleProductField::findOrFail($fieldId);
         $field->update(['is_active' => ! $field->is_active]);
         $this->loadFields();
@@ -279,6 +281,8 @@ class ProductFields extends Component
 
     public function delete(int $fieldId): void
     {
+        $this->authorize('modules.manage');
+        
         ModuleProductField::destroy($fieldId);
         session()->flash('success', __('Field deleted successfully'));
         $this->loadFields();

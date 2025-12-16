@@ -199,6 +199,11 @@ class SettingsService
                                     $setting->key => json_last_error() === JSON_ERROR_NONE ? $decoded : $decrypted,
                                 ];
                             } catch (\Exception $e) {
+                                Log::warning('Failed to decrypt group setting', [
+                                    'key' => $setting->key,
+                                    'error' => $e->getMessage(),
+                                ]);
+
                                 return [$setting->key => null];
                             }
                         }

@@ -172,6 +172,8 @@ class ScheduledReports extends Component
 
     public function toggleActive(int $id): void
     {
+        $this->authorize('reports.manage');
+        
         $schedule = DB::table('report_schedules')->find($id);
         if ($schedule) {
             DB::table('report_schedules')
@@ -182,6 +184,8 @@ class ScheduledReports extends Component
 
     public function runNow(int $id): void
     {
+        $this->authorize('reports.manage');
+        
         $result = $this->reportService->runNow($id);
 
         if ($result['success']) {

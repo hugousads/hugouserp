@@ -11,6 +11,7 @@ use App\Services\Contracts\HRMServiceInterface;
 use App\Traits\HandlesServiceErrors;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Factory as ValidatorFactory;
 
 class HRMService implements HRMServiceInterface
@@ -193,6 +194,12 @@ class HRMService implements HRMServiceInterface
 
             return round($dailyRate * $absenceDays, 2);
         } catch (\Exception $e) {
+            Log::warning('Failed to calculate absence deduction', [
+                'employee_id' => $emp->getKey(),
+                'period' => $period,
+                'error' => $e->getMessage(),
+            ]);
+            
             return 0;
         }
     }

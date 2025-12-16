@@ -58,11 +58,22 @@ class SaleService implements SaleServiceInterface
 
                     $refund = 0.0;
                     foreach ($items as $it) {
+                        // Validate required fields
+                        if (!isset($it['product_id']) || !isset($it['qty'])) {
+                            continue;
+                        }
+                        
                         $si = $sale->items->firstWhere('product_id', $it['product_id']);
                         if (! $si) {
                             continue;
                         }
                         $qty = min((float) $it['qty'], (float) $si->qty);
+                        
+                        // Skip if qty is zero or negative
+                        if ($qty <= 0) {
+                            continue;
+                        }
+                        
                         $line = $qty * (float) $si->price;
                         $refund += $line;
                     }

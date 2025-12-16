@@ -84,7 +84,12 @@ class Form extends Component
         $this->validate();
 
         $user = auth()->user();
-        $branchId = $user->branch_id ?? Branch::first()->id;
+        $branchId = $user->branch_id ?? Branch::first()?->id;
+        
+        if (!$branchId) {
+            session()->flash('error', __('No branch available. Please contact your administrator.'));
+            return;
+        }
 
         $data = [
             'branch_id' => $branchId,

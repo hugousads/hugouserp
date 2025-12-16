@@ -228,6 +228,8 @@ class Index extends Component
 
     public function toggleActive(int $id): void
     {
+        $this->authorize('inventory.units.manage');
+        
         $unit = UnitOfMeasure::find($id);
         if ($unit) {
             $unit->update(['is_active' => ! $unit->is_active]);

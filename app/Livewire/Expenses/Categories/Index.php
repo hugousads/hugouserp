@@ -140,6 +140,8 @@ class Index extends Component
 
     public function delete(int $id): void
     {
+        $this->authorize('expenses.manage');
+        
         $category = ExpenseCategory::find($id);
         if ($category) {
             if ($category->expenses()->count() > 0) {
@@ -153,6 +155,8 @@ class Index extends Component
 
     public function toggleActive(int $id): void
     {
+        $this->authorize('expenses.manage');
+        
         $category = ExpenseCategory::find($id);
         if ($category) {
             $category->update(['is_active' => ! $category->is_active]);
