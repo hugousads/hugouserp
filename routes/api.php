@@ -85,6 +85,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('webhooks')->group(function () {
         Route::post('/shopify/{storeId}', [WebhooksController::class, 'handleShopify'])->name('webhooks.shopify');
         Route::post('/woocommerce/{storeId}', [WebhooksController::class, 'handleWooCommerce'])->name('webhooks.woocommerce');
+        Route::post('/laravel/{storeId}', [WebhooksController::class, 'handleLaravel'])->name('webhooks.laravel');
     });
 
     // Auth routes (public routes + authenticated routes)
