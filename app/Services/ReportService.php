@@ -67,7 +67,7 @@ class ReportService implements ReportServiceInterface
                     ->join('sales as s', 's.id', '=', 'si.sale_id')
                     ->join('products as p', 'p.id', '=', 'si.product_id')
                     ->where('s.branch_id', $branchId)
-                    ->selectRaw('p.id, p.name, SUM(si.qty*si.price) as gross')
+                    ->selectRaw('p.id, p.name, SUM(si.qty*si.unit_price) as gross')
                     ->groupBy('p.id', 'p.name')
                     ->orderByDesc('gross')
                     ->limit($limit)
