@@ -815,6 +815,11 @@ Route::middleware('auth')->group(function () {
             ->name('api-docs')
             ->middleware('can:stores.view');
 
+        // Translation Management
+        Route::get('/translations', \App\Livewire\Admin\TranslationManager::class)
+            ->name('translations.index')
+            ->middleware('can:settings.view');
+
         // Currency Management
         Route::get('/currencies', \App\Livewire\Admin\CurrencyManager::class)
             ->name('currencies.index')

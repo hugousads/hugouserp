@@ -494,12 +494,12 @@
         @endif
 
         {{-- Translation Manager --}}
-        @if($canAccess('settings.translations.manage'))
-        <a href="{{ route('admin.settings') }}?tab=translations"
-           class="sidebar-link bg-gradient-to-r from-cyan-500 to-cyan-600 {{ $isActive('admin.settings') ? 'active ring-2 ring-white/30' : '' }}">
+        @if($canAccess('settings.view'))
+        <a href="{{ route('admin.translations.index') }}"
+           class="sidebar-link bg-gradient-to-r from-cyan-500 to-cyan-600 {{ $isActive('admin.translations') ? 'active ring-2 ring-white/30' : '' }}">
             <span class="text-lg">🌍</span>
             <span class="text-sm font-medium">{{ __('Translation Manager') }}</span>
-            @if($isActive('admin.settings'))
+            @if($isActive('admin.translations'))
                 <span class="ms-auto w-2 h-2 rounded-full bg-white animate-pulse"></span>
             @endif
         </a>
