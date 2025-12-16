@@ -335,22 +335,6 @@
                     <span class="text-sm">{{ __('Employees') }}</span>
                 </a>
                 
-                @if($canAccess('hrm.departments.view'))
-                <a href="{{ route('app.hrm.departments.index') }}"
-                   class="sidebar-link-secondary ms-4 {{ $isActive('app.hrm.departments') ? 'active' : '' }}">
-                    <span class="text-base">🏢</span>
-                    <span class="text-sm">{{ __('Departments') }}</span>
-                </a>
-                @endif
-                
-                @if($canAccess('hrm.positions.view'))
-                <a href="{{ route('app.hrm.positions.index') }}"
-                   class="sidebar-link-secondary ms-4 {{ $isActive('app.hrm.positions') ? 'active' : '' }}">
-                    <span class="text-base">💼</span>
-                    <span class="text-sm">{{ __('Positions') }}</span>
-                </a>
-                @endif
-                
                 @if($canAccess('hrm.attendance.view'))
                 <a href="{{ route('app.hrm.attendance.index') }}"
                    class="sidebar-link-secondary ms-4 {{ $isActive('app.hrm.attendance') ? 'active' : '' }}">
@@ -359,11 +343,11 @@
                 </a>
                 @endif
                 
-                @if($canAccess('hrm.leaves.view'))
-                <a href="{{ route('app.hrm.leaves.index') }}"
-                   class="sidebar-link-secondary ms-4 {{ $isActive('app.hrm.leaves') ? 'active' : '' }}">
-                    <span class="text-base">🏖️</span>
-                    <span class="text-sm">{{ __('Leave Management') }}</span>
+                @if($canAccess('hrm.view'))
+                <a href="{{ route('app.hrm.shifts.index') }}"
+                   class="sidebar-link-secondary ms-4 {{ $isActive('app.hrm.shifts') ? 'active' : '' }}">
+                    <span class="text-base">📅</span>
+                    <span class="text-sm">{{ __('Shifts') }}</span>
                 </a>
                 @endif
                 
@@ -372,6 +356,14 @@
                    class="sidebar-link-secondary ms-4 {{ $isActive('app.hrm.payroll') ? 'active' : '' }}">
                     <span class="text-base">💰</span>
                     <span class="text-sm">{{ __('Payroll') }}</span>
+                </a>
+                @endif
+                
+                @if($canAccess('hrm.view-reports'))
+                <a href="{{ route('app.hrm.reports') }}"
+                   class="sidebar-link-secondary ms-4 {{ $isActive('app.hrm.reports') ? 'active' : '' }}">
+                    <span class="text-base">📊</span>
+                    <span class="text-sm">{{ __('HR Reports') }}</span>
                 </a>
                 @endif
             </div>
