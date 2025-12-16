@@ -109,6 +109,9 @@ class RentalPeriodsSeeder extends Seeder
         ];
 
         foreach ($periods as $period) {
+            // Ensure module_id is included in the data to be created/updated
+            $period['module_id'] = $rentalModule->id;
+            
             RentalPeriod::updateOrCreate(
                 [
                     'module_id' => $rentalModule->id,
