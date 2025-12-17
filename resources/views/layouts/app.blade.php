@@ -239,6 +239,33 @@
     // CSRF Token Refresh - Prevents 419 Session Expired Errors
     // Refreshes the CSRF token every 30 minutes to keep sessions alive
     (function() {
+        let livewireHookRegistered = false;
+        
+        const updateCsrfToken = (token) => {
+            // Update meta tag
+            const metaTag = document.querySelector('meta[name="csrf-token"]');
+            if (metaTag) {
+                metaTag.setAttribute('content', token);
+            }
+            
+            // Update axios default header if available
+            if (window.axios) {
+                window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+            }
+            
+            // Register Livewire hook once to update CSRF token on requests
+            if (window.Livewire && !livewireHookRegistered) {
+                window.Livewire.hook('request', ({ options }) => {
+                    const currentToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    if (currentToken) {
+                        options.headers = options.headers || {};
+                        options.headers['X-CSRF-TOKEN'] = currentToken;
+                    }
+                });
+                livewireHookRegistered = true;
+            }
+        };
+        
         const refreshCsrfToken = async () => {
             try {
                 const response = await fetch('/csrf-token', {
@@ -252,32 +279,19 @@
                 if (response.ok) {
                     const data = await response.json();
                     if (data.csrf_token) {
-                        // Update meta tag
-                        const metaTag = document.querySelector('meta[name="csrf-token"]');
-                        if (metaTag) {
-                            metaTag.setAttribute('content', data.csrf_token);
-                        }
-                        
-                        // Update axios default header if available
-                        if (window.axios) {
-                            window.axios.defaults.headers.common['X-CSRF-TOKEN'] = data.csrf_token;
-                        }
-                        
-                        // Update Livewire's CSRF token if available
-                        if (window.Livewire) {
-                            window.Livewire.hook('request', ({ options }) => {
-                                options.headers = options.headers || {};
-                                options.headers['X-CSRF-TOKEN'] = data.csrf_token;
-                            });
-                        }
-                        
+                        updateCsrfToken(data.csrf_token);
+                        @if(config('app.debug'))
                         console.log('[CSRF] Token refreshed successfully');
+                        @endif
                     }
-                } else {
-                    console.warn('[CSRF] Failed to refresh token, status:', response.status);
+                } else if (response.status === 401) {
+                    // User is no longer authenticated, redirect to login
+                    window.location.href = '/login';
                 }
             } catch (error) {
+                @if(config('app.debug'))
                 console.error('[CSRF] Error refreshing token:', error);
+                @endif
             }
         };
         

@@ -92,11 +92,12 @@ Route::get('/health', function () {
 });
 
 // CSRF token refresh endpoint to prevent 419 errors during long sessions
+// Requires authentication and is rate-limited to prevent abuse
 Route::get('/csrf-token', function () {
     return response()->json([
         'csrf_token' => csrf_token(),
     ]);
-})->middleware('web');
+})->middleware(['web', 'auth', 'throttle:60,1']);
 
 /*
 |--------------------------------------------------------------------------
