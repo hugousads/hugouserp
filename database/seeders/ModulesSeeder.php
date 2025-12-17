@@ -14,17 +14,17 @@ class ModulesSeeder extends Seeder
     public function run(): void
     {
         $modules = [
-            ['key' => 'inventory',      'name' => 'Inventory',          'version' => '1.0.0', 'is_core' => true],
-            ['key' => 'sales',          'name' => 'Sales',              'version' => '1.0.0', 'is_core' => true],
-            ['key' => 'purchases',      'name' => 'Purchases',          'version' => '1.0.0', 'is_core' => true],
-            ['key' => 'pos',            'name' => 'Point of Sale',      'version' => '1.0.0', 'is_core' => true],
-            ['key' => 'manufacturing',  'name' => 'Manufacturing',      'version' => '1.0.0', 'is_core' => false],
-            ['key' => 'rental',         'name' => 'Rental',             'version' => '1.0.0', 'is_core' => false],
-            ['key' => 'motorcycle',     'name' => 'Motorcycle',         'version' => '1.0.0', 'is_core' => false],
-            ['key' => 'spares',         'name' => 'Spares',             'version' => '1.0.0', 'is_core' => false],
-            ['key' => 'wood',           'name' => 'Wood',               'version' => '1.0.0', 'is_core' => false],
-            ['key' => 'hrm',            'name' => 'HRM',                'version' => '1.0.0', 'is_core' => false],
-            ['key' => 'reports',        'name' => 'Reports',            'version' => '1.0.0', 'is_core' => true],
+            ['key' => 'inventory',      'name' => 'Inventory',          'version' => '1.0.0', 'is_core' => true,  'supports_items' => true],
+            ['key' => 'sales',          'name' => 'Sales',              'version' => '1.0.0', 'is_core' => true,  'supports_items' => true],
+            ['key' => 'purchases',      'name' => 'Purchases',          'version' => '1.0.0', 'is_core' => true,  'supports_items' => true],
+            ['key' => 'pos',            'name' => 'Point of Sale',      'version' => '1.0.0', 'is_core' => true,  'supports_items' => true],
+            ['key' => 'manufacturing',  'name' => 'Manufacturing',      'version' => '1.0.0', 'is_core' => false, 'supports_items' => true],
+            ['key' => 'rental',         'name' => 'Rental',             'version' => '1.0.0', 'is_core' => false, 'supports_items' => true],
+            ['key' => 'motorcycle',     'name' => 'Motorcycle',         'version' => '1.0.0', 'is_core' => false, 'supports_items' => true],
+            ['key' => 'spares',         'name' => 'Spares',             'version' => '1.0.0', 'is_core' => false, 'supports_items' => true],
+            ['key' => 'wood',           'name' => 'Wood',               'version' => '1.0.0', 'is_core' => false, 'supports_items' => true],
+            ['key' => 'hrm',            'name' => 'HRM',                'version' => '1.0.0', 'is_core' => false, 'supports_items' => false],
+            ['key' => 'reports',        'name' => 'Reports',            'version' => '1.0.0', 'is_core' => true,  'supports_items' => false],
         ];
 
         $createdModules = [];
@@ -37,6 +37,7 @@ class ModulesSeeder extends Seeder
                     'version' => $row['version'],
                     'is_core' => $row['is_core'],
                     'is_active' => true,
+                    'supports_items' => $row['supports_items'] ?? false,
                     'description' => $row['name'].' module',
                 ]
             );

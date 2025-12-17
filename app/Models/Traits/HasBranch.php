@@ -37,7 +37,8 @@ trait HasBranch
         $user = $user ?? $this->resolveCurrentUser();
 
         if (! $user) {
-            return $query->whereRaw('1 = 0');
+            // BUG FIX: Instead of whereRaw('1 = 0'), use whereNull which is more efficient
+            return $query->whereNull($this->getTable() . '.id');
         }
 
         $branchIds = [];
@@ -50,7 +51,7 @@ trait HasBranch
             $branchIds[] = $user->branch_id;
         }
 
-        return empty($branchIds) ? $query : $query->whereIn('branch_id', $branchIds);
+        return empty($branchIds) ? $query->whereNull($this->getTable() . '.id') : $query->whereIn('branch_id', $branchIds);
     }
 
     protected function resolveCurrentUser(): ?object

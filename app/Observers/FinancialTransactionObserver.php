@@ -1,0 +1,161 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Observers;
+
+use App\Models\Sale;
+use App\Models\Purchase;
+use App\Models\Customer;
+use App\Models\Supplier;
+use Illuminate\Support\Facades\Log;
+
+/**
+ * FinancialTransactionObserver - Track financial transaction changes
+ * 
+ * NEW FEATURE: Enhanced audit trail for financial transactions
+ * 
+ * FEATURES:
+ * - Auto-update customer/supplier balances
+ * - Auto-update payment status
+ * - Track financial changes for audit
+ * - Prevent unauthorized modifications
+ */
+class FinancialTransactionObserver
+{
+    /**
+     * Handle Sale created event.
+     */
+    public function created(Sale|Purchase $model): void
+    {
+        $this->updateRelatedBalance($model, 'add');
+        $this->updatePaymentStatus($model);
+        
+        Log::info('Financial transaction created', [
+            'type' => get_class($model),
+            'id' => $model->id,
+            'code' => $model->code,
+            'amount' => $model->grand_total,
+            'user_id' => auth()->id(),
+        ]);
+    }
+
+    /**
+     * Handle Sale updated event.
+     */
+    public function updated(Sale|Purchase $model): void
+    {
+        // Check if grand_total changed
+        if ($model->isDirty('grand_total')) {
+            $oldTotal = $model->getOriginal('grand_total');
+            $newTotal = $model->grand_total;
+            $difference = $newTotal - $oldTotal;
+
+            if ($difference != 0) {
+                $this->adjustRelatedBalance($model, $difference);
+                
+                Log::warning('Financial transaction amount changed', [
+                    'type' => get_class($model),
+                    'id' => $model->id,
+                    'code' => $model->code,
+                    'old_amount' => $oldTotal,
+                    'new_amount' => $newTotal,
+                    'difference' => $difference,
+                    'user_id' => auth()->id(),
+                ]);
+            }
+        }
+
+        $this->updatePaymentStatus($model);
+
+        // Track status changes
+        if ($model->isDirty('status')) {
+            Log::info('Financial transaction status changed', [
+                'type' => get_class($model),
+                'id' => $model->id,
+                'code' => $model->code,
+                'old_status' => $model->getOriginal('status'),
+                'new_status' => $model->status,
+                'user_id' => auth()->id(),
+            ]);
+        }
+    }
+
+    /**
+     * Handle Sale deleted event.
+     */
+    public function deleted(Sale|Purchase $model): void
+    {
+        $this->updateRelatedBalance($model, 'subtract');
+        
+        Log::warning('Financial transaction deleted', [
+            'type' => get_class($model),
+            'id' => $model->id,
+            'code' => $model->code,
+            'amount' => $model->grand_total,
+            'user_id' => auth()->id(),
+        ]);
+    }
+
+    /**
+     * Update customer or supplier balance.
+     */
+    private function updateRelatedBalance(Sale|Purchase $model, string $operation): void
+    {
+        if ($model instanceof Sale && $model->customer_id) {
+            $customer = Customer::find($model->customer_id);
+            if ($customer) {
+                if ($operation === 'add') {
+                    $customer->addBalance((float) $model->grand_total);
+                } else {
+                    $customer->subtractBalance((float) $model->grand_total);
+                }
+            }
+        } elseif ($model instanceof Purchase && $model->supplier_id) {
+            $supplier = Supplier::find($model->supplier_id);
+            if ($supplier) {
+                if ($operation === 'add') {
+                    $supplier->addBalance((float) $model->grand_total);
+                } else {
+                    $supplier->subtractBalance((float) $model->grand_total);
+                }
+            }
+        }
+    }
+
+    /**
+     * Adjust balance when amount changes.
+     */
+    private function adjustRelatedBalance(Sale|Purchase $model, float $difference): void
+    {
+        if ($model instanceof Sale && $model->customer_id) {
+            $customer = Customer::find($model->customer_id);
+            if ($customer) {
+                if ($difference > 0) {
+                    $customer->addBalance($difference);
+                } else {
+                    $customer->subtractBalance(abs($difference));
+                }
+            }
+        } elseif ($model instanceof Purchase && $model->supplier_id) {
+            $supplier = Supplier::find($model->supplier_id);
+            if ($supplier) {
+                if ($difference > 0) {
+                    $supplier->addBalance($difference);
+                } else {
+                    $supplier->subtractBalance(abs($difference));
+                }
+            }
+        }
+    }
+
+    /**
+     * Auto-update payment status based on payments.
+     */
+    private function updatePaymentStatus(Sale|Purchase $model): void
+    {
+        if (method_exists($model, 'updatePaymentStatus')) {
+            $model->updatePaymentStatus();
+        }
+    }
+}

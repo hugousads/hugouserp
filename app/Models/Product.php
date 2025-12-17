@@ -37,9 +37,16 @@ class Product extends BaseModel
         'cost_method', 'cost_currency', 'standard_cost', 'cost',
         'tax_id',
         'price_list_id', 'default_price', 'price_currency',
-        'min_stock', 'reorder_point', 'reorder_qty',
+        'min_stock', 'reorder_point', 'reorder_qty', 'stock_quantity', 'stock_alert_threshold',
+        'reserved_quantity',
         'is_serialized', 'is_batch_tracked',
         'track_stock_alerts',
+        'has_warranty', 'warranty_period_days', 'warranty_type',
+        'length', 'width', 'height', 'weight',
+        'manufacturer', 'brand', 'model_number', 'origin_country',
+        'manufacture_date', 'expiry_date', 'is_perishable', 'shelf_life_days',
+        'allow_backorder', 'requires_approval', 'minimum_order_quantity', 'maximum_order_quantity',
+        'msrp', 'wholesale_price', 'last_cost_update', 'last_price_update',
         'hourly_rate', 'service_duration', 'duration_unit',
         'status', 'notes',
         'extra_attributes',
@@ -53,6 +60,9 @@ class Product extends BaseModel
         'min_stock' => 'decimal:4',
         'reorder_point' => 'decimal:4',
         'reorder_qty' => 'decimal:4',
+        'stock_quantity' => 'decimal:4',
+        'stock_alert_threshold' => 'decimal:4',
+        'reserved_quantity' => 'decimal:4',
         'hourly_rate' => 'decimal:2',
         'service_duration' => 'integer',
         'is_serialized' => 'boolean',
@@ -60,6 +70,24 @@ class Product extends BaseModel
         'has_variations' => 'boolean',
         'has_variants' => 'boolean',
         'track_stock_alerts' => 'boolean',
+        'has_warranty' => 'boolean',
+        'warranty_period_days' => 'integer',
+        'length' => 'decimal:2',
+        'width' => 'decimal:2',
+        'height' => 'decimal:2',
+        'weight' => 'decimal:2',
+        'manufacture_date' => 'date',
+        'expiry_date' => 'date',
+        'is_perishable' => 'boolean',
+        'shelf_life_days' => 'integer',
+        'allow_backorder' => 'boolean',
+        'requires_approval' => 'boolean',
+        'minimum_order_quantity' => 'decimal:4',
+        'maximum_order_quantity' => 'decimal:4',
+        'msrp' => 'decimal:4',
+        'wholesale_price' => 'decimal:4',
+        'last_cost_update' => 'date',
+        'last_price_update' => 'date',
         'extra_attributes' => 'array',
         'variation_attributes' => 'array',
         'custom_fields' => 'array',
@@ -208,9 +236,129 @@ class Product extends BaseModel
         return $query->where('has_variations', true);
     }
 
+    public function scopeLowStock($query)
+    {
+        return $query->whereNotNull('stock_alert_threshold')
+            ->whereRaw('stock_quantity <= stock_alert_threshold');
+    }
+
+    public function scopeOutOfStock($query)
+    {
+        return $query->where('stock_quantity', '<=', 0);
+    }
+
+    public function scopeInStock($query)
+    {
+        return $query->where('stock_quantity', '>', 0);
+    }
+
+    public function scopeExpiringSoon($query, int $days = 30)
+    {
+        return $query->where('is_perishable', true)
+            ->whereNotNull('expiry_date')
+            ->whereBetween('expiry_date', [now(), now()->addDays($days)]);
+    }
+
+    public function scopeExpired($query)
+    {
+        return $query->where('is_perishable', true)
+            ->whereNotNull('expiry_date')
+            ->where('expiry_date', '<', now());
+    }
+
     public function uomLabel(): string
     {
         return $this->uom ?: 'unit';
+    }
+
+    // Business logic methods
+    public function isLowStock(): bool
+    {
+        return $this->stock_alert_threshold &&
+            $this->stock_quantity <= $this->stock_alert_threshold;
+    }
+
+    public function isOutOfStock(): bool
+    {
+        return $this->stock_quantity <= 0;
+    }
+
+    public function isInStock(float $quantity = 1): bool
+    {
+        return $this->getAvailableQuantity() >= $quantity;
+    }
+
+    public function getAvailableQuantity(): float
+    {
+        return max(0, $this->stock_quantity - $this->reserved_quantity);
+    }
+
+    public function reserveStock(float $quantity): bool
+    {
+        if (!$this->isInStock($quantity)) {
+            return false;
+        }
+
+        $this->increment('reserved_quantity', $quantity);
+        return true;
+    }
+
+    public function releaseStock(float $quantity): void
+    {
+        $this->decrement('reserved_quantity', $quantity);
+    }
+
+    public function addStock(float $quantity): void
+    {
+        $this->increment('stock_quantity', $quantity);
+    }
+
+    public function subtractStock(float $quantity): void
+    {
+        $this->decrement('stock_quantity', $quantity);
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->is_perishable &&
+            $this->expiry_date &&
+            $this->expiry_date->isPast();
+    }
+
+    public function isExpiringSoon(int $days = 30): bool
+    {
+        return $this->is_perishable &&
+            $this->expiry_date &&
+            $this->expiry_date->isBetween(now(), now()->addDays($days));
+    }
+
+    public function needsReorder(): bool
+    {
+        return $this->reorder_point &&
+            $this->stock_quantity <= $this->reorder_point;
+    }
+
+    public function getReorderSuggestion(): ?float
+    {
+        if (!$this->needsReorder()) {
+            return null;
+        }
+
+        return $this->reorder_qty ?? ($this->reorder_point * 2);
+    }
+
+    public function hasWarranty(): bool
+    {
+        return $this->has_warranty && $this->warranty_period_days > 0;
+    }
+
+    public function getWarrantyExpiryDate(\DateTime $purchaseDate): ?\DateTime
+    {
+        if (!$this->hasWarranty()) {
+            return null;
+        }
+
+        return (clone $purchaseDate)->modify("+{$this->warranty_period_days} days");
     }
 
     public function getFieldValue(string $fieldKey)

@@ -22,22 +22,31 @@ class Sale extends BaseModel
     protected $fillable = [
         'uuid', 'code', 'branch_id', 'warehouse_id', 'customer_id',
         'status', 'channel', 'currency',
-        'sub_total', 'discount_total', 'tax_total', 'shipping_total', 'grand_total',
-        'paid_total', 'due_total',
-        'reference_no', 'posted_at',
+        'sub_total', 'discount_total', 'discount_type', 'discount_value',
+        'tax_total', 'shipping_total', 'shipping_method', 'tracking_number',
+        'grand_total', 'paid_total', 'due_total', 'amount_paid', 'amount_due',
+        'payment_status', 'payment_due_date',
+        'expected_delivery_date', 'actual_delivery_date',
+        'reference_no', 'posted_at', 'sales_person',
         'store_order_id',
-        'notes', 'extra_attributes', 'created_by', 'updated_by',
+        'notes', 'internal_notes', 'extra_attributes', 'created_by', 'updated_by',
     ];
 
     protected $casts = [
         'sub_total' => 'decimal:4',
         'discount_total' => 'decimal:4',
+        'discount_value' => 'decimal:4',
         'tax_total' => 'decimal:4',
         'shipping_total' => 'decimal:4',
         'grand_total' => 'decimal:4',
         'paid_total' => 'decimal:4',
         'due_total' => 'decimal:4',
+        'amount_paid' => 'decimal:4',
+        'amount_due' => 'decimal:4',
         'posted_at' => 'datetime',
+        'payment_due_date' => 'date',
+        'expected_delivery_date' => 'date',
+        'actual_delivery_date' => 'date',
         'extra_attributes' => 'array',
     ];
 
@@ -103,6 +112,23 @@ class Sale extends BaseModel
         return $q->where('status', 'posted');
     }
 
+    public function scopePaid($q)
+    {
+        return $q->where('payment_status', 'paid');
+    }
+
+    public function scopeUnpaid($q)
+    {
+        return $q->where('payment_status', 'unpaid');
+    }
+
+    public function scopeOverdue($q)
+    {
+        return $q->where('payment_status', '!=', 'paid')
+            ->whereNotNull('payment_due_date')
+            ->where('payment_due_date', '<', now());
+    }
+
     public function getTotalPaidAttribute(): float
     {
         return (float) $this->payments()->sum('amount');
@@ -115,7 +141,41 @@ class Sale extends BaseModel
 
     public function isPaid(): bool
     {
-        return $this->remaining_amount <= 0;
+        return $this->remaining_amount <= 0 || $this->payment_status === 'paid';
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->payment_due_date &&
+            $this->payment_due_date->isPast() &&
+            !$this->isPaid();
+    }
+
+    public function isDelivered(): bool
+    {
+        return $this->actual_delivery_date !== null;
+    }
+
+    public function updatePaymentStatus(): void
+    {
+        $totalPaid = $this->total_paid;
+        $grandTotal = (float) $this->grand_total;
+
+        if ($totalPaid >= $grandTotal) {
+            $this->payment_status = 'paid';
+        } elseif ($totalPaid > 0) {
+            $this->payment_status = 'partial';
+        } else {
+            $this->payment_status = 'unpaid';
+        }
+
+        // Update amount fields for consistency
+        $this->amount_paid = $totalPaid;
+        $this->amount_due = max(0, $grandTotal - $totalPaid);
+        $this->paid_total = $totalPaid;
+        $this->due_total = $this->amount_due;
+
+        $this->saveQuietly();
     }
 
     public function storeOrder(): BelongsTo

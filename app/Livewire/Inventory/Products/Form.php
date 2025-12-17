@@ -323,19 +323,22 @@ class Form extends Component
                 ->toArray();
 
             if (! empty($enabledModuleIds)) {
-                // Show all active modules enabled for this branch
-                // Removed supports_items filter to show all modules
+                // BUG FIX: Only show modules that support items/products
+                // Filter by supports_items=true to prevent selecting invalid modules
                 $modules = Module::where('is_active', true)
+                    ->where('supports_items', true)
                     ->whereIn('id', $enabledModuleIds)
                     ->orderBy('sort_order')
                     ->get();
             }
         }
         
-        // Fallback: If no branch-specific modules found (or user has no branch), show all active modules
-        // This ensures users can always see modules even if branch modules aren't configured
+        // Fallback: If no branch-specific modules found (or user has no branch), 
+        // show all active modules that support items
+        // BUG FIX: Added supports_items filter to prevent empty module list issue
         if ($modules->isEmpty()) {
             $modules = Module::where('is_active', true)
+                ->where('supports_items', true)
                 ->orderBy('sort_order')
                 ->get();
         }

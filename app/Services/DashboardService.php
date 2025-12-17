@@ -355,6 +355,7 @@ class DashboardService
 
     /**
      * Generate top selling products data.
+     * BUG FIX: Use COALESCE for SUM to handle NULL values properly
      */
     private function generateTopSellingProductsData(?int $branchId, int $limit = 5): array
     {
@@ -364,8 +365,8 @@ class DashboardService
             ->select(
                 'products.id',
                 'products.name',
-                DB::raw('SUM(sale_items.qty) as total_quantity'),
-                DB::raw('SUM(sale_items.line_total) as total_revenue')
+                DB::raw('COALESCE(SUM(sale_items.qty), 0) as total_quantity'),
+                DB::raw('COALESCE(SUM(sale_items.line_total), 0) as total_revenue')
             )
             ->where('sales.status', '!=', 'cancelled')
             ->whereBetween('sales.created_at', [now()->subDays(30), now()])
@@ -385,6 +386,7 @@ class DashboardService
 
     /**
      * Generate top customers data.
+     * BUG FIX: Use COALESCE for SUM/COUNT to handle NULL values properly
      */
     private function generateTopCustomersData(?int $branchId, int $limit = 5): array
     {
@@ -394,7 +396,7 @@ class DashboardService
                 'customers.id',
                 'customers.name',
                 DB::raw('COUNT(sales.id) as total_orders'),
-                DB::raw('SUM(sales.grand_total) as total_spent')
+                DB::raw('COALESCE(SUM(sales.grand_total), 0) as total_spent')
             )
             ->where('sales.status', '!=', 'cancelled')
             ->whereBetween('sales.created_at', [now()->subDays(30), now()])
@@ -414,13 +416,15 @@ class DashboardService
 
     /**
      * Generate low stock alerts data.
+     * BUG FIX: Use COALESCE for stock_quantity comparison to handle NULL values
      */
     private function generateLowStockAlertsData(?int $branchId): array
     {
         $query = DB::table('products')
             ->select('id', 'name', 'sku', 'stock_quantity', 'stock_alert_threshold')
             ->whereNotNull('stock_alert_threshold')
-            ->whereRaw('stock_quantity <= stock_alert_threshold')
+            ->whereRaw('COALESCE(stock_quantity, 0) <= stock_alert_threshold')
+            ->where('status', 'active')
             ->orderBy('stock_quantity', 'asc')
             ->limit(10);
 
@@ -428,9 +432,21 @@ class DashboardService
             $query->where('branch_id', $branchId);
         }
 
+        $products = $query->get()->toArray();
+
+        // Count without limit for accurate total
+        $countQuery = DB::table('products')
+            ->whereNotNull('stock_alert_threshold')
+            ->whereRaw('COALESCE(stock_quantity, 0) <= stock_alert_threshold')
+            ->where('status', 'active');
+
+        if ($branchId) {
+            $countQuery->where('branch_id', $branchId);
+        }
+
         return [
-            'products' => $query->get()->toArray(),
-            'total_alerts' => $query->count(),
+            'products' => $products,
+            'total_alerts' => $countQuery->count(),
         ];
     }
 
