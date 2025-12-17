@@ -94,7 +94,7 @@ class Form extends Component
     {
         $this->products = Product::where('branch_id', auth()->user()->branch_id)
             ->where('status', 'active')
-            ->select('id', 'name', 'sku', 'price')
+            ->select('id', 'name', 'sku', 'default_price')
             ->get()
             ->toArray();
     }
