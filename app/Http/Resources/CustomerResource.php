@@ -38,7 +38,7 @@ class CustomerResource extends JsonResource
             ),
             'total_purchases' => $this->when(
                 $request->user()?->can('customers.view-financial') && $this->relationLoaded('sales'),
-                fn () => $this->sales->sum('total')
+                fn () => $this->sales->sum('grand_total')
             ),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

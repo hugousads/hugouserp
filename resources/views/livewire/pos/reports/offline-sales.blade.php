@@ -80,7 +80,7 @@
                             {{ $sale->customer?->name ?? '—' }}
                         </td>
                         <td class="px-3 py-2 text-xs text-right text-slate-800">
-                            {{ number_format($sale->total, 2) }}
+                            {{ number_format($sale->grand_total, 2) }}
                         </td>
                     </tr>
                 @empty

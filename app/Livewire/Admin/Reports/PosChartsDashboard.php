@@ -58,7 +58,7 @@ class PosChartsDashboard extends Component
             }
 
             $dayLabels[] = $date;
-            $dayValues[] = (float) $items->sum('total');
+            $dayValues[] = (float) $items->sum('grand_total');
         }
 
         $groupedByBranch = $sales->groupBy('branch_id');
@@ -68,7 +68,7 @@ class PosChartsDashboard extends Component
 
         foreach ($groupedByBranch as $branchId => $items) {
             $branchLabels[] = $branchId ? ('#'.$branchId) : __('N/A');
-            $branchValues[] = (float) $items->sum('total');
+            $branchValues[] = (float) $items->sum('grand_total');
         }
 
         $chartSalesByDay = [

@@ -29,9 +29,9 @@ class ClosePosDayJob implements ShouldQueue
         $sales = \App\Models\Sale::query()
             ->whereDate('created_at', $date)
             ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
-            ->get(['total', 'paid_total']);
+            ->get(['grand_total', 'paid_total']);
 
-        $gross = (float) $sales->sum('total');
+        $gross = (float) $sales->sum('grand_total');
         $paid = (float) $sales->sum('paid_total');
 
         // Save a closing record if you have a model/table for that
