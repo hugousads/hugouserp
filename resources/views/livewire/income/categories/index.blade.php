@@ -99,6 +99,9 @@
                 @empty
                     <tr>
                         <td colspan="6" class="text-center py-8 text-slate-500">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                            </svg>
                             {{ __('No categories found') }}
                         </td>
                     </tr>
@@ -114,58 +117,60 @@
 
 <!-- Modal -->
 @if($showModal)
-<div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="closeModal"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-slate-900 dark:text-white">
-                        {{ $editingId ? __('Edit Category') : __('Add Category') }}
-                    </h3>
-                    <button wire:click="closeModal" class="text-slate-400 hover:text-slate-500">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto" wire:click.self="closeModal">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg mx-auto my-auto max-h-[90vh] overflow-y-auto">
+            <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                <h3 class="text-lg font-semibold flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                    </svg>
+                    {{ $editingId ? __('Edit Category') : __('Add Category') }}
+                </h3>
+            </div>
+            <form wire:submit.prevent="save" class="p-6 space-y-4">
+                <div>
+                    <label class="erp-label">{{ __('Name') }} <span class="text-red-500">*</span></label>
+                    <input type="text" wire:model="name" class="erp-input mt-1 @error('name') border-red-500 @enderror" placeholder="{{ __('Category name') }}">
+                    @error('name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="erp-label">{{ __('Arabic Name') }}</label>
+                    <input type="text" wire:model="nameAr" class="erp-input mt-1" dir="rtl" placeholder="{{ __('اسم التصنيف') }}">
+                    @error('nameAr') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="erp-label">{{ __('Description') }}</label>
+                    <textarea wire:model="description" rows="3" class="erp-input mt-1" placeholder="{{ __('Optional description') }}"></textarea>
+                    @error('description') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="flex items-center pt-2">
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" wire:model="isActive" id="isActive" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                        <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('Active') }}</span>
+                    </label>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" wire:click="closeModal" class="erp-btn-secondary" wire:loading.attr="disabled">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="submit" class="erp-btn-primary" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="save">
+                            {{ $editingId ? __('Save Changes') : __('Create Category') }}
+                        </span>
+                        <span wire:loading wire:target="save">
+                            <svg class="animate-spin h-5 w-5 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            {{ __('Saving...') }}
+                        </span>
                     </button>
                 </div>
-                
-                <form wire:submit="save" class="space-y-4">
-                    <div>
-                        <label class="erp-label">{{ __('Name') }} <span class="text-red-500">*</span></label>
-                        <input type="text" wire:model="name" class="erp-input @error('name') border-red-500 @enderror">
-                        @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <label class="erp-label">{{ __('Arabic Name') }}</label>
-                        <input type="text" wire:model="nameAr" class="erp-input" dir="rtl">
-                        @error('nameAr') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div>
-                        <label class="erp-label">{{ __('Description') }}</label>
-                        <textarea wire:model="description" rows="3" class="erp-input"></textarea>
-                        @error('description') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" wire:model="isActive" id="isActive" class="rounded border-slate-300 text-emerald-600">
-                        <label for="isActive" class="text-sm">{{ __('Active') }}</label>
-                    </div>
-
-                    <div class="flex justify-end gap-3 pt-4">
-                        <button type="button" wire:click="closeModal" class="erp-btn erp-btn-secondary">
-                            {{ __('Cancel') }}
-                        </button>
-                        <button type="submit" class="erp-btn erp-btn-primary">
-                            {{ $editingId ? __('Update') : __('Save') }}
-                        </button>
-                    </div>
-                </form>
-            </div>
+            </form>
         </div>
     </div>
-</div>
 @endif

@@ -78,8 +78,17 @@ class Form extends Component
     public function save(): void
     {
         $validated = $this->validate();
-        $validated['branch_id'] = auth()->user()->branches()->first()?->id;
-        $validated['created_by'] = auth()->id();
+        
+        // Get the user's branch - handle both direct branch_id and relationship
+        $user = auth()->user();
+        $branchId = $user->branch_id ?? $user->branches()->first()?->id ?? 1;
+        
+        $validated['branch_id'] = $branchId;
+        
+        // Only set created_by for new records
+        if (!$this->editMode) {
+            $validated['created_by'] = auth()->id();
+        }
 
         $this->handleOperation(
             operation: function () use ($validated) {

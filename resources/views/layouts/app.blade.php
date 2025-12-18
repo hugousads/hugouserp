@@ -61,41 +61,9 @@
         
         /* Responsive improvements */
         @media (max-width: 768px) {
-            .mobile-menu-toggle {
-                display: flex !important;
-            }
-            aside {
-                position: fixed;
-                left: 0;
-                top: 0;
-                height: 100vh;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                z-index: 50;
-            }
-            aside.sidebar-open {
-                transform: translateX(0);
-            }
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(0,0,0,0.5);
-                z-index: 40;
-            }
-            .sidebar-overlay.active {
-                display: block;
-            }
             .responsive-table {
-                overflow-x: auto;
+                overflow-x-auto;
                 -webkit-overflow-scrolling: touch;
-            }
-        }
-        
-        /* Better touch targets */
-        @media (pointer: coarse) {
-            .sidebar-link, button, a {
-                min-height: 44px;
             }
         }
     </style>
@@ -138,7 +106,7 @@
 <div class="min-h-screen flex {{ $dir === 'rtl' ? 'flex-row-reverse' : 'flex-row' }}">
 
     {{-- Sidebar --}}
-    @includeIf('layouts.sidebar')
+    @includeIf('layouts.sidebar-improved')
 
     {{-- Main --}}
     <div class="flex-1 flex flex-col min-h-screen">

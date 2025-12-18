@@ -24,6 +24,8 @@ trait HandlesErrors
                 $this->redirectRoute($redirectRoute, navigate: true);
             }
         } catch (ValidationException $e) {
+            // Re-throw validation exceptions so Livewire can handle them properly
+            // This ensures validation errors are displayed to the user
             throw $e;
         } catch (QueryException $e) {
             Log::error('Database error in Livewire component', [
@@ -32,6 +34,8 @@ trait HandlesErrors
                 'user_id' => auth()->id(),
             ]);
 
+            // Dispatch browser event to hide loading states
+            $this->dispatch('operation-failed');
             session()->flash('error', __('A database error occurred. Please try again.'));
         } catch (Throwable $e) {
             Log::error('Error in Livewire component', [
@@ -41,6 +45,8 @@ trait HandlesErrors
                 'user_id' => auth()->id(),
             ]);
 
+            // Dispatch browser event to hide loading states
+            $this->dispatch('operation-failed');
             session()->flash('error', __('An unexpected error occurred. Please try again.'));
         }
     }

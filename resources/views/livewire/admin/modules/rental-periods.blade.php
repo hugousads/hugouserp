@@ -109,15 +109,18 @@
     </div>
 
     @if($showModal)
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-                <div class="p-6 border-b border-gray-200">
-                    <h2 class="text-xl font-bold text-gray-800">
+        <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto" wire:click.self="closeModal">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg mx-auto my-auto max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                         {{ $isEditing ? __('Edit Period') : __('Add New Period') }}
                     </h2>
                 </div>
                 
-                <form wire:submit="save" class="p-6 space-y-4">
+                <form wire:submit.prevent="save" class="p-6 space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Period Key') }} *</label>
@@ -183,12 +186,21 @@
                         </label>
                     </div>
                     
-                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                        <button type="button" wire:click="closeModal" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button type="button" wire:click="closeModal" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition" wire:loading.attr="disabled">
                             {{ __('Cancel') }}
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition">
-                            {{ $isEditing ? __('Update') : __('Create') }}
+                        <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="save">
+                                {{ $isEditing ? __('Update Period') : __('Create Period') }}
+                            </span>
+                            <span wire:loading wire:target="save" class="flex items-center gap-2">
+                                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                {{ __('Saving...') }}
+                            </span>
                         </button>
                     </div>
                 </form>

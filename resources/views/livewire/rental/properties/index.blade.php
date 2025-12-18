@@ -136,47 +136,53 @@
     </div>
 
     @if($showModal)
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" wire:click="closeModal"></div>
-            <div class="inline-block align-bottom bg-white rounded-xl text-start overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <form wire:submit="save">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
-                        <h3 class="text-lg font-semibold text-slate-800 mb-4">
-                            {{ $editingId ? __('Edit Property') : __('Add Property') }}
-                        </h3>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Property Name') }} *</label>
-                                <input type="text" wire:model="name" class="erp-input" required>
-                                @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Address') }}</label>
-                                <input type="text" wire:model="address" class="erp-input">
-                                @error('address') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Notes') }}</label>
-                                <textarea wire:model="notes" rows="3" class="erp-input"></textarea>
-                                @error('notes') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-slate-50 px-4 py-3 sm:px-6 flex justify-end gap-3">
-                        <button type="button" wire:click="closeModal" class="erp-btn erp-btn-secondary">
-                            {{ __('Cancel') }}
-                        </button>
-                        <button type="submit" class="erp-btn erp-btn-primary">
-                            {{ $editingId ? __('Update') : __('Save') }}
-                        </button>
-                    </div>
-                </form>
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto" wire:click.self="closeModal">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg mx-auto my-auto max-h-[90vh] overflow-y-auto">
+            <div class="px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                <h3 class="text-lg font-semibold flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    {{ $editingId ? __('Edit Property') : __('Add Property') }}
+                </h3>
             </div>
+            <form wire:submit.prevent="save" class="p-6 space-y-4">
+                <div>
+                    <label class="erp-label">{{ __('Property Name') }} <span class="text-red-500">*</span></label>
+                    <input type="text" wire:model="name" class="erp-input mt-1 @error('name') border-red-500 @enderror" placeholder="{{ __('Property name') }}" required>
+                    @error('name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+                
+                <div>
+                    <label class="erp-label">{{ __('Address') }}</label>
+                    <input type="text" wire:model="address" class="erp-input mt-1 @error('address') border-red-500 @enderror" placeholder="{{ __('Property address') }}">
+                    @error('address') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+                
+                <div>
+                    <label class="erp-label">{{ __('Notes') }}</label>
+                    <textarea wire:model="notes" rows="3" class="erp-input mt-1 @error('notes') border-red-500 @enderror" placeholder="{{ __('Optional notes') }}"></textarea>
+                    @error('notes') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                </div>
+                
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" wire:click="closeModal" class="erp-btn-secondary" wire:loading.attr="disabled">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="submit" class="erp-btn-primary" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="save">
+                            {{ $editingId ? __('Update Property') : __('Create Property') }}
+                        </span>
+                        <span wire:loading wire:target="save">
+                            <svg class="animate-spin h-5 w-5 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            {{ __('Saving...') }}
+                        </span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
     @endif
