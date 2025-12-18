@@ -120,16 +120,24 @@
                     ['route' => 'app.manufacturing.work-centers.index', 'icon' => '🔧', 'label' => __('Work Centers'), 'permission' => 'manufacturing.view'],
                 ]],
                 ['route' => 'app.fixed-assets.index', 'icon' => '🏗️', 'label' => __('Fixed Assets'), 'permission' => 'fixed-assets.view', 'gradient' => 'from-stone-500 to-stone-600'],
+                ['route' => 'app.projects.index', 'icon' => '📋', 'label' => __('Projects'), 'permission' => 'projects.view', 'gradient' => 'from-blue-500 to-blue-600'],
+                ['route' => 'app.helpdesk.index', 'icon' => '🎫', 'label' => __('Helpdesk'), 'permission' => 'helpdesk.view', 'gradient' => 'from-purple-500 to-purple-600', 'children' => [
+                    ['route' => 'app.helpdesk.tickets.index', 'icon' => '🎫', 'label' => __('Tickets'), 'permission' => 'helpdesk.view'],
+                ]],
+                ['route' => 'app.documents.index', 'icon' => '📄', 'label' => __('Documents'), 'permission' => 'documents.view', 'gradient' => 'from-orange-500 to-orange-600'],
             ]
         ],
         [
             'title' => __('Reports'),
             'icon' => '📊',
             'items' => [
-                ['route' => 'admin.reports.index', 'icon' => '📊', 'label' => __('Reports'), 'permission' => 'reports.view', 'gradient' => 'from-purple-500 to-purple-600', 'children' => [
-                    ['route' => 'admin.reports.inventory', 'icon' => '📦', 'label' => __('Inventory'), 'permission' => 'reports.view'],
-                    ['route' => 'admin.reports.pos', 'icon' => '🧾', 'label' => __('POS'), 'permission' => 'reports.view'],
-                    ['route' => 'admin.reports.scheduled', 'icon' => '📅', 'label' => __('Scheduled'), 'permission' => 'reports.view'],
+                ['route' => 'admin.reports.index', 'icon' => '📊', 'label' => __('Reports Hub'), 'permission' => 'reports.view', 'gradient' => 'from-purple-500 to-purple-600', 'children' => [
+                    ['route' => 'admin.reports.sales', 'icon' => '💰', 'label' => __('Sales'), 'permission' => 'sales.view-reports'],
+                    ['route' => 'admin.reports.inventory', 'icon' => '📦', 'label' => __('Inventory'), 'permission' => 'inventory.view-reports'],
+                    ['route' => 'admin.reports.pos', 'icon' => '🧾', 'label' => __('POS'), 'permission' => 'pos.view-reports'],
+                    ['route' => 'admin.reports.aggregate', 'icon' => '📈', 'label' => __('Aggregate'), 'permission' => 'reports.aggregate'],
+                    ['route' => 'admin.reports.scheduled', 'icon' => '📅', 'label' => __('Scheduled'), 'permission' => 'reports.schedule'],
+                    ['route' => 'admin.reports.templates', 'icon' => '📋', 'label' => __('Templates'), 'permission' => 'reports.templates'],
                 ]],
             ]
         ],
@@ -149,7 +157,7 @@
                 ['route' => 'admin.currencies.index', 'icon' => '💱', 'label' => __('Currencies'), 'permission' => 'settings.view', 'gradient' => 'from-yellow-500 to-yellow-600', 'children' => [
                     ['route' => 'admin.currency-rates.index', 'icon' => '📈', 'label' => __('Exchange Rates'), 'permission' => 'settings.view'],
                 ]],
-                ['route' => 'admin.media.index', 'icon' => '🖼️', 'label' => __('Media Library'), 'permission' => 'settings.view', 'gradient' => 'from-rose-500 to-rose-600'],
+                ['route' => 'admin.media.index', 'icon' => '🖼️', 'label' => __('Media Library'), 'permission' => 'media.view', 'gradient' => 'from-rose-500 to-rose-600'],
                 ['route' => 'admin.logs.audit', 'icon' => '📜', 'label' => __('Audit Logs'), 'permission' => 'logs.audit.view', 'gradient' => 'from-gray-500 to-gray-600', 'children' => [
                     ['route' => 'admin.activity-log', 'icon' => '📋', 'label' => __('Activity Log'), 'permission' => 'logs.audit.view'],
                 ]],
