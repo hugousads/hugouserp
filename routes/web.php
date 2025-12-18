@@ -210,6 +210,15 @@ Route::middleware('auth')->group(function () {
             ->name('analytics')
             ->middleware('can:sales.view-reports');
 
+        // Export & Import
+        Route::get('/export', \App\Http\Controllers\Branch\Sales\ExportImportController::class . '@exportSales')
+            ->name('export')
+            ->middleware('can:sales.export');
+
+        Route::post('/import', \App\Http\Controllers\Branch\Sales\ExportImportController::class . '@importSales')
+            ->name('import')
+            ->middleware('can:sales.import');
+
         Route::get('/{sale}', \App\Livewire\Sales\Show::class)
             ->name('show')
             ->middleware('can:sales.view')
@@ -266,6 +275,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/grn/create', \App\Livewire\Purchases\GRN\Form::class)
             ->name('grn.create')
             ->middleware('can:purchases.manage');
+
+        // Export & Import
+        Route::get('/export', \App\Http\Controllers\Branch\Purchases\ExportImportController::class . '@exportPurchases')
+            ->name('export')
+            ->middleware('can:purchases.export');
+
+        Route::post('/import', \App\Http\Controllers\Branch\Purchases\ExportImportController::class . '@importPurchases')
+            ->name('import')
+            ->middleware('can:purchases.import');
 
         // Wildcard routes must come last
         Route::get('/{purchase}', \App\Livewire\Purchases\Show::class)
@@ -866,11 +884,25 @@ Route::middleware('auth')->group(function () {
             ->name('settings')
             ->middleware('can:settings.view');
 
+        // Module-specific settings pages
+        Route::get('/settings/warehouse', \App\Livewire\Admin\Settings\WarehouseSettings::class)
+            ->name('settings.warehouse')
+            ->middleware('can:settings.view');
+
+        Route::get('/settings/purchases', \App\Livewire\Admin\Settings\PurchasesSettings::class)
+            ->name('settings.purchases')
+            ->middleware('can:settings.view');
+
         // Redirects from old settings routes
         Route::redirect('/settings/system', '/admin/settings?tab=general');
         Route::redirect('/settings/branch', '/admin/settings?tab=branch');
         Route::redirect('/settings/translations', '/admin/settings?tab=translations');
         Route::redirect('/settings/advanced', '/admin/settings?tab=advanced');
+
+        // Export & Import
+        Route::get('/export/customize', \App\Livewire\Admin\Export\CustomizeExport::class)
+            ->name('export.customize')
+            ->middleware('can:reports.export');
 
         // Media Library
         Route::get('/media', \App\Livewire\Admin\MediaLibrary::class)
