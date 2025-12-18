@@ -6,12 +6,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class Supplier extends BaseModel
 {
-    use LogsActivity;
+    use LogsActivity, SoftDeletes;
 
     protected ?string $moduleKey = 'suppliers';
 

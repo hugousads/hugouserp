@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
@@ -14,7 +15,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Product extends BaseModel
 {
-    use LogsActivity;
+    use LogsActivity, SoftDeletes;
     protected ?string $moduleKey = 'inventory';
 
     protected $table = 'products';
@@ -41,9 +42,9 @@ class Product extends BaseModel
         'reserved_quantity', 'lead_time_days', 'location_code',
         'is_serialized', 'is_batch_tracked',
         'track_stock_alerts',
-        'has_warranty', 'warranty_period_days', 'warranty_type',
+        'has_warranty', 'warranty_period_days', 'warranty_period', 'warranty_type',
         'length', 'width', 'height', 'weight',
-        'manufacturer', 'brand', 'model_number', 'origin_country',
+        'manufacturer', 'brand', 'model_number', 'origin_country', 'hs_code',
         'manufacture_date', 'expiry_date', 'is_perishable', 'shelf_life_days',
         'allow_backorder', 'requires_approval', 'minimum_order_quantity', 'maximum_order_quantity',
         'msrp', 'wholesale_price', 'last_cost_update', 'last_price_update',

@@ -6,13 +6,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class Purchase extends BaseModel
 {
-    use LogsActivity;
+    use LogsActivity, SoftDeletes;
     protected ?string $moduleKey = 'purchases';
 
     protected $table = 'purchases';
@@ -22,8 +23,8 @@ class Purchase extends BaseModel
     protected $fillable = [
         'uuid', 'code', 'branch_id', 'warehouse_id', 'supplier_id',
         'status', 'currency', 'sub_total', 'discount_total', 'discount_type', 'discount_value',
-        'tax_total', 'shipping_total', 'shipping_method', 'grand_total',
-        'paid_total', 'due_total', 'amount_paid', 'amount_due',
+        'tax_total', 'shipping_total', 'shipping_method', 'shipping_carrier', 'grand_total',
+        'estimated_profit_margin', 'paid_total', 'due_total', 'amount_paid', 'amount_due',
         'payment_status', 'payment_due_date',
         'expected_delivery_date', 'actual_delivery_date', 'delivery_status',
         'approved_by', 'approved_at', 'requisition_number',
@@ -38,6 +39,7 @@ class Purchase extends BaseModel
         'tax_total' => 'decimal:4',
         'shipping_total' => 'decimal:4',
         'grand_total' => 'decimal:4',
+        'estimated_profit_margin' => 'decimal:4',
         'paid_total' => 'decimal:4',
         'due_total' => 'decimal:4',
         'amount_paid' => 'decimal:4',

@@ -6,9 +6,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RentalContract extends BaseModel
 {
+    use SoftDeletes;
     protected ?string $moduleKey = 'rentals';
 
     protected $fillable = [
