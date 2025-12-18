@@ -54,6 +54,9 @@ class PurchaseService implements PurchaseServiceInterface
                     'sub_total' => 0, 'tax_total' => 0, 'discount_total' => 0, 'grand_total' => 0,
                     'paid_total' => 0, 'due_total' => 0,
                 ]);
+                
+                $subtotal = '0';
+                
                 foreach ($payload['items'] ?? [] as $it) {
                     // Skip invalid items without required fields
                     if (!isset($it['product_id']) || !isset($it['qty'])) {
@@ -63,17 +66,44 @@ class PurchaseService implements PurchaseServiceInterface
                     $qty = (float) $it['qty'];
                     $unitCost = (float) ($it['price'] ?? 0);
                     
+                    // Critical ERP: Validate positive quantities and prices
+                    if ($qty <= 0) {
+                        throw new \InvalidArgumentException("Quantity must be positive for product {$it['product_id']}");
+                    }
+                    
+                    if ($unitCost < 0) {
+                        throw new \InvalidArgumentException("Unit cost cannot be negative for product {$it['product_id']}");
+                    }
+                    
+                    // Use bcmath for precise calculation
+                    $lineTotal = bcmul((string) $qty, (string) $unitCost, 2);
+                    $subtotal = bcadd($subtotal, $lineTotal, 2);
+                    
                     PurchaseItem::create([
                         'purchase_id' => $p->getKey(),
                         'product_id' => $it['product_id'],
                         'qty' => $qty,
                         'unit_cost' => $unitCost,
-                        'line_total' => $qty * $unitCost,
+                        'line_total' => (float) $lineTotal,
                     ]);
                 }
-                $p->sub_total = (float) $p->items()->sum('line_total');
+                
+                $p->sub_total = (float) $subtotal;
                 $p->grand_total = $p->sub_total;
                 $p->due_total = $p->grand_total;
+                
+                // Critical ERP: Validate supplier minimum order value
+                if ($p->supplier_id) {
+                    $supplier = \App\Models\Supplier::find($p->supplier_id);
+                    if ($supplier && $supplier->minimum_order_value > 0) {
+                        if ($p->grand_total < $supplier->minimum_order_value) {
+                            throw new \InvalidArgumentException(
+                                "Order total ({$p->grand_total}) is below supplier minimum order value ({$supplier->minimum_order_value})"
+                            );
+                        }
+                    }
+                }
+                
                 $p->save();
 
                 return $p;
@@ -136,8 +166,13 @@ class PurchaseService implements PurchaseServiceInterface
                     ));
                 }
 
-                $p->paid_total = round((float) $p->paid_total + $amount, 2);
-                $p->due_total = round(max(0, $p->grand_total - $p->paid_total), 2);
+                // Critical ERP: Use bcmath for precise money calculations
+                $newPaidTotal = bcadd((string) $p->paid_total, (string) $amount, 2);
+                $p->paid_total = (float) $newPaidTotal;
+                
+                // Calculate due amount with precision
+                $dueAmount = bcsub((string) $p->grand_total, $newPaidTotal, 2);
+                $p->due_total = max(0, (float) $dueAmount);
                 if ($p->paid_total >= $p->grand_total) {
                     $p->status = 'paid';
                 }

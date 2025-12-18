@@ -225,10 +225,28 @@ class AccountingService
      */
     public function validateBalance(JournalEntry $entry): bool
     {
-        $totalDebit = $entry->lines()->sum('debit');
-        $totalCredit = $entry->lines()->sum('credit');
+        // Critical ERP: Use bcmath for precise balance validation
+        $totalDebit = '0';
+        $totalCredit = '0';
+        
+        foreach ($entry->lines as $line) {
+            $totalDebit = bcadd($totalDebit, (string) $line->debit, 2);
+            $totalCredit = bcadd($totalCredit, (string) $line->credit, 2);
+        }
+        
+        $difference = bcsub($totalDebit, $totalCredit, 2);
+        
+        // Log unbalanced entries for audit
+        if (abs((float) $difference) >= 0.01) {
+            \Log::error('Unbalanced journal entry detected', [
+                'entry_id' => $entry->id,
+                'total_debit' => $totalDebit,
+                'total_credit' => $totalCredit,
+                'difference' => $difference,
+            ]);
+        }
 
-        return abs($totalDebit - $totalCredit) < 0.01;
+        return abs((float) $difference) < 0.01;
     }
 
     /**
@@ -396,15 +414,18 @@ class AccountingService
      */
     public function validateBalancedEntry(array $items): bool
     {
-        $totalDebit = 0;
-        $totalCredit = 0;
+        // Critical ERP: Use bcmath for precise validation
+        $totalDebit = '0';
+        $totalCredit = '0';
 
         foreach ($items as $item) {
-            $totalDebit += (float) ($item['debit'] ?? 0);
-            $totalCredit += (float) ($item['credit'] ?? 0);
+            $totalDebit = bcadd($totalDebit, (string) ($item['debit'] ?? 0), 2);
+            $totalCredit = bcadd($totalCredit, (string) ($item['credit'] ?? 0), 2);
         }
+        
+        $difference = bcsub($totalDebit, $totalCredit, 2);
 
-        return abs($totalDebit - $totalCredit) < 0.01;
+        return abs((float) $difference) < 0.01;
     }
 
     /**

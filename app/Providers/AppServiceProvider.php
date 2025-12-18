@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Models\Product;
+use App\Observers\PriceAuditObserver;
 use App\Observers\ProductObserver;
 use App\Services\Contracts\ModuleFieldServiceInterface;
 use App\Services\Contracts\ProductServiceInterface;
@@ -60,5 +61,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Observers
         Product::observe(ProductObserver::class);
+        Product::observe(PriceAuditObserver::class); // Critical ERP: Price audit trail
     }
 }
