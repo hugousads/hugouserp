@@ -120,7 +120,7 @@ return new class extends Migration
         }
 
         if (Schema::hasTable('suppliers')) {
-            Schema->table('suppliers', function (Blueprint $table) {
+            Schema::table('suppliers', function (Blueprint $table) {
                 $table->dropColumn(['payment_terms', 'lead_time_days', 'minimum_order_value', 'supplier_rating', 'last_purchase_date']);
             });
         }
