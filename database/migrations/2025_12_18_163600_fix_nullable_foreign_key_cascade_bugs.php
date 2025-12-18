@@ -98,15 +98,17 @@ return new class extends Migration
 
     /**
      * Helper method to drop foreign key if it exists
+     * Compatible with Laravel 12+ (no Doctrine dependency)
      */
     protected function dropForeignKeyIfExists(string $table, string $foreignKey): void
     {
         try {
-            $sm = Schema::getConnection()->getDoctrineSchemaManager();
-            $foreignKeys = $sm->listTableForeignKeys($table);
+            $connection = Schema::getConnection();
+            $schemaBuilder = $connection->getSchemaBuilder();
+            $foreignKeys = $schemaBuilder->getForeignKeys($table);
             
             foreach ($foreignKeys as $fk) {
-                if ($fk->getName() === $foreignKey) {
+                if ($fk['name'] === $foreignKey) {
                     Schema::table($table, function (Blueprint $blueprint) use ($foreignKey) {
                         $blueprint->dropForeign($foreignKey);
                     });

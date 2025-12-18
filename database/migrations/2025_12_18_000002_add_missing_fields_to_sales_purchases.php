@@ -161,9 +161,16 @@ return new class extends Migration
     protected function indexExists(string $table, string $index): bool
     {
         try {
-            $sm = Schema::getConnection()->getDoctrineSchemaManager();
-            $indexes = $sm->listTableIndexes($table);
-            return isset($indexes[$index]);
+            $connection = Schema::getConnection();
+            $schemaBuilder = $connection->getSchemaBuilder();
+            $indexes = $schemaBuilder->getIndexes($table);
+            
+            foreach ($indexes as $indexInfo) {
+                if ($indexInfo['name'] === $index) {
+                    return true;
+                }
+            }
+            return false;
         } catch (\Exception $e) {
             return false;
         }
@@ -171,14 +178,17 @@ return new class extends Migration
 
     /**
      * Check if a foreign key exists
+     * Compatible with Laravel 12+ (no Doctrine dependency)
      */
     protected function foreignKeyExists(string $table, string $foreignKey): bool
     {
         try {
-            $sm = Schema::getConnection()->getDoctrineSchemaManager();
-            $foreignKeys = $sm->listTableForeignKeys($table);
+            $connection = Schema::getConnection();
+            $schemaBuilder = $connection->getSchemaBuilder();
+            $foreignKeys = $schemaBuilder->getForeignKeys($table);
+            
             foreach ($foreignKeys as $fk) {
-                if ($fk->getName() === $foreignKey) {
+                if ($fk['name'] === $foreignKey) {
                     return true;
                 }
             }

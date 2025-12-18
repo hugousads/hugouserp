@@ -354,12 +354,29 @@ return new class extends Migration
 
     /**
      * Check if an index exists
+     * Compatible with Laravel 12+ (no Doctrine dependency)
      */
     protected function indexExists(string $table, string $index): bool
     {
-        $sm = Schema::getConnection()->getDoctrineSchemaManager();
-        $indexes = $sm->listTableIndexes($table);
-        
-        return isset($indexes[$index]);
+        try {
+            $connection = Schema::getConnection();
+            $schemaBuilder = $connection->getSchemaBuilder();
+            
+            // Get all indexes for the table
+            $indexes = $schemaBuilder->getIndexes($table);
+            
+            // Check if index exists by name
+            foreach ($indexes as $indexInfo) {
+                if ($indexInfo['name'] === $index) {
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (\Exception $e) {
+            // If we can't determine, assume it doesn't exist to allow creation attempt
+            // Laravel will handle duplicate index errors gracefully
+            return false;
+        }
     }
 };
