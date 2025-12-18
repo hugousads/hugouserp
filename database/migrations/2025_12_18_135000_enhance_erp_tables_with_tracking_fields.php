@@ -65,9 +65,8 @@ return new class extends Migration
                 if (!Schema::hasColumn('products', 'location_code')) {
                     $table->string('location_code')->nullable()->after('lead_time_days');
                 }
-                if (!Schema::hasColumn('products', 'shelf_life_days')) {
-                    $table->string('shelf_life_days')->nullable()->after('location_code');
-                }
+                // Note: shelf_life_days already added by migration 2025_12_18_000003
+                // Skipping to avoid conflicts
             });
         }
 
@@ -183,9 +182,7 @@ return new class extends Migration
                 if (Schema::hasColumn('products', 'location_code')) {
                     $columnsToDropProducts[] = 'location_code';
                 }
-                if (Schema::hasColumn('products', 'shelf_life_days')) {
-                    $columnsToDropProducts[] = 'shelf_life_days';
-                }
+                // Note: shelf_life_days is from earlier migration, don't drop it
                 if (!empty($columnsToDropProducts)) {
                     $table->dropColumn($columnsToDropProducts);
                 }
