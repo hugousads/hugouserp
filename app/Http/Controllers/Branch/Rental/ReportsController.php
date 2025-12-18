@@ -12,6 +12,10 @@ class ReportsController extends Controller
 {
     public function occupancy(Request $request): StreamedResponse
     {
+        $validated = $request->validate([
+            'property_id' => 'nullable|integer|exists:properties,id',
+        ]);
+
         $model = '\\App\\Models\\RentalUnit';
 
         if (! class_exists($model)) {
@@ -20,8 +24,8 @@ class ReportsController extends Controller
 
         $query = $model::query()->with('property');
 
-        if ($request->filled('property_id')) {
-            $query->where('property_id', $request->integer('property_id'));
+        if (!empty($validated['property_id'])) {
+            $query->where('property_id', $validated['property_id']);
         }
 
         $filename = 'rental_occupancy_'.now()->format('Ymd_His').'.xlsx';
@@ -75,7 +79,11 @@ class ReportsController extends Controller
 
     public function expiringContracts(Request $request): StreamedResponse
     {
-        $days = $request->integer('days', 30);
+        $validated = $request->validate([
+            'days' => 'nullable|integer|min:1|max:365',
+        ]);
+
+        $days = $validated['days'] ?? 30;
         $threshold = now()->addDays($days)->toDateString();
 
         $model = '\\App\\Models\\RentalContract';

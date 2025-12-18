@@ -12,6 +12,14 @@ class ReportsController extends Controller
 {
     public function attendance(Request $request): StreamedResponse
     {
+        $validated = $request->validate([
+            'employee_id' => 'nullable|integer',
+            'status' => 'nullable|string|in:present,absent,late,on_leave',
+            'branch_id' => 'nullable|integer',
+            'from' => 'nullable|date',
+            'to' => 'nullable|date|after_or_equal:from',
+        ]);
+
         $model = '\\App\\Models\\Attendance';
 
         if (! class_exists($model)) {
@@ -21,24 +29,24 @@ class ReportsController extends Controller
         /** @var \App\Models\Attendance $model */
         $query = $model::query()->with('employee');
 
-        if ($request->filled('employee_id')) {
-            $query->where('employee_id', $request->integer('employee_id'));
+        if (!empty($validated['employee_id'])) {
+            $query->where('employee_id', $validated['employee_id']);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->get('status'));
+        if (!empty($validated['status'])) {
+            $query->where('status', $validated['status']);
         }
 
-        if ($request->filled('branch_id')) {
-            $query->where('branch_id', $request->integer('branch_id'));
+        if (!empty($validated['branch_id'])) {
+            $query->where('branch_id', $validated['branch_id']);
         }
 
-        if ($request->filled('from')) {
-            $query->whereDate('date', '>=', $request->get('from'));
+        if (!empty($validated['from'])) {
+            $query->whereDate('date', '>=', $validated['from']);
         }
 
-        if ($request->filled('to')) {
-            $query->whereDate('date', '<=', $request->get('to'));
+        if (!empty($validated['to'])) {
+            $query->whereDate('date', '<=', $validated['to']);
         }
 
         $filename = 'hrm_attendance_'.now()->format('Ymd_His').'.xlsx';
@@ -92,6 +100,12 @@ class ReportsController extends Controller
 
     public function payroll(Request $request): StreamedResponse
     {
+        $validated = $request->validate([
+            'employee_id' => 'nullable|integer',
+            'period' => 'nullable|string|max:20',
+            'status' => 'nullable|string|in:pending,paid,cancelled',
+        ]);
+
         $model = '\\App\\Models\\Payroll';
 
         if (! class_exists($model)) {
@@ -101,16 +115,16 @@ class ReportsController extends Controller
         /** @var \App\Models\Payroll $model */
         $query = $model::query()->with('employee');
 
-        if ($request->filled('employee_id')) {
-            $query->where('employee_id', $request->integer('employee_id'));
+        if (!empty($validated['employee_id'])) {
+            $query->where('employee_id', $validated['employee_id']);
         }
 
-        if ($request->filled('period')) {
-            $query->where('period', $request->get('period'));
+        if (!empty($validated['period'])) {
+            $query->where('period', $validated['period']);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->get('status'));
+        if (!empty($validated['status'])) {
+            $query->where('status', $validated['status']);
         }
 
         $filename = 'hrm_payroll_'.now()->format('Ymd_His').'.xlsx';

@@ -16,7 +16,7 @@ class WorkflowAutomationService
     /**
      * Check for low stock products and create alerts
      */
-    public function checkLowStockProducts(): array
+    public function checkLowStockProducts(int $limit = 100): array
     {
         $lowStockProducts = Product::query()
             ->where(function ($query) {
@@ -24,6 +24,7 @@ class WorkflowAutomationService
                       ->orWhereRaw('current_stock <= COALESCE(min_stock, 0)');
             })
             ->with(['category', 'supplier'])
+            ->limit($limit)
             ->get();
 
         $alerts = [];
@@ -63,13 +64,14 @@ class WorkflowAutomationService
     /**
      * Check for expiring rental contracts
      */
-    public function checkExpiringContracts(int $daysAhead = 30): array
+    public function checkExpiringContracts(int $daysAhead = 30, int $limit = 100): array
     {
         $expiringContracts = RentalContract::query()
             ->where('status', 'active')
             ->whereDate('end_date', '<=', now()->addDays($daysAhead))
             ->whereDate('end_date', '>=', now())
             ->with(['unit', 'tenant', 'property'])
+            ->limit($limit)
             ->get();
 
         $alerts = [];
@@ -143,11 +145,13 @@ class WorkflowAutomationService
     /**
      * Generate reorder suggestions based on stock levels and sales velocity
      */
-    public function generateReorderSuggestions(): array
+    public function generateReorderSuggestions(int $limit = 50): array
     {
         $products = Product::query()
             ->whereRaw('current_stock <= COALESCE(reorder_point, min_stock, 0)')
             ->with(['supplier', 'category'])
+            ->orderByRaw('(COALESCE(reorder_point, min_stock, 0) - current_stock) DESC')
+            ->limit($limit)
             ->get();
 
         $suggestions = [];
