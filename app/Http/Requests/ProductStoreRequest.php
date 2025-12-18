@@ -24,6 +24,12 @@ class ProductStoreRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'category_id' => ['nullable', 'exists:product_categories,id'],
             'tax_id' => ['nullable', 'exists:taxes,id'],
+            // Inventory tracking fields
+            'min_stock' => ['nullable', 'numeric', 'min:0'],
+            'max_stock' => ['nullable', 'numeric', 'min:0'],
+            'reorder_point' => ['nullable', 'numeric', 'min:0'],
+            'lead_time_days' => ['nullable', 'numeric', 'min:0'],
+            'location_code' => ['nullable', 'string', 'max:191'],
         ];
     }
 }

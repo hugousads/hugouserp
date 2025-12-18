@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Branch;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaleReturnRequest;
+use App\Http\Requests\SaleUpdateRequest;
 use App\Http\Requests\SaleVoidRequest;
 use App\Models\Sale;
 use App\Services\Contracts\SaleServiceInterface as Sales;
@@ -50,13 +51,13 @@ class SaleController extends Controller
         return $this->ok($sale->load('items'));
     }
 
-    public function update(Request $request, Sale $sale)
+    public function update(SaleUpdateRequest $request, Sale $sale)
     {
         // Defense-in-depth: Verify sale belongs to current branch
         $branchId = $this->requireBranchId($request);
         abort_if($sale->branch_id !== $branchId, 404, 'Sale not found in this branch');
         
-        $sale->fill($request->only(['notes']))->save();
+        $sale->fill($request->validated())->save();
 
         return $this->ok($sale);
     }

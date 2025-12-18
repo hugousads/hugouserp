@@ -22,6 +22,17 @@ class PurchaseStoreRequest extends FormRequest
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.qty' => ['required', 'numeric', 'gt:0'],
             'items.*.price' => ['required', 'numeric', 'gte:0'],
+            // New tracking fields
+            'expected_delivery_date' => ['nullable', 'date'],
+            'actual_delivery_date' => ['nullable', 'date'],
+            'shipping_method' => ['nullable', 'string', 'max:191'],
+            'supplier_notes' => ['nullable', 'string', 'max:1000'],
+            'internal_notes' => ['nullable', 'string', 'max:1000'],
+            // Payment fields
+            'payment_status' => ['nullable', 'in:unpaid,partial,paid'],
+            'payment_due_date' => ['nullable', 'date'],
+            'discount_type' => ['nullable', 'in:fixed,percentage'],
+            'discount_value' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }
