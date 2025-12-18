@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 return new class extends Migration
 {
@@ -67,7 +68,7 @@ return new class extends Migration
             }
         } catch (\Exception $e) {
             // Foreign key might not exist or other error - continue
-            \Log::warning("Could not drop foreign key {$foreignKey} on table {$table}: " . $e->getMessage());
+            Log::warning("Could not drop foreign key {$foreignKey} on table {$table}: " . $e->getMessage());
         }
     }
 
