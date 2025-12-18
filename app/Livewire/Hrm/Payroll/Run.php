@@ -81,18 +81,21 @@ class Run extends Component
                     continue;
                 }
 
-                $basic = (float) ($employee->salary ?? 0);
-                $allowances = 0.0;
-                $deductions = 0.0;
-                $net = $basic + $allowances - $deductions;
+                $basic = (string) ($employee->salary ?? '0');
+                $allowances = '0.00';
+                $deductions = '0.00';
+                
+                // Calculate net salary with bcmath precision
+                $netCalc = bcadd($basic, $allowances, 2);
+                $net = bcsub($netCalc, $deductions, 2);
 
                 $model = new Payroll;
                 $model->employee_id = $employee->id;
                 $model->period = $this->period;
-                $model->basic = $basic;
-                $model->allowances = $allowances;
-                $model->deductions = $deductions;
-                $model->net = $net;
+                $model->basic = (float) $basic;
+                $model->allowances = (float) $allowances;
+                $model->deductions = (float) $deductions;
+                $model->net = (float) $net;
                 $model->status = 'draft';
                 $model->extra_attributes = [];
                 $model->save();

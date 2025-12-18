@@ -114,15 +114,16 @@ class Form extends Component
         $validator->after(function ($validator) {
             // Check that each line has either debit OR credit (not both, not neither)
             foreach ($this->lines as $index => $line) {
-                $debit = (float) ($line['debit'] ?? 0);
-                $credit = (float) ($line['credit'] ?? 0);
+                $debit = (string) ($line['debit'] ?? '0');
+                $credit = (string) ($line['credit'] ?? '0');
 
-                if ($debit > 0 && $credit > 0) {
+                // Use bccomp for precise comparisons
+                if (bccomp($debit, '0', 2) > 0 && bccomp($credit, '0', 2) > 0) {
                     $validator->errors()->add(
                         "lines.{$index}.debit",
                         __('A line cannot have both debit and credit amounts.')
                     );
-                } elseif ($debit == 0 && $credit == 0) {
+                } elseif (bccomp($debit, '0', 2) === 0 && bccomp($credit, '0', 2) === 0) {
                     $validator->errors()->add(
                         "lines.{$index}.debit",
                         __('A line must have either a debit or credit amount.')
@@ -130,21 +131,23 @@ class Form extends Component
                 }
             }
 
-            // Check that total debits equal total credits
-            $totalDebit = $this->getTotalDebit();
-            $totalCredit = $this->getTotalCredit();
+            // Check that total debits equal total credits using bcmath
+            $totalDebit = (string) $this->getTotalDebit();
+            $totalCredit = (string) $this->getTotalCredit();
+            $difference = bcsub($totalDebit, $totalCredit, 2);
 
-            if (abs($totalDebit - $totalCredit) > 0.01) {
+            // Check if absolute difference exceeds threshold
+            if (bccomp(ltrim($difference, '-'), '0.01', 2) > 0) {
                 $validator->errors()->add(
                     'lines',
                     __('Total debits must equal total credits. Difference: :amount', [
-                        'amount' => number_format(abs($totalDebit - $totalCredit), 2),
+                        'amount' => number_format((float) ltrim($difference, '-'), 2),
                     ])
                 );
             }
 
-            // Reject zero-sum entries (0 = 0 is not a valid journal entry)
-            if ($totalDebit <= 0 && $totalCredit <= 0) {
+            // Reject zero-sum entries using bccomp
+            if (bccomp($totalDebit, '0', 2) <= 0 && bccomp($totalCredit, '0', 2) <= 0) {
                 $validator->errors()->add(
                     'lines',
                     __('Journal entry must have amounts greater than zero.')

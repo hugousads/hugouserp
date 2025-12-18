@@ -96,16 +96,18 @@ class Form extends Component
         $discrepancies = [];
 
         foreach ($this->items as $index => $item) {
-            $ordered = (float) ($item['quantity_ordered'] ?? 0);
-            $received = (float) ($item['quantity_received'] ?? 0);
-            $damaged = (float) ($item['quantity_damaged'] ?? 0);
-            $defective = (float) ($item['quantity_defective'] ?? 0);
+            $ordered = (string) ($item['quantity_ordered'] ?? '0');
+            $received = (string) ($item['quantity_received'] ?? '0');
+            $damaged = (string) ($item['quantity_damaged'] ?? '0');
+            $defective = (string) ($item['quantity_defective'] ?? '0');
 
-            if ($received != $ordered) {
+            // Use bccomp for precise quantity comparison
+            if (bccomp($received, $ordered, 4) !== 0) {
                 $discrepancies[] = "Item {$index}: Quantity mismatch";
             }
 
-            if ($damaged > 0 || $defective > 0) {
+            // Use bccomp for quality issues check
+            if (bccomp($damaged, '0', 4) > 0 || bccomp($defective, '0', 4) > 0) {
                 $discrepancies[] = "Item {$index}: Quality issues";
             }
         }
@@ -121,9 +123,14 @@ class Form extends Component
         $this->grn->items()->delete();
 
         foreach ($this->items as $item) {
-            $qtyReceived = (float) ($item['qty_received'] ?? $item['quantity_received'] ?? 0);
-            $qtyRejected = (float) ($item['qty_rejected'] ?? ($item['quantity_damaged'] ?? 0) + ($item['quantity_defective'] ?? 0));
-            $qtyAccepted = max(0, $qtyReceived - $qtyRejected);
+            $qtyReceived = (string) ($item['qty_received'] ?? $item['quantity_received'] ?? '0');
+            $damaged = (string) ($item['quantity_damaged'] ?? '0');
+            $defective = (string) ($item['quantity_defective'] ?? '0');
+            $qtyRejected = (string) ($item['qty_rejected'] ?? bcadd($damaged, $defective, 4));
+            
+            // Calculate accepted quantity with bcmath
+            $qtyAcceptedCalc = bcsub($qtyReceived, $qtyRejected, 4);
+            $qtyAccepted = bccomp($qtyAcceptedCalc, '0', 4) > 0 ? $qtyAcceptedCalc : '0';
             
             GRNItem::create([
                 'grn_id' => $this->grn->id,
