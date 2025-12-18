@@ -12,55 +12,97 @@ return new class extends Migration
     public function up(): void
     {
         // Enhance sales table
-        if (Schema::hasTable('sales') && !Schema::hasColumn('sales', 'delivery_date')) {
+        if (Schema::hasTable('sales')) {
             Schema::table('sales', function (Blueprint $table) {
-                $table->date('delivery_date')->nullable()->after('posted_at');
-                $table->string('shipping_method')->nullable()->after('delivery_date');
-                $table->text('customer_notes')->nullable()->after('notes');
-                $table->text('internal_notes')->nullable()->after('customer_notes');
+                // Only add columns that don't exist yet
+                if (!Schema::hasColumn('sales', 'delivery_date')) {
+                    $table->date('delivery_date')->nullable()->after('posted_at');
+                }
+                if (!Schema::hasColumn('sales', 'shipping_method')) {
+                    $table->string('shipping_method')->nullable()->after('delivery_date');
+                }
+                if (!Schema::hasColumn('sales', 'customer_notes')) {
+                    $table->text('customer_notes')->nullable()->after('notes');
+                }
+                if (!Schema::hasColumn('sales', 'internal_notes')) {
+                    $table->text('internal_notes')->nullable()->after('customer_notes');
+                }
             });
         }
 
         // Enhance purchases table
-        if (Schema::hasTable('purchases') && !Schema::hasColumn('purchases', 'expected_delivery_date')) {
+        if (Schema::hasTable('purchases')) {
             Schema::table('purchases', function (Blueprint $table) {
-                $table->date('expected_delivery_date')->nullable()->after('posted_at');
-                $table->date('actual_delivery_date')->nullable()->after('expected_delivery_date');
-                $table->string('shipping_method')->nullable()->after('actual_delivery_date');
-                $table->text('supplier_notes')->nullable()->after('notes');
+                // Only add columns that don't exist yet
+                if (!Schema::hasColumn('purchases', 'expected_delivery_date')) {
+                    $table->date('expected_delivery_date')->nullable()->after('posted_at');
+                }
+                if (!Schema::hasColumn('purchases', 'actual_delivery_date')) {
+                    $table->date('actual_delivery_date')->nullable()->after('expected_delivery_date');
+                }
+                if (!Schema::hasColumn('purchases', 'shipping_method')) {
+                    $table->string('shipping_method')->nullable()->after('actual_delivery_date');
+                }
+                if (!Schema::hasColumn('purchases', 'supplier_notes')) {
+                    $table->text('supplier_notes')->nullable()->after('notes');
+                }
             });
         }
 
         // Enhance products table
-        if (Schema::hasTable('products') && !Schema::hasColumn('products', 'reorder_point')) {
+        if (Schema::hasTable('products')) {
             Schema::table('products', function (Blueprint $table) {
-                $table->decimal('reorder_point', 10, 2)->nullable()->after('min_stock');
-                $table->decimal('max_stock', 10, 2)->nullable()->after('reorder_point');
-                $table->decimal('lead_time_days', 5, 1)->nullable()->after('max_stock');
-                $table->string('location_code')->nullable()->after('lead_time_days');
-                $table->string('shelf_life_days')->nullable()->after('location_code');
+                // Note: reorder_point already exists in the original products table creation
+                // Only add columns that don't exist yet
+                if (!Schema::hasColumn('products', 'max_stock')) {
+                    $table->decimal('max_stock', 10, 2)->nullable()->after('reorder_point');
+                }
+                if (!Schema::hasColumn('products', 'lead_time_days')) {
+                    $table->decimal('lead_time_days', 5, 1)->nullable()->after('max_stock');
+                }
+                if (!Schema::hasColumn('products', 'location_code')) {
+                    $table->string('location_code')->nullable()->after('lead_time_days');
+                }
+                if (!Schema::hasColumn('products', 'shelf_life_days')) {
+                    $table->string('shelf_life_days')->nullable()->after('location_code');
+                }
             });
         }
 
         // Enhance customers table
-        if (Schema::hasTable('customers') && !Schema::hasColumn('customers', 'payment_terms_days')) {
+        if (Schema::hasTable('customers')) {
             Schema::table('customers', function (Blueprint $table) {
-                $table->integer('payment_terms_days')->default(30)->after('credit_limit');
-                $table->decimal('discount_percentage', 5, 2)->default(0)->after('payment_terms_days');
-                $table->string('customer_group')->nullable()->after('discount_percentage');
-                $table->string('preferred_payment_method')->nullable()->after('customer_group');
-                $table->timestamp('last_order_date')->nullable()->after('preferred_payment_method');
+                // Only add columns that don't exist yet
+                // Note: payment_terms and discount_percentage already added by earlier migration
+                if (!Schema::hasColumn('customers', 'payment_terms_days')) {
+                    $table->integer('payment_terms_days')->default(30)->after('credit_limit');
+                }
+                if (!Schema::hasColumn('customers', 'customer_group')) {
+                    $table->string('customer_group')->nullable()->after('discount_percentage');
+                }
+                if (!Schema::hasColumn('customers', 'preferred_payment_method')) {
+                    $table->string('preferred_payment_method')->nullable()->after('customer_group');
+                }
+                if (!Schema::hasColumn('customers', 'last_order_date')) {
+                    $table->timestamp('last_order_date')->nullable()->after('preferred_payment_method');
+                }
             });
         }
 
         // Enhance suppliers table
-        if (Schema::hasTable('suppliers') && !Schema::hasColumn('suppliers', 'payment_terms')) {
+        if (Schema::hasTable('suppliers')) {
             Schema::table('suppliers', function (Blueprint $table) {
-                $table->string('payment_terms')->nullable()->after('tax_id');
-                $table->integer('lead_time_days')->nullable()->after('payment_terms');
-                $table->decimal('minimum_order_value', 10, 2)->nullable()->after('lead_time_days');
-                $table->string('supplier_rating')->nullable()->after('minimum_order_value');
-                $table->timestamp('last_purchase_date')->nullable()->after('supplier_rating');
+                // Only add columns that don't exist yet
+                // Note: payment_terms and average_lead_time_days already added by earlier migration
+                if (!Schema::hasColumn('suppliers', 'minimum_order_value')) {
+                    $table->decimal('minimum_order_value', 10, 2)->nullable()->after('average_lead_time_days');
+                }
+                if (!Schema::hasColumn('suppliers', 'supplier_rating')) {
+                    $table->string('supplier_rating')->nullable()->after('minimum_order_value');
+                }
+                if (!Schema::hasColumn('suppliers', 'last_purchase_date')) {
+                    $table->timestamp('last_purchase_date')->nullable()->after('supplier_rating');
+                }
             });
         }
 
@@ -94,34 +136,98 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Remove added columns
+        // Remove added columns - only drop if they exist
         if (Schema::hasTable('sales')) {
             Schema::table('sales', function (Blueprint $table) {
-                $table->dropColumn(['delivery_date', 'shipping_method', 'customer_notes', 'internal_notes']);
+                $columnsToDropSales = [];
+                if (Schema::hasColumn('sales', 'delivery_date')) {
+                    $columnsToDropSales[] = 'delivery_date';
+                }
+                if (Schema::hasColumn('sales', 'customer_notes')) {
+                    $columnsToDropSales[] = 'customer_notes';
+                }
+                // Note: shipping_method and internal_notes are added by earlier migration
+                // so we don't drop them here to avoid breaking the rollback chain
+                if (!empty($columnsToDropSales)) {
+                    $table->dropColumn($columnsToDropSales);
+                }
             });
         }
 
         if (Schema::hasTable('purchases')) {
             Schema::table('purchases', function (Blueprint $table) {
-                $table->dropColumn(['expected_delivery_date', 'actual_delivery_date', 'shipping_method', 'supplier_notes']);
+                $columnsToDropPurchases = [];
+                if (Schema::hasColumn('purchases', 'supplier_notes')) {
+                    $columnsToDropPurchases[] = 'supplier_notes';
+                }
+                // Note: expected_delivery_date, actual_delivery_date are added by earlier migration
+                // so we don't drop them here to avoid breaking the rollback chain
+                if (!empty($columnsToDropPurchases)) {
+                    $table->dropColumn($columnsToDropPurchases);
+                }
             });
         }
 
         if (Schema::hasTable('products')) {
             Schema::table('products', function (Blueprint $table) {
-                $table->dropColumn(['reorder_point', 'max_stock', 'lead_time_days', 'location_code', 'shelf_life_days']);
+                $columnsToDropProducts = [];
+                // Note: reorder_point is from original table, don't drop it
+                if (Schema::hasColumn('products', 'max_stock')) {
+                    $columnsToDropProducts[] = 'max_stock';
+                }
+                if (Schema::hasColumn('products', 'lead_time_days')) {
+                    $columnsToDropProducts[] = 'lead_time_days';
+                }
+                if (Schema::hasColumn('products', 'location_code')) {
+                    $columnsToDropProducts[] = 'location_code';
+                }
+                if (Schema::hasColumn('products', 'shelf_life_days')) {
+                    $columnsToDropProducts[] = 'shelf_life_days';
+                }
+                if (!empty($columnsToDropProducts)) {
+                    $table->dropColumn($columnsToDropProducts);
+                }
             });
         }
 
         if (Schema::hasTable('customers')) {
             Schema::table('customers', function (Blueprint $table) {
-                $table->dropColumn(['payment_terms_days', 'discount_percentage', 'customer_group', 'preferred_payment_method', 'last_order_date']);
+                $columnsToDropCustomers = [];
+                if (Schema::hasColumn('customers', 'payment_terms_days')) {
+                    $columnsToDropCustomers[] = 'payment_terms_days';
+                }
+                if (Schema::hasColumn('customers', 'customer_group')) {
+                    $columnsToDropCustomers[] = 'customer_group';
+                }
+                if (Schema::hasColumn('customers', 'preferred_payment_method')) {
+                    $columnsToDropCustomers[] = 'preferred_payment_method';
+                }
+                if (Schema::hasColumn('customers', 'last_order_date')) {
+                    $columnsToDropCustomers[] = 'last_order_date';
+                }
+                // Note: discount_percentage is from earlier migration, don't drop it
+                if (!empty($columnsToDropCustomers)) {
+                    $table->dropColumn($columnsToDropCustomers);
+                }
             });
         }
 
         if (Schema::hasTable('suppliers')) {
             Schema::table('suppliers', function (Blueprint $table) {
-                $table->dropColumn(['payment_terms', 'lead_time_days', 'minimum_order_value', 'supplier_rating', 'last_purchase_date']);
+                $columnsToDropSuppliers = [];
+                if (Schema::hasColumn('suppliers', 'minimum_order_value')) {
+                    $columnsToDropSuppliers[] = 'minimum_order_value';
+                }
+                if (Schema::hasColumn('suppliers', 'supplier_rating')) {
+                    $columnsToDropSuppliers[] = 'supplier_rating';
+                }
+                if (Schema::hasColumn('suppliers', 'last_purchase_date')) {
+                    $columnsToDropSuppliers[] = 'last_purchase_date';
+                }
+                // Note: payment_terms and lead_time_days are from earlier migration, don't drop them
+                if (!empty($columnsToDropSuppliers)) {
+                    $table->dropColumn($columnsToDropSuppliers);
+                }
             });
         }
 
