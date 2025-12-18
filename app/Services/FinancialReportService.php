@@ -60,12 +60,17 @@ class FinancialReportService
             $totalCredit += $creditAmount;
         }
 
+        // Use bcmath for precise financial calculations
+        $totalDebitStr = (string) $totalDebit;
+        $totalCreditStr = (string) $totalCredit;
+        $difference = bcsub($totalDebitStr, $totalCreditStr, 2);
+
         return [
             'accounts' => $data,
-            'total_debit' => round($totalDebit, 2),
-            'total_credit' => round($totalCredit, 2),
-            'difference' => round($totalDebit - $totalCredit, 2),
-            'is_balanced' => abs($totalDebit - $totalCredit) < 0.01,
+            'total_debit' => (float) bcdiv($totalDebitStr, '1', 2),
+            'total_credit' => (float) bcdiv($totalCreditStr, '1', 2),
+            'difference' => (float) $difference,
+            'is_balanced' => bccomp(str_replace('-', '', $difference), '0.01', 2) < 0,
         ];
     }
 
@@ -132,18 +137,19 @@ class FinancialReportService
             }
         }
 
-        $netIncome = $totalRevenue - $totalExpenses;
+        // Use bcmath for profit calculation
+        $netIncome = bcsub((string) $totalRevenue, (string) $totalExpenses, 2);
 
         return [
             'revenue' => [
                 'accounts' => $revenue,
-                'total' => round($totalRevenue, 2),
+                'total' => (float) bcdiv((string) $totalRevenue, '1', 2),
             ],
             'expenses' => [
                 'accounts' => $expenses,
-                'total' => round($totalExpenses, 2),
+                'total' => (float) bcdiv((string) $totalExpenses, '1', 2),
             ],
-            'net_income' => round($netIncome, 2),
+            'net_income' => (float) $netIncome,
         ];
     }
 
@@ -232,24 +238,26 @@ class FinancialReportService
             'amount' => $netIncome,
         ];
 
-        $totalLiabilitiesAndEquity = $totalLiabilities + $totalEquity;
+        // Use bcmath for balance sheet totals
+        $totalLiabilitiesAndEquity = bcadd((string) $totalLiabilities, (string) $totalEquity, 2);
+        $balanceDiff = bcsub((string) $totalAssets, $totalLiabilitiesAndEquity, 2);
 
         return [
             'as_of_date' => $asOfDate,
             'assets' => [
                 'accounts' => $assets,
-                'total' => round($totalAssets, 2),
+                'total' => (float) bcdiv((string) $totalAssets, '1', 2),
             ],
             'liabilities' => [
                 'accounts' => $liabilities,
-                'total' => round($totalLiabilities, 2),
+                'total' => (float) bcdiv((string) $totalLiabilities, '1', 2),
             ],
             'equity' => [
                 'accounts' => $equity,
-                'total' => round($totalEquity, 2),
+                'total' => (float) bcdiv((string) $totalEquity, '1', 2),
             ],
-            'total_liabilities_and_equity' => round($totalLiabilitiesAndEquity, 2),
-            'is_balanced' => abs($totalAssets - $totalLiabilitiesAndEquity) < 0.01,
+            'total_liabilities_and_equity' => (float) $totalLiabilitiesAndEquity,
+            'is_balanced' => bccomp(str_replace('-', '', $balanceDiff), '0.01', 2) < 0,
         ];
     }
 
@@ -438,9 +446,9 @@ class FinancialReportService
             ],
             'transactions' => $transactions,
             'summary' => [
-                'total_debit' => round($totalDebit, 2),
-                'total_credit' => round($totalCredit, 2),
-                'ending_balance' => round($runningBalance, 2),
+                'total_debit' => (float) bcdiv((string) $totalDebit, '1', 2),
+                'total_credit' => (float) bcdiv((string) $totalCredit, '1', 2),
+                'ending_balance' => (float) bcdiv((string) $runningBalance, '1', 2),
             ],
         ];
     }

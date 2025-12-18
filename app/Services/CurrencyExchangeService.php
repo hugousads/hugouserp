@@ -50,7 +50,8 @@ class CurrencyExchangeService
             return $amount; // Return original amount if rate not found
         }
 
-        return round($amount * $rate, 4);
+        // Use bcmath for precise currency exchange
+        return (float) bcmul((string) $amount, (string) $rate, 4);
     }
 
     /**

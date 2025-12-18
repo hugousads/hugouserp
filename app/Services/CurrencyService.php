@@ -124,7 +124,8 @@ class CurrencyService
             return null;
         }
 
-        return round($amount * $rate, 2);
+        // Use bcmath for precise currency conversion
+        return (float) bcmul((string) $amount, (string) $rate, 2);
     }
 
     public function setRate(string $from, string $to, float $rate, $effectiveDate = null): CurrencyRate
