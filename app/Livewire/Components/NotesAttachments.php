@@ -94,7 +94,9 @@ class NotesAttachments extends Component
         $user = Auth::user();
 
         if ($this->editingNoteId) {
-            $note = Note::findOrFail($this->editingNoteId);
+            $note = Note::where('noteable_type', $this->modelType)
+                ->where('noteable_id', $this->modelId)
+                ->findOrFail($this->editingNoteId);
             $note->update([
                 'content' => $this->newNote,
                 'type' => $this->noteType,
@@ -119,7 +121,9 @@ class NotesAttachments extends Component
 
     public function editNote(int $noteId): void
     {
-        $note = Note::findOrFail($noteId);
+        $note = Note::where('noteable_type', $this->modelType)
+            ->where('noteable_id', $this->modelId)
+            ->findOrFail($noteId);
         $this->editingNoteId = $noteId;
         $this->newNote = $note->content;
         $this->noteType = $note->type;
@@ -128,14 +132,19 @@ class NotesAttachments extends Component
 
     public function deleteNote(int $noteId): void
     {
-        Note::findOrFail($noteId)->delete();
+        Note::where('noteable_type', $this->modelType)
+            ->where('noteable_id', $this->modelId)
+            ->findOrFail($noteId)
+            ->delete();
         session()->flash('success', __('Note deleted successfully'));
         $this->loadData();
     }
 
     public function togglePin(int $noteId): void
     {
-        $note = Note::findOrFail($noteId);
+        $note = Note::where('noteable_type', $this->modelType)
+            ->where('noteable_id', $this->modelId)
+            ->findOrFail($noteId);
         $note->update(['is_pinned' => ! $note->is_pinned]);
         $this->loadData();
     }
@@ -187,9 +196,13 @@ class NotesAttachments extends Component
 
     public function deleteAttachment(int $attachmentId): void
     {
-        $attachment = Attachment::findOrFail($attachmentId);
+        $attachment = Attachment::where('attachable_type', $this->modelType)
+            ->where('attachable_id', $this->modelId)
+            ->findOrFail($attachmentId);
 
-        Storage::disk($attachment->disk)->delete($attachment->path);
+        if (Storage::disk($attachment->disk)->exists($attachment->path)) {
+            Storage::disk($attachment->disk)->delete($attachment->path);
+        }
 
         $attachment->delete();
 

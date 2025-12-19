@@ -63,7 +63,7 @@ class TimeLogs extends Component
     public function editLog(int $id): void
     {
         $this->authorize('projects.timelogs.manage');
-        $this->editingLog = ProjectTimeLog::findOrFail($id);
+        $this->editingLog = $this->project->timeLogs()->findOrFail($id);
         $this->fill($this->editingLog->only([
             'task_id', 'employee_id', 'hours',
             'is_billable', 'hourly_rate', 'description'
@@ -111,7 +111,7 @@ class TimeLogs extends Component
     public function deleteLog(int $id): void
     {
         $this->authorize('projects.timelogs.manage');
-        $log = ProjectTimeLog::findOrFail($id);
+        $log = $this->project->timeLogs()->findOrFail($id);
         $log->delete();
         session()->flash('success', __('Time log deleted successfully'));
     }
