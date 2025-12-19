@@ -29,7 +29,7 @@ return new class extends Migration
             Schema::create('module_policies', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('module_id')->constrained('modules')->cascadeOnDelete();
-                $table->foreignId('branch_id')->nullable()->constrained('branches')->cascadeOnDelete();
+                $table->foreignId('branch_id')->nullable()->constrained('branches')->nullOnDelete();
                 $table->string('policy_key')->index();
                 $table->string('policy_name');
                 $table->text('policy_description')->nullable();
@@ -68,7 +68,7 @@ return new class extends Migration
             Schema::create('module_navigation', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('module_id')->constrained('modules')->cascadeOnDelete();
-                $table->foreignId('parent_id')->nullable()->constrained('module_navigation')->cascadeOnDelete();
+                $table->foreignId('parent_id')->nullable()->constrained('module_navigation')->nullOnDelete();
                 $table->string('nav_key')->index();
                 $table->string('nav_label');
                 $table->string('nav_label_ar')->nullable();

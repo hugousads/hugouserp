@@ -207,13 +207,29 @@ class ModuleNavigationService
     /**
      * Clear navigation cache for a user
      */
-    public function clearNavigationCache(User $user): void
+    public function clearNavigationCache(User $user, ?array $branchIds = null): void
     {
         $locales = ['ar', 'en'];
+
+        $branches = collect($branchIds ?? [])
+            ->when($branchIds === null, function ($collection) use ($user) {
+                $userBranchIds = $user->branches()->pluck('branches.id')->all();
+
+                if ($user->branch_id) {
+                    $userBranchIds[] = $user->branch_id;
+                }
+
+                return $collection->merge($userBranchIds);
+            })
+            ->push(null)
+            ->unique();
+
         foreach ($locales as $locale) {
-            Cache::forget(sprintf('nav:user:%d:branch:null:locale:%s', $user->id, $locale));
-            // Clear for all possible branch IDs would be more complex
-            // For now, we can clear by pattern if needed
+            foreach ($branches as $branchId) {
+                Cache::forget(
+                    sprintf('nav:user:%d:branch:%s:locale:%s', $user->id, $branchId ?? 'null', $locale)
+                );
+            }
         }
     }
 
