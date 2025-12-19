@@ -165,7 +165,7 @@ class WorkflowAutomationService
                 'reorder_point' => $product->reorder_point ?? 0,
                 'suggested_order_quantity' => $reorderQuantity,
                 'supplier_name' => $product->supplier?->name,
-                'estimated_cost' => $product->cost * $reorderQuantity,
+                'estimated_cost' => ($product->cost ?? 0) * $reorderQuantity,
                 'lead_time_days' => $product->lead_time_days ?? $product->supplier?->lead_time_days ?? 7,
                 'urgency' => $this->calculateUrgency($product),
             ];
@@ -188,14 +188,19 @@ class WorkflowAutomationService
         $currentStock = $product->current_stock ?? 0;
         $maxStock = $product->max_stock ?? ($product->min_stock * 3);
         $minStock = $product->min_stock ?? 0;
+        $unitCost = $product->cost ?? 0;
 
         // Simple reorder formula: order to max stock level
-        $reorderQty = $maxStock - $currentStock;
+        $reorderQty = max($maxStock - $currentStock, 0);
 
         // Ensure minimum order if supplier has one
         $minOrderValue = $product->supplier?->minimum_order_value ?? 0;
-        if ($minOrderValue > 0 && ($reorderQty * $product->cost) < $minOrderValue) {
-            $reorderQty = ceil($minOrderValue / $product->cost);
+        if ($minOrderValue > 0 && $unitCost > 0) {
+            $totalCost = $reorderQty * $unitCost;
+
+            if ($totalCost < $minOrderValue) {
+                $reorderQty = (int) ceil($minOrderValue / $unitCost);
+            }
         }
 
         return max($reorderQty, $minStock);

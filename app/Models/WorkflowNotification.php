@@ -16,12 +16,20 @@ class WorkflowNotification extends Model
         'type',
         'channel',
         'message',
+        'metadata',
         'is_sent',
+        'delivery_status',
+        'priority',
+        'delivered_at',
+        'read_at',
         'sent_at',
     ];
 
     protected $casts = [
         'is_sent' => 'boolean',
+        'metadata' => 'array',
+        'delivered_at' => 'datetime',
+        'read_at' => 'datetime',
         'sent_at' => 'datetime',
     ];
 
@@ -50,11 +58,25 @@ class WorkflowNotification extends Model
         return $query->where('is_sent', true);
     }
 
+    public function scopeUnread($query)
+    {
+        return $query->whereNull('read_at');
+    }
+
     public function markAsSent(): void
     {
         $this->update([
             'is_sent' => true,
+            'delivery_status' => 'delivered',
+            'delivered_at' => now(),
             'sent_at' => now(),
+        ]);
+    }
+
+    public function markAsRead(): void
+    {
+        $this->update([
+            'read_at' => now(),
         ]);
     }
 }

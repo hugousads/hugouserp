@@ -368,6 +368,11 @@ class WorkflowService
             'type' => 'approval_request',
             'channel' => 'system',
             'message' => "You have a pending approval request for {$approval->stage_name}",
+            'priority' => 'high',
+            'metadata' => [
+                'stage_order' => $approval->stage_order,
+                'stage_name' => $approval->stage_name,
+            ],
         ]);
     }
 
@@ -384,6 +389,11 @@ class WorkflowService
             'type' => $type,
             'channel' => 'system',
             'message' => "Your workflow request has been {$status}",
+            'priority' => $status === 'approved' ? 'normal' : 'high',
+            'metadata' => [
+                'final_stage' => $instance->current_stage,
+                'status' => $status,
+            ],
         ]);
     }
 
