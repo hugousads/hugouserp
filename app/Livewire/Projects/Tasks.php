@@ -71,6 +71,7 @@ class Tasks extends Component
             'priority', 'status', 'start_date', 'due_date',
             'estimated_hours', 'progress'
         ]));
+        $this->parent_task_id = $this->editingTask->parent_id;
         $this->selectedDependencies = $this->editingTask->dependencies()->pluck('dependency_id')->toArray();
     }
 
@@ -84,6 +85,9 @@ class Tasks extends Component
             'priority', 'status', 'start_date', 'due_date',
             'estimated_hours', 'progress'
         ]);
+
+        $data['parent_id'] = $data['parent_task_id'];
+        unset($data['parent_task_id']);
 
         if ($this->editingTask) {
             $this->editingTask->update($data);

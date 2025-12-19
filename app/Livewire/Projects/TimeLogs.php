@@ -133,7 +133,7 @@ class TimeLogs extends Component
             ->orderByRaw('COALESCE(log_date, date) desc')
             ->paginate(15);
 
-        $tasks = $this->project->tasks()->orderBy('title')->get();
+        $tasks = $this->project->tasks()->orderBy('name')->get();
         $employees = User::orderBy('name')->get();
 
         $totalHours = $this->project->timeLogs()->sum('hours');
