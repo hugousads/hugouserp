@@ -9,6 +9,9 @@ use App\Models\Document;
 use App\Models\User;
 use App\Services\DocumentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class DocumentServiceTest extends TestCase
@@ -97,5 +100,30 @@ class DocumentServiceTest extends TestCase
         $formatted = $document->getFileSizeFormatted();
 
         $this->assertStringContainsString('MB', $formatted);
+    }
+
+    public function test_upload_document_rejects_disallowed_mime(): void
+    {
+        Storage::fake('local');
+        config(['filesystems.document_disk' => 'local']);
+        $this->actingAs($this->user);
+
+        try {
+            $this->service->uploadDocument(
+                UploadedFile::fake()->create('payload.html', 10, 'text/html'),
+                [
+                    'title' => 'Unsafe',
+                    'description' => null,
+                    'folder' => null,
+                    'category' => null,
+                    'is_public' => false,
+                    'branch_id' => $this->branch->id,
+                ]
+            );
+            $this->fail('Expected validation exception was not thrown.');
+        } catch (ValidationException $e) {
+            $this->assertDatabaseCount('documents', 0);
+            Storage::disk('local')->assertDirectoryEmpty('documents');
+        }
     }
 }

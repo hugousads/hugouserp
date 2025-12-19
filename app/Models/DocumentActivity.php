@@ -12,6 +12,8 @@ class DocumentActivity extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
         'document_id',
         'user_id',
@@ -19,6 +21,7 @@ class DocumentActivity extends Model
         'details',
         'ip_address',
         'user_agent',
+        'created_at',
     ];
 
     protected $casts = [

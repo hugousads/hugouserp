@@ -40,7 +40,7 @@ class MediaLibrary extends Component
     public function updatedFiles(): void
     {
         $this->validate([
-            'files.*' => 'file|max:10240', // 10MB max
+            'files.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,csv,txt', // 10MB max, restricted types
         ]);
 
         $user = auth()->user();
@@ -106,9 +106,11 @@ class MediaLibrary extends Component
         
         $query = Media::query()
             ->with('user')
-            ->when($this->search, fn ($q) => 
-                $q->where('name', 'like', "%{$this->search}%")
-                  ->orWhere('original_name', 'like', "%{$this->search}%")
+            ->when($this->search, fn ($q) =>
+                $q->where(function ($query) {
+                    $query->where('name', 'like', "%{$this->search}%")
+                        ->orWhere('original_name', 'like', "%{$this->search}%");
+                })
             )
             ->when($this->filterType === 'images', fn ($q) => $q->images())
             ->when($this->filterType === 'documents', fn ($q) => $q->documents())

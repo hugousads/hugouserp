@@ -50,7 +50,7 @@ class Document extends Model
                 $document->version = 1;
             }
             if (!$document->status) {
-                $document->status = 'active';
+                $document->status = 'draft';
             }
         });
     }
@@ -73,7 +73,7 @@ class Document extends Model
 
     public function tags(): BelongsToMany
     {
-        return $this->belongsToMany(DocumentTag::class, 'document_tag', 'document_id', 'tag_id');
+        return $this->belongsToMany(DocumentTag::class, 'document_tag', 'document_id', 'document_tag_id');
     }
 
     public function shares(): HasMany
@@ -153,6 +153,7 @@ class Document extends Model
             'action' => $action,
             'user_id' => $user?->id ?? auth()->id(),
             'details' => $details,
+            'created_at' => now(),
         ]);
     }
 }

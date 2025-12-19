@@ -7,14 +7,31 @@ namespace App\Services;
 use App\Models\Document;
 use App\Models\DocumentVersion;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class DocumentService
 {
     private string $documentsDisk;
+    private array $allowedMimes = [
+        'pdf',
+        'doc',
+        'docx',
+        'xls',
+        'xlsx',
+        'ppt',
+        'pptx',
+        'png',
+        'jpg',
+        'jpeg',
+        'gif',
+        'csv',
+        'txt',
+    ];
 
     public function __construct(
         protected UIHelperService $uiHelper
@@ -26,6 +43,8 @@ class DocumentService
      */
     public function uploadDocument(UploadedFile $file, array $data): Document
     {
+        $this->validateFile($file);
+
         return DB::transaction(function () use ($file, $data) {
             // Store the file on the configured private disk
             $disk = $this->documentsDisk;
@@ -78,6 +97,8 @@ class DocumentService
      */
     public function uploadVersion(Document $document, UploadedFile $file, ?string $changeNotes = null): DocumentVersion
     {
+        $this->validateFile($file);
+
         return DB::transaction(function () use ($document, $file, $changeNotes) {
             // Store the file on the configured private disk
             $disk = $this->documentsDisk;
@@ -149,6 +170,8 @@ class DocumentService
      */
     public function shareDocument(Document $document, int $userId, string $permission = 'view', ?\DateTime $expiresAt = null): void
     {
+        $this->ensureCanManageShares($document);
+
         DB::transaction(function () use ($document, $userId, $permission, $expiresAt) {
             $document->shares()->updateOrCreate(
                 ['user_id' => $userId],
@@ -172,6 +195,8 @@ class DocumentService
      */
     public function unshareDocument(Document $document, int $userId): void
     {
+        $this->ensureCanManageShares($document);
+
         DB::transaction(function () use ($document, $userId) {
             $document->shares()->where('user_id', $userId)->delete();
 
@@ -246,6 +271,23 @@ class DocumentService
         }
 
         return 'public';
+    }
+
+    private function validateFile(UploadedFile $file): void
+    {
+        Validator::make(
+            ['file' => $file],
+            ['file' => 'required|file|max:51200|mimes:' . implode(',', $this->allowedMimes)]
+        )->validate();
+    }
+
+    private function ensureCanManageShares(Document $document): void
+    {
+        $user = auth()->user();
+
+        if (!$user || ($document->uploaded_by !== $user->id && !$user->can('documents.manage'))) {
+            throw new AuthorizationException('You are not allowed to manage shares for this document.');
+        }
     }
 
     /**
