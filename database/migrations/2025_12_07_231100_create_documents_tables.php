@@ -81,7 +81,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('document_id')->constrained('documents')->cascadeOnDelete();
             $table->foreignId('shared_by')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('shared_with_user_id')->nullable()->constrained('users')->cascadeOnDelete();
+            $table->foreignId('shared_with_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('shared_with_role')->nullable();
             $table->enum('permission', ['view', 'download', 'edit', 'manage'])->default('view');
             $table->date('expires_at')->nullable();

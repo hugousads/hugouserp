@@ -39,7 +39,7 @@ return new class extends Migration
         Schema::create('project_tasks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
-            $table->foreignId('parent_task_id')->nullable()->constrained('project_tasks')->cascadeOnDelete();
+            $table->foreignId('parent_task_id')->nullable()->constrained('project_tasks')->nullOnDelete();
             $table->string('title');
             $table->text('description')->nullable();
             $table->enum('status', ['pending', 'in_progress', 'review', 'completed', 'cancelled'])->default('pending');

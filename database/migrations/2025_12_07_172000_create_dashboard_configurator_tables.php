@@ -43,7 +43,7 @@ return new class extends Migration
         Schema::create('user_dashboard_layouts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('branch_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name')->default('Default Dashboard');
             $table->boolean('is_default')->default(true);
             $table->json('layout_config')->nullable(); // Grid layout configuration
