@@ -304,108 +304,109 @@ class Form extends Component
         }
         $this->isSubmitting = true;
 
-        $this->validate();
+        try {
+            $this->validate();
 
-        $user = auth()->user();
+            $user = auth()->user();
 
-        // BUG-001 Fix: Strict branch validation
-        $branchId = $this->getUserBranchId();
-        if (! $branchId) {
-            $this->isSubmitting = false;
-            throw ValidationException::withMessages([
-                'branch' => [__('You must be assigned to a branch to create or edit sales.')],
-            ]);
-        }
+            // BUG-001 Fix: Strict branch validation
+            $branchId = $this->getUserBranchId();
+            if (! $branchId) {
+                throw ValidationException::withMessages([
+                    'branch' => [__('You must be assigned to a branch to create or edit sales.')],
+                ]);
+            }
 
-        $this->handleOperation(
-            operation: function () use ($user, $branchId) {
-                DB::transaction(function () use ($user, $branchId) {
-                    // BUG-005 Fix: Clamp due_total to >= 0
-                    $dueTotal = max(0, $this->grandTotal - $this->payment_amount);
+            $this->handleOperation(
+                operation: function () use ($user, $branchId) {
+                    DB::transaction(function () use ($user, $branchId) {
+                        // BUG-005 Fix: Ensure due_total is non-negative
+                        $dueTotal = max(0, $this->grandTotal - $this->payment_amount);
 
-                    $saleData = [
-                        'branch_id' => $branchId,
-                        'customer_id' => $this->customer_id ?: null,
-                        'warehouse_id' => $this->warehouse_id ?: null,
-                        'reference_no' => $this->reference_no,
-                        'status' => $this->status,
-                        'currency' => $this->currency,
-                        'notes' => $this->notes,
-                        'customer_notes' => $this->customer_notes,
-                        'internal_notes' => $this->internal_notes,
-                        'delivery_date' => $this->delivery_date ?: null,
-                        'shipping_method' => $this->shipping_method,
-                        'tracking_number' => $this->tracking_number,
-                        'sub_total' => $this->subTotal,
-                        'discount_total' => $this->discount_total,
-                        'tax_total' => $this->taxTotal,
-                        'shipping_total' => $this->shipping_total,
-                        'grand_total' => $this->grandTotal,
-                        'paid_total' => $this->payment_amount,
-                        'due_total' => $dueTotal,
-                        'updated_by' => $user->id,
-                    ];
+                        $saleData = [
+                            'branch_id' => $branchId,
+                            'customer_id' => $this->customer_id ?: null,
+                            'warehouse_id' => $this->warehouse_id ?: null,
+                            'reference_no' => $this->reference_no,
+                            'status' => $this->status,
+                            'currency' => $this->currency,
+                            'notes' => $this->notes,
+                            'customer_notes' => $this->customer_notes,
+                            'internal_notes' => $this->internal_notes,
+                            'delivery_date' => $this->delivery_date ?: null,
+                            'shipping_method' => $this->shipping_method,
+                            'tracking_number' => $this->tracking_number,
+                            'sub_total' => $this->subTotal,
+                            'discount_total' => $this->discount_total,
+                            'tax_total' => $this->taxTotal,
+                            'shipping_total' => $this->shipping_total,
+                            'grand_total' => $this->grandTotal,
+                            'paid_total' => $this->payment_amount,
+                            'due_total' => $dueTotal,
+                            'updated_by' => $user->id,
+                        ];
 
-                    if ($this->editMode) {
-                        // BUG-008 Fix: Verify branch hasn't changed on edit
-                        if ($this->sale->branch_id !== $branchId) {
-                            throw ValidationException::withMessages([
-                                'branch' => [__('You do not have permission to edit this sale.')],
+                        if ($this->editMode) {
+                            // BUG-008 Fix: Verify branch hasn't changed on edit
+                            if ($this->sale->branch_id !== $branchId) {
+                                throw ValidationException::withMessages([
+                                    'branch' => [__('You do not have permission to edit this sale.')],
+                                ]);
+                            }
+
+                            $this->sale->update($saleData);
+                            $sale = $this->sale;
+                            $sale->items()->delete();
+                            $sale->payments()->delete();
+                        } else {
+                            $saleData['created_by'] = $user->id;
+                            $sale = Sale::create($saleData);
+                        }
+
+                        foreach ($this->items as $item) {
+                            $lineTotal = ($item['qty'] * $item['unit_price']) - ($item['discount'] ?? 0);
+                            $lineTotal += $lineTotal * (($item['tax_rate'] ?? 0) / 100);
+
+                            SaleItem::create([
+                                'sale_id' => $sale->id,
+                                'product_id' => $item['product_id'],
+                                'branch_id' => $sale->branch_id,
+                                'qty' => $item['qty'],
+                                'unit_price' => $item['unit_price'],
+                                'discount' => $item['discount'] ?? 0,
+                                'tax_rate' => $item['tax_rate'] ?? 0,
+                                'line_total' => $lineTotal,
+                                'created_by' => $user->id,
                             ]);
                         }
 
-                        $this->sale->update($saleData);
-                        $sale = $this->sale;
-                        $sale->items()->delete();
-                        $sale->payments()->delete();
-                    } else {
-                        $saleData['created_by'] = $user->id;
-                        $sale = Sale::create($saleData);
-                    }
+                        if ($this->payment_amount > 0) {
+                            SalePayment::create([
+                                'sale_id' => $sale->id,
+                                'branch_id' => $sale->branch_id,
+                                'payment_method' => $this->payment_method,
+                                'amount' => $this->payment_amount,
+                                'payment_date' => now(),
+                                'created_by' => $user->id,
+                            ]);
+                        }
 
-                    foreach ($this->items as $item) {
-                        $lineTotal = ($item['qty'] * $item['unit_price']) - ($item['discount'] ?? 0);
-                        $lineTotal += $lineTotal * (($item['tax_rate'] ?? 0) / 100);
+                        // BUG-005 Fix: Update payment status after payment
+                        $sale->updatePaymentStatus();
 
-                        SaleItem::create([
-                            'sale_id' => $sale->id,
-                            'product_id' => $item['product_id'],
-                            'branch_id' => $sale->branch_id,
-                            'qty' => $item['qty'],
-                            'unit_price' => $item['unit_price'],
-                            'discount' => $item['discount'] ?? 0,
-                            'tax_rate' => $item['tax_rate'] ?? 0,
-                            'line_total' => $lineTotal,
-                            'created_by' => $user->id,
-                        ]);
-                    }
-
-                    if ($this->payment_amount > 0) {
-                        SalePayment::create([
-                            'sale_id' => $sale->id,
-                            'branch_id' => $sale->branch_id,
-                            'payment_method' => $this->payment_method,
-                            'amount' => $this->payment_amount,
-                            'payment_date' => now(),
-                            'created_by' => $user->id,
-                        ]);
-                    }
-
-                    // BUG-005 Fix: Update payment status after payment
-                    $sale->updatePaymentStatus();
-
-                    // BUG-006 Fix: Dispatch SaleCompleted event for inventory updates
-                    // Only dispatch for completed sales to trigger stock deduction
-                    if ($sale->status === 'completed') {
-                        event(new SaleCompleted($sale->fresh()));
-                    }
-                });
-            },
-            successMessage: $this->editMode ? __('Sale updated successfully') : __('Sale created successfully'),
-            redirectRoute: 'app.sales.index'
-        );
-
-        $this->isSubmitting = false;
+                        // BUG-006 Fix: Dispatch SaleCompleted event for inventory updates
+                        // Only dispatch for completed sales to trigger stock deduction
+                        if ($sale->status === 'completed') {
+                            event(new SaleCompleted($sale->fresh()));
+                        }
+                    });
+                },
+                successMessage: $this->editMode ? __('Sale updated successfully') : __('Sale created successfully'),
+                redirectRoute: 'app.sales.index'
+            );
+        } finally {
+            $this->isSubmitting = false;
+        }
     }
 
     public function render()

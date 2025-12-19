@@ -281,90 +281,91 @@ class Form extends Component
         }
         $this->isSubmitting = true;
 
-        $this->validate();
+        try {
+            $this->validate();
 
-        $user = auth()->user();
+            $user = auth()->user();
 
-        // BUG-002 Fix: Strict branch validation
-        $branchId = $this->getUserBranchId();
-        if (! $branchId) {
-            $this->isSubmitting = false;
-            throw ValidationException::withMessages([
-                'branch' => [__('You must be assigned to a branch to create or edit purchases.')],
-            ]);
-        }
+            // BUG-002 Fix: Strict branch validation
+            $branchId = $this->getUserBranchId();
+            if (! $branchId) {
+                throw ValidationException::withMessages([
+                    'branch' => [__('You must be assigned to a branch to create or edit purchases.')],
+                ]);
+            }
 
-        $this->handleOperation(
-            operation: function () use ($user, $branchId) {
-                DB::transaction(function () use ($user, $branchId) {
-                    $purchaseData = [
-                        'branch_id' => $branchId,
-                        'supplier_id' => $this->supplier_id,
-                        'warehouse_id' => $this->warehouse_id,
-                        'reference_no' => $this->reference_no,
-                        'status' => $this->status,
-                        'currency' => $this->currency,
-                        'notes' => $this->notes,
-                        'supplier_notes' => $this->supplier_notes,
-                        'internal_notes' => $this->internal_notes,
-                        'expected_delivery_date' => $this->expected_delivery_date ?: null,
-                        'actual_delivery_date' => $this->actual_delivery_date ?: null,
-                        'shipping_method' => $this->shipping_method,
-                        'sub_total' => $this->subTotal,
-                        'discount_total' => $this->discount_total,
-                        'tax_total' => $this->taxTotal,
-                        'shipping_total' => $this->shipping_total,
-                        'grand_total' => $this->grandTotal,
-                        'paid_total' => 0,
-                        'due_total' => $this->grandTotal,
-                        'updated_by' => $user->id,
-                    ];
+            $this->handleOperation(
+                operation: function () use ($user, $branchId) {
+                    DB::transaction(function () use ($user, $branchId) {
+                        $purchaseData = [
+                            'branch_id' => $branchId,
+                            'supplier_id' => $this->supplier_id,
+                            'warehouse_id' => $this->warehouse_id,
+                            'reference_no' => $this->reference_no,
+                            'status' => $this->status,
+                            'currency' => $this->currency,
+                            'notes' => $this->notes,
+                            'supplier_notes' => $this->supplier_notes,
+                            'internal_notes' => $this->internal_notes,
+                            'expected_delivery_date' => $this->expected_delivery_date ?: null,
+                            'actual_delivery_date' => $this->actual_delivery_date ?: null,
+                            'shipping_method' => $this->shipping_method,
+                            'sub_total' => $this->subTotal,
+                            'discount_total' => $this->discount_total,
+                            'tax_total' => $this->taxTotal,
+                            'shipping_total' => $this->shipping_total,
+                            'grand_total' => $this->grandTotal,
+                            'paid_total' => 0,
+                            'due_total' => $this->grandTotal,
+                            'updated_by' => $user->id,
+                        ];
 
-                    if ($this->editMode) {
-                        // BUG-008 Fix: Verify branch hasn't changed on edit
-                        if ($this->purchase->branch_id !== $branchId) {
-                            throw ValidationException::withMessages([
-                                'branch' => [__('You do not have permission to edit this purchase.')],
+                        if ($this->editMode) {
+                            // BUG-008 Fix: Verify branch hasn't changed on edit
+                            if ($this->purchase->branch_id !== $branchId) {
+                                throw ValidationException::withMessages([
+                                    'branch' => [__('You do not have permission to edit this purchase.')],
+                                ]);
+                            }
+
+                            $this->purchase->update($purchaseData);
+                            $purchase = $this->purchase;
+                            $purchase->items()->delete();
+                        } else {
+                            $purchaseData['created_by'] = $user->id;
+                            $purchase = Purchase::create($purchaseData);
+                        }
+
+                        foreach ($this->items as $item) {
+                            $lineTotal = ($item['qty'] * $item['unit_cost']) - ($item['discount'] ?? 0);
+                            $lineTotal += $lineTotal * (($item['tax_rate'] ?? 0) / 100);
+
+                            PurchaseItem::create([
+                                'purchase_id' => $purchase->id,
+                                'product_id' => $item['product_id'],
+                                'branch_id' => $purchase->branch_id,
+                                'qty' => $item['qty'],
+                                'unit_cost' => $item['unit_cost'],
+                                'discount' => $item['discount'] ?? 0,
+                                'tax_rate' => $item['tax_rate'] ?? 0,
+                                'line_total' => $lineTotal,
+                                'created_by' => $user->id,
                             ]);
                         }
 
-                        $this->purchase->update($purchaseData);
-                        $purchase = $this->purchase;
-                        $purchase->items()->delete();
-                    } else {
-                        $purchaseData['created_by'] = $user->id;
-                        $purchase = Purchase::create($purchaseData);
-                    }
-
-                    foreach ($this->items as $item) {
-                        $lineTotal = ($item['qty'] * $item['unit_cost']) - ($item['discount'] ?? 0);
-                        $lineTotal += $lineTotal * (($item['tax_rate'] ?? 0) / 100);
-
-                        PurchaseItem::create([
-                            'purchase_id' => $purchase->id,
-                            'product_id' => $item['product_id'],
-                            'branch_id' => $purchase->branch_id,
-                            'qty' => $item['qty'],
-                            'unit_cost' => $item['unit_cost'],
-                            'discount' => $item['discount'] ?? 0,
-                            'tax_rate' => $item['tax_rate'] ?? 0,
-                            'line_total' => $lineTotal,
-                            'created_by' => $user->id,
-                        ]);
-                    }
-
-                    // BUG-007 Fix: Dispatch PurchaseReceived event for inventory updates
-                    // Only dispatch for received purchases to trigger stock addition
-                    if ($purchase->status === 'received') {
-                        event(new PurchaseReceived($purchase->fresh()));
-                    }
-                });
-            },
-            successMessage: $this->editMode ? __('Purchase updated successfully') : __('Purchase created successfully'),
-            redirectRoute: 'app.purchases.index'
-        );
-
-        $this->isSubmitting = false;
+                        // BUG-007 Fix: Dispatch PurchaseReceived event for inventory updates
+                        // Only dispatch for received purchases to trigger stock addition
+                        if ($purchase->status === 'received') {
+                            event(new PurchaseReceived($purchase->fresh()));
+                        }
+                    });
+                },
+                successMessage: $this->editMode ? __('Purchase updated successfully') : __('Purchase created successfully'),
+                redirectRoute: 'app.purchases.index'
+            );
+        } finally {
+            $this->isSubmitting = false;
+        }
     }
 
     public function render()
