@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Manufacturing\BillsOfMaterials;
 
 use App\Models\BillOfMaterial;
+use App\Traits\HasSortableColumns;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
@@ -16,6 +17,7 @@ class Index extends Component
 {
     use AuthorizesRequests;
     use WithPagination;
+    use HasSortableColumns;
 
     #[Url]
     public string $search = '';
@@ -37,33 +39,44 @@ class Index extends Component
         $this->resetPage();
     }
 
-    public function sortBy(string $field): void
+    protected function allowedSortColumns(): array
     {
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
-        }
+        return [
+            'created_at',
+            'bom_number',
+            'status',
+            'name',
+        ];
     }
 
     public function getStatistics(): array
     {
         $user = auth()->user();
-        $cacheKey = 'bom_stats_'.($user?->branch_id ?? 'all');
+        $baseQuery = BillOfMaterial::query()
+            ->when($this->status, fn ($q) => $q->where('status', $this->status));
 
-        return Cache::remember($cacheKey, 300, function () use ($user) {
-            $query = BillOfMaterial::query();
+        if ($user && $user->branch_id) {
+            $baseQuery->where('branch_id', $user->branch_id);
+        }
 
-            if ($user && $user->branch_id) {
-                $query->where('branch_id', $user->branch_id);
-            }
+        $lastUpdated = (clone $baseQuery)->max('updated_at');
+        $lastUpdatedKey = $lastUpdated
+            ? (is_string($lastUpdated) ? (strtotime($lastUpdated) ?: md5($lastUpdated)) : $lastUpdated->getTimestamp())
+            : 'none';
 
+        $cacheKey = sprintf(
+            'bom_stats_%s_%s_%s',
+            $user?->branch_id ?? 'all',
+            $this->status ?: 'all',
+            $lastUpdatedKey
+        );
+
+        return Cache::remember($cacheKey, 300, function () use ($baseQuery) {
             return [
-                'total_boms' => $query->count(),
-                'active_boms' => $query->where('status', 'active')->count(),
-                'draft_boms' => $query->where('status', 'draft')->count(),
-                'total_production_orders' => $query->withCount('productionOrders')->get()->sum('production_orders_count'),
+                'total_boms' => (clone $baseQuery)->count(),
+                'active_boms' => (clone $baseQuery)->where('status', 'active')->count(),
+                'draft_boms' => (clone $baseQuery)->where('status', 'draft')->count(),
+                'total_production_orders' => (clone $baseQuery)->withCount('productionOrders')->get()->sum('production_orders_count'),
             ];
         });
     }
@@ -84,7 +97,7 @@ class Index extends Component
                     ->orWhereHas('product', fn ($p) => $p->where('name', 'like', "%{$this->search}%"));
             }))
             ->when($this->status, fn ($q) => $q->where('status', $this->status))
-            ->orderBy($this->sortField, $this->sortDirection)
+            ->orderBy($this->getSortField(), $this->getSortDirection())
             ->paginate(15);
 
         $stats = $this->getStatistics();

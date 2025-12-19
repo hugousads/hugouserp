@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductStoreMapping;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProductsController extends BaseApiController
 {
@@ -147,7 +148,10 @@ class ProductsController extends BaseApiController
             'cost_price' => 'nullable|numeric|min:0',
             'quantity' => 'required|integer|min:0',
             'category_id' => 'nullable|exists:product_categories,id',
-            'warehouse_id' => 'nullable|exists:warehouses,id',
+            'warehouse_id' => [
+                'nullable',
+                Rule::exists('warehouses', 'id')->where('branch_id', $store->branch_id),
+            ],
             'barcode' => 'nullable|string|max:100',
             'unit' => 'nullable|string|max:50',
             'min_stock' => 'nullable|integer|min:0',
@@ -206,7 +210,10 @@ class ProductsController extends BaseApiController
             'cost_price' => 'nullable|numeric|min:0',
             'quantity' => 'sometimes|integer|min:0',
             'category_id' => 'nullable|exists:product_categories,id',
-            'warehouse_id' => 'nullable|exists:warehouses,id',
+            'warehouse_id' => [
+                'nullable',
+                Rule::exists('warehouses', 'id')->where('branch_id', $store->branch_id),
+            ],
             'barcode' => 'nullable|string|max:100',
             'unit' => 'nullable|string|max:50',
             'min_stock' => 'nullable|integer|min:0',

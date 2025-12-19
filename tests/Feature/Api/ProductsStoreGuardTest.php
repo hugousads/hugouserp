@@ -95,7 +95,7 @@ class ProductsStoreGuardTest extends TestCase
             'abilities' => ['products.write'],
         ]);
 
-        $product = Product::create([
+        $product = Product::forceCreate([
             'name' => 'Other Branch Product',
             'sku' => 'SKU-OTHER-1',
             'default_price' => 15,
@@ -109,5 +109,46 @@ class ProductsStoreGuardTest extends TestCase
 
         $response->assertStatus(404);
         $this->assertEquals('Other Branch Product', $product->fresh()->name);
+    }
+
+    public function test_store_rejects_warehouse_from_other_branch(): void
+    {
+        $this->withExceptionHandling();
+
+        $branchA = Branch::factory()->create();
+        $branchB = Branch::factory()->create();
+
+        $store = Store::create([
+            'name' => 'Branch A Store',
+            'type' => Store::TYPE_CUSTOM,
+            'branch_id' => $branchA->id,
+            'is_active' => true,
+        ]);
+
+        $token = StoreToken::create([
+            'store_id' => $store->id,
+            'name' => 'Writer',
+            'token' => 'tok-'.$store->id.'-c',
+            'abilities' => ['products.write'],
+        ]);
+
+        $foreignWarehouse = \App\Models\Warehouse::create([
+            'name' => 'Branch B Warehouse',
+            'branch_id' => $branchB->id,
+            'status' => 'active',
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token->token)
+            ->postJson('/api/v1/products', [
+                'name' => 'Invalid Warehouse Product',
+                'sku' => 'SKU-WH-001',
+                'price' => 10,
+                'quantity' => 1,
+                'warehouse_id' => $foreignWarehouse->id,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['warehouse_id']);
+        $this->assertDatabaseCount('products', 0);
     }
 }
