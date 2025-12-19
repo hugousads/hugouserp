@@ -1,201 +1,258 @@
-{{-- Enhanced Sidebar with Collapsible Groups, Independent Scrolling, and Responsive Design --}}
+{{-- Dynamic Sidebar Navigation --}}
 @php
+    use Illuminate\Support\Str;
+    use Illuminate\Support\Facades\Route;
+    use App\Models\Module;
+    use App\Services\ModuleNavigationService;
+
     $dir = app()->getLocale() === 'ar' ? 'rtl' : 'ltr';
     $currentRoute = request()->route()?->getName() ?? '';
     $user = auth()->user();
-    
-    $isActive = function($routes) use ($currentRoute) {
-        if (is_string($routes)) {
-            return str_starts_with($currentRoute, $routes);
-        }
+
+    $isActive = function ($routes) use ($currentRoute) {
+        $routes = (array) $routes;
+
         foreach ($routes as $route) {
-            if (str_starts_with($currentRoute, $route)) {
+            if ($route && str_starts_with($currentRoute, $route)) {
                 return true;
             }
         }
+
         return false;
     };
-    
-    $canAccess = function($permission) use ($user) {
-        if (!$user) return false;
-        if ($user->hasRole('Super Admin')) return true;
+
+    $safeRoute = function (?string $route) {
+        return $route && Route::has($route) ? route($route) : '#';
+    };
+
+    $canAccess = function ($permission) use ($user) {
+        if (! $permission) {
+            return true;
+        }
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->hasRole('Super Admin')) {
+            return true;
+        }
+
         return $user->can($permission);
     };
-    
-    // Define menu structure with groups - Comprehensive ERP Navigation
-    $menuGroups = [
+
+    $mapNavItem = null;
+    $mapNavItem = function (array $item) use (&$mapNavItem) {
+        return [
+            'route' => $item['route'] ?? null,
+            'icon' => $item['icon'] ?? '🧭',
+            'label' => $item['label'] ?? __('Navigation'),
+            'permission' => null,
+            'children' => collect($item['children'] ?? [])->map($mapNavItem)->values()->all(),
+        ];
+    };
+
+    $navigationService = app(ModuleNavigationService::class);
+    $dynamicNavigation = $user ? $navigationService->getNavigationForUser($user, $user->branch_id) : [];
+
+    $dynamicSections = collect($dynamicNavigation)
+        ->groupBy('module_id')
+        ->map(function ($items, $moduleId) use ($mapNavItem) {
+            $first = $items->first();
+            $moduleName = optional(Module::find($moduleId))->name
+                ?? Str::headline($first['module_key'] ?? 'Module');
+
+            return [
+                'title' => $moduleName,
+                'icon' => '🧩',
+                'items' => $items->map($mapNavItem)->values()->all(),
+                'is_dynamic' => true,
+            ];
+        })
+        ->values()
+        ->all();
+
+    $baseSections = [
         [
-            'title' => __('Overview'),
-            'icon' => '📊',
+            'title' => __('Workspace'),
+            'icon' => '🌐',
             'items' => [
-                ['route' => 'dashboard', 'icon' => '📊', 'label' => __('Dashboard'), 'permission' => 'dashboard.view', 'gradient' => 'from-red-500 to-red-600'],
-            ]
-        ],
-        [
-            'title' => __('Contacts'),
-            'icon' => '👥',
-            'items' => [
-                ['route' => 'customers.index', 'icon' => '👤', 'label' => __('Customers'), 'permission' => 'customers.view', 'gradient' => 'from-cyan-500 to-cyan-600'],
-                ['route' => 'suppliers.index', 'icon' => '🏭', 'label' => __('Suppliers'), 'permission' => 'suppliers.view', 'gradient' => 'from-violet-500 to-violet-600'],
-            ]
-        ],
-        [
-            'title' => __('Sales & POS'),
-            'icon' => '💰',
-            'items' => [
-                ['route' => 'pos.terminal', 'icon' => '🧾', 'label' => __('POS Terminal'), 'permission' => 'pos.use', 'gradient' => 'from-amber-500 to-amber-600', 'children' => [
+                ['route' => 'dashboard', 'icon' => '📊', 'label' => __('Dashboard'), 'permission' => 'dashboard.view'],
+                ['route' => 'pos.terminal', 'icon' => '🧾', 'label' => __('POS Terminal'), 'permission' => 'pos.use', 'children' => [
                     ['route' => 'pos.daily.report', 'icon' => '📑', 'label' => __('Daily Report'), 'permission' => 'pos.daily-report.view'],
                 ]],
-                ['route' => 'app.sales.index', 'icon' => '💰', 'label' => __('Sales'), 'permission' => 'sales.view', 'gradient' => 'from-green-500 to-green-600', 'children' => [
+                ['route' => 'admin.reports.index', 'icon' => '📈', 'label' => __('Reports Hub'), 'permission' => 'reports.view'],
+            ],
+        ],
+        [
+            'title' => __('Sales & Purchases'),
+            'icon' => '💼',
+            'items' => [
+                ['route' => 'app.sales.index', 'icon' => '💰', 'label' => __('Sales'), 'permission' => 'sales.view', 'children' => [
                     ['route' => 'app.sales.returns.index', 'icon' => '↩️', 'label' => __('Returns'), 'permission' => 'sales.return'],
                     ['route' => 'app.sales.analytics', 'icon' => '📈', 'label' => __('Analytics'), 'permission' => 'sales.view'],
                 ]],
-            ]
-        ],
-        [
-            'title' => __('Purchases & Expenses'),
-            'icon' => '🛒',
-            'items' => [
-                ['route' => 'app.purchases.index', 'icon' => '🛒', 'label' => __('Purchases'), 'permission' => 'purchases.view', 'gradient' => 'from-purple-500 to-purple-600', 'children' => [
+                ['route' => 'app.purchases.index', 'icon' => '🛒', 'label' => __('Purchases'), 'permission' => 'purchases.view', 'children' => [
                     ['route' => 'app.purchases.returns.index', 'icon' => '↩️', 'label' => __('Returns'), 'permission' => 'purchases.return'],
                 ]],
-                ['route' => 'app.expenses.index', 'icon' => '📋', 'label' => __('Expenses'), 'permission' => 'expenses.view', 'gradient' => 'from-slate-500 to-slate-600', 'children' => [
-                    ['route' => 'app.expenses.categories.index', 'icon' => '📂', 'label' => __('Categories'), 'permission' => 'expenses.manage'],
-                ]],
-            ]
+                ['route' => 'customers.index', 'icon' => '👤', 'label' => __('Customers'), 'permission' => 'customers.view'],
+                ['route' => 'suppliers.index', 'icon' => '🏭', 'label' => __('Suppliers'), 'permission' => 'suppliers.view'],
+            ],
         ],
         [
             'title' => __('Inventory & Warehouse'),
             'icon' => '📦',
             'items' => [
-                ['route' => 'app.inventory.products.index', 'icon' => '📦', 'label' => __('Products'), 'permission' => 'inventory.products.view', 'gradient' => 'from-teal-500 to-teal-600', 'children' => [
+                ['route' => 'app.inventory.products.index', 'icon' => '📦', 'label' => __('Products'), 'permission' => 'inventory.products.view', 'children' => [
                     ['route' => 'app.inventory.categories.index', 'icon' => '📂', 'label' => __('Categories'), 'permission' => 'inventory.products.view'],
                     ['route' => 'app.inventory.units.index', 'icon' => '📏', 'label' => __('Units'), 'permission' => 'inventory.products.view'],
                     ['route' => 'app.inventory.stock-alerts', 'icon' => '⚠️', 'label' => __('Stock Alerts'), 'permission' => 'inventory.stock.alerts.view'],
                     ['route' => 'app.inventory.barcodes', 'icon' => '🏷️', 'label' => __('Barcodes'), 'permission' => 'inventory.products.view'],
                     ['route' => 'app.inventory.batches.index', 'icon' => '📦', 'label' => __('Batches'), 'permission' => 'inventory.products.view'],
-                    ['route' => 'app.inventory.serials.index', 'icon' => '🔢', 'label' => __('Serials'), 'permission' => 'inventory.products.view'],
+                    ['route' => 'app.inventory.serials.index', 'icon' => '🔢', 'label' => __('Serial Numbers'), 'permission' => 'inventory.products.view'],
                     ['route' => 'app.inventory.vehicle-models', 'icon' => '🚗', 'label' => __('Vehicle Models'), 'permission' => 'spares.compatibility.manage'],
                 ]],
-                ['route' => 'app.warehouse.index', 'icon' => '🏭', 'label' => __('Warehouse'), 'permission' => 'warehouse.view', 'gradient' => 'from-orange-500 to-orange-600'],
-            ]
+                ['route' => 'app.inventory.index', 'icon' => '📊', 'label' => __('Inventory Overview'), 'permission' => 'inventory.products.view'],
+                ['route' => 'app.warehouse.index', 'icon' => '🏭', 'label' => __('Warehouse'), 'permission' => 'warehouse.view'],
+            ],
         ],
         [
             'title' => __('Finance & Banking'),
             'icon' => '💵',
             'items' => [
-                ['route' => 'app.accounting.index', 'icon' => '🧮', 'label' => __('Accounting'), 'permission' => 'accounting.view', 'gradient' => 'from-indigo-500 to-indigo-600'],
-                ['route' => 'app.income.index', 'icon' => '💵', 'label' => __('Income'), 'permission' => 'income.view', 'gradient' => 'from-emerald-500 to-emerald-600', 'children' => [
-                    ['route' => 'app.income.categories.index', 'icon' => '📂', 'label' => __('Categories'), 'permission' => 'income.manage'],
+                ['route' => 'app.accounting.index', 'icon' => '🧮', 'label' => __('Accounting'), 'permission' => 'accounting.view'],
+                ['route' => 'app.expenses.index', 'icon' => '💳', 'label' => __('Expenses'), 'permission' => 'expenses.view', 'children' => [
+                    ['route' => 'app.expenses.categories.index', 'icon' => '📂', 'label' => __('Categories'), 'permission' => 'expenses.manage'],
                 ]],
-                ['route' => 'app.banking.accounts.index', 'icon' => '🏦', 'label' => __('Banking'), 'permission' => 'banking.view', 'gradient' => 'from-blue-500 to-blue-600'],
-                ['route' => 'admin.branches.index', 'icon' => '🏢', 'label' => __('Branches'), 'permission' => 'branches.view', 'gradient' => 'from-blue-600 to-blue-700'],
-            ]
+                ['route' => 'app.income.index', 'icon' => '💰', 'label' => __('Income'), 'permission' => 'income.view', 'children' => [
+                    ['route' => 'app.income.categories.index', 'icon' => '🗂️', 'label' => __('Categories'), 'permission' => 'income.manage'],
+                ]],
+                ['route' => 'app.banking.accounts.index', 'icon' => '🏦', 'label' => __('Banking'), 'permission' => 'banking.view'],
+                ['route' => 'admin.branches.index', 'icon' => '🏢', 'label' => __('Branches'), 'permission' => 'branches.view'],
+            ],
         ],
         [
-            'title' => __('Human Resources'),
+            'title' => __('People & HR'),
             'icon' => '👥',
             'items' => [
-                ['route' => 'app.hrm.employees.index', 'icon' => '👥', 'label' => __('Employees'), 'permission' => 'hrm.employees.view', 'gradient' => 'from-rose-500 to-rose-600', 'children' => [
-                    ['route' => 'app.hrm.attendance.index', 'icon' => '📅', 'label' => __('Attendance'), 'permission' => 'hrm.attendance.view'],
-                    ['route' => 'app.hrm.shifts.index', 'icon' => '⏰', 'label' => __('Shifts'), 'permission' => 'hrm.view'],
-                    ['route' => 'app.hrm.payroll.index', 'icon' => '💰', 'label' => __('Payroll'), 'permission' => 'hrm.payroll.view'],
-                    ['route' => 'app.hrm.reports', 'icon' => '📊', 'label' => __('HR Reports'), 'permission' => 'hrm.view-reports'],
+                ['route' => 'app.hrm.index', 'icon' => '🧑‍💼', 'label' => __('Human Resources'), 'permission' => 'hrm.employees.view', 'children' => [
+                    ['route' => 'app.hrm.employees.index', 'icon' => '🧑‍💻', 'label' => __('Employees'), 'permission' => 'hrm.employees.view'],
+                    ['route' => 'app.hrm.attendance.index', 'icon' => '🕒', 'label' => __('Attendance'), 'permission' => 'hrm.attendance.manage'],
+                    ['route' => 'app.hrm.payroll.index', 'icon' => '💵', 'label' => __('Payroll'), 'permission' => 'hrm.payroll.manage'],
+                    ['route' => 'app.hrm.shifts.index', 'icon' => '📅', 'label' => __('Shifts'), 'permission' => 'hrm.shifts.manage'],
+                    ['route' => 'app.hrm.reports', 'icon' => '📊', 'label' => __('Reports'), 'permission' => 'hr.view-reports'],
                 ]],
-            ]
+            ],
         ],
         [
             'title' => __('Operations'),
             'icon' => '⚙️',
             'items' => [
-                ['route' => 'app.rental.units.index', 'icon' => '🏠', 'label' => __('Rental Management'), 'permission' => 'rental.units.view', 'gradient' => 'from-sky-500 to-sky-600', 'children' => [
-                    ['route' => 'app.rental.properties.index', 'icon' => '🏢', 'label' => __('Properties'), 'permission' => 'rentals.view'],
-                    ['route' => 'app.rental.units.index', 'icon' => '🚪', 'label' => __('Units'), 'permission' => 'rental.units.view'],
-                    ['route' => 'app.rental.tenants.index', 'icon' => '👤', 'label' => __('Tenants'), 'permission' => 'rentals.view'],
-                    ['route' => 'app.rental.contracts.index', 'icon' => '📄', 'label' => __('Contracts'), 'permission' => 'rental.contracts.view'],
+                ['route' => 'app.rental.index', 'icon' => '🏠', 'label' => __('Rental'), 'permission' => 'rental.units.view', 'children' => [
+                    ['route' => 'app.rental.units.index', 'icon' => '📦', 'label' => __('Units'), 'permission' => 'rental.units.view'],
+                    ['route' => 'app.rental.properties.index', 'icon' => '🏢', 'label' => __('Properties'), 'permission' => 'rental.properties.view'],
+                    ['route' => 'app.rental.tenants.index', 'icon' => '🧑‍🤝‍🧑', 'label' => __('Tenants'), 'permission' => 'rental.tenants.view'],
+                    ['route' => 'app.rental.contracts.index', 'icon' => '📝', 'label' => __('Contracts'), 'permission' => 'rental.contracts.view'],
+                    ['route' => 'app.rental.reports', 'icon' => '📈', 'label' => __('Reports'), 'permission' => 'rental.view-reports'],
                 ]],
-                ['route' => 'app.manufacturing.boms.index', 'icon' => '🏭', 'label' => __('Manufacturing'), 'permission' => 'manufacturing.view', 'gradient' => 'from-gray-500 to-gray-600', 'children' => [
-                    ['route' => 'app.manufacturing.boms.index', 'icon' => '📋', 'label' => __('BOMs'), 'permission' => 'manufacturing.view'],
-                    ['route' => 'app.manufacturing.orders.index', 'icon' => '⚙️', 'label' => __('Orders'), 'permission' => 'manufacturing.view'],
-                    ['route' => 'app.manufacturing.work-centers.index', 'icon' => '🔧', 'label' => __('Work Centers'), 'permission' => 'manufacturing.view'],
+                ['route' => 'app.manufacturing.index', 'icon' => '🏭', 'label' => __('Manufacturing'), 'permission' => 'manufacturing.view', 'children' => [
+                    ['route' => 'app.manufacturing.boms.index', 'icon' => '🧾', 'label' => __('BOMs'), 'permission' => 'manufacturing.view'],
+                    ['route' => 'app.manufacturing.orders.index', 'icon' => '🛠️', 'label' => __('Production Orders'), 'permission' => 'manufacturing.view'],
+                    ['route' => 'app.manufacturing.work-centers.index', 'icon' => '🏗️', 'label' => __('Work Centers'), 'permission' => 'manufacturing.view'],
                 ]],
-                ['route' => 'app.fixed-assets.index', 'icon' => '🏗️', 'label' => __('Fixed Assets'), 'permission' => 'fixed-assets.view', 'gradient' => 'from-stone-500 to-stone-600'],
-                ['route' => 'app.projects.index', 'icon' => '📋', 'label' => __('Projects'), 'permission' => 'projects.view', 'gradient' => 'from-blue-500 to-blue-600'],
-                ['route' => 'app.helpdesk.index', 'icon' => '🎫', 'label' => __('Helpdesk'), 'permission' => 'helpdesk.view', 'gradient' => 'from-purple-500 to-purple-600', 'children' => [
-                    ['route' => 'app.helpdesk.tickets.index', 'icon' => '🎫', 'label' => __('Tickets'), 'permission' => 'helpdesk.view'],
+                ['route' => 'app.fixed-assets.index', 'icon' => '🏛️', 'label' => __('Fixed Assets'), 'permission' => 'fixed-assets.view', 'children' => [
+                    ['route' => 'app.fixed-assets.create', 'icon' => '➕', 'label' => __('Add Asset'), 'permission' => 'fixed-assets.view'],
+                    ['route' => 'app.fixed-assets.depreciation', 'icon' => '📉', 'label' => __('Depreciation'), 'permission' => 'fixed-assets.view'],
                 ]],
-                ['route' => 'app.documents.index', 'icon' => '📄', 'label' => __('Documents'), 'permission' => 'documents.view', 'gradient' => 'from-orange-500 to-orange-600'],
-            ]
+                ['route' => 'app.projects.index', 'icon' => '📂', 'label' => __('Projects'), 'permission' => 'projects.view', 'children' => [
+                    ['route' => 'app.projects.create', 'icon' => '➕', 'label' => __('New Project'), 'permission' => 'projects.view'],
+                ]],
+                ['route' => 'app.documents.index', 'icon' => '📄', 'label' => __('Documents'), 'permission' => 'documents.view', 'children' => [
+                    ['route' => 'app.documents.create', 'icon' => '⬆️', 'label' => __('Upload Document'), 'permission' => 'documents.view'],
+                ]],
+                ['route' => 'app.helpdesk.index', 'icon' => '🎫', 'label' => __('Helpdesk'), 'permission' => 'helpdesk.view', 'children' => [
+                    ['route' => 'app.helpdesk.tickets.index', 'icon' => '🎟️', 'label' => __('Tickets'), 'permission' => 'helpdesk.view'],
+                    ['route' => 'app.helpdesk.tickets.create', 'icon' => '➕', 'label' => __('New Ticket'), 'permission' => 'helpdesk.view'],
+                    ['route' => 'app.helpdesk.categories.index', 'icon' => '📚', 'label' => __('Categories'), 'permission' => 'helpdesk.view'],
+                ]],
+            ],
         ],
         [
-            'title' => __('Reports'),
-            'icon' => '📊',
+            'title' => __('Reporting'),
+            'icon' => '📑',
             'items' => [
-                ['route' => 'admin.reports.index', 'icon' => '📊', 'label' => __('Reports Hub'), 'permission' => 'reports.view', 'gradient' => 'from-purple-500 to-purple-600', 'children' => [
+                ['route' => 'admin.reports.index', 'icon' => '📊', 'label' => __('Reports Hub'), 'permission' => 'reports.view', 'children' => [
                     ['route' => 'admin.reports.sales', 'icon' => '💰', 'label' => __('Sales'), 'permission' => 'sales.view-reports'],
                     ['route' => 'admin.reports.inventory', 'icon' => '📦', 'label' => __('Inventory'), 'permission' => 'inventory.view-reports'],
                     ['route' => 'admin.reports.pos', 'icon' => '🧾', 'label' => __('POS'), 'permission' => 'pos.view-reports'],
-                    ['route' => 'admin.reports.aggregate', 'icon' => '📈', 'label' => __('Aggregate'), 'permission' => 'reports.aggregate'],
+                    ['route' => 'admin.reports.aggregate', 'icon' => '🧮', 'label' => __('Aggregate'), 'permission' => 'reports.aggregate'],
                     ['route' => 'admin.reports.scheduled', 'icon' => '📅', 'label' => __('Scheduled'), 'permission' => 'reports.schedule'],
                     ['route' => 'admin.reports.templates', 'icon' => '📋', 'label' => __('Templates'), 'permission' => 'reports.templates'],
                 ]],
-            ]
+            ],
         ],
         [
             'title' => __('Administration'),
-            'icon' => '⚙️',
+            'icon' => '🛠️',
             'items' => [
-                ['route' => 'admin.settings', 'icon' => '⚙️', 'label' => __('Settings'), 'permission' => 'settings.view', 'gradient' => 'from-sky-500 to-sky-600'],
-                ['route' => 'admin.users.index', 'icon' => '👥', 'label' => __('Users'), 'permission' => 'users.manage', 'gradient' => 'from-pink-500 to-pink-600'],
-                ['route' => 'admin.roles.index', 'icon' => '🔐', 'label' => __('Roles'), 'permission' => 'roles.manage', 'gradient' => 'from-violet-500 to-violet-600'],
-                ['route' => 'admin.modules.index', 'icon' => '🧩', 'label' => __('Modules'), 'permission' => 'modules.manage', 'gradient' => 'from-fuchsia-500 to-fuchsia-600'],
-                ['route' => 'admin.stores.index', 'icon' => '🔗', 'label' => __('Store Integrations'), 'permission' => 'stores.view', 'gradient' => 'from-indigo-500 to-indigo-600', 'children' => [
+                ['route' => 'admin.settings', 'icon' => '⚙️', 'label' => __('Settings'), 'permission' => 'settings.view'],
+                ['route' => 'admin.users.index', 'icon' => '👥', 'label' => __('Users'), 'permission' => 'users.manage'],
+                ['route' => 'admin.roles.index', 'icon' => '🔐', 'label' => __('Roles'), 'permission' => 'roles.manage'],
+                ['route' => 'admin.branches.index', 'icon' => '🏢', 'label' => __('Branches'), 'permission' => 'branches.view'],
+                ['route' => 'admin.modules.index', 'icon' => '🧩', 'label' => __('Modules'), 'permission' => 'modules.manage', 'children' => [
+                    ['route' => 'admin.modules.create', 'icon' => '➕', 'label' => __('Add Module'), 'permission' => 'modules.manage'],
+                    ['route' => 'admin.modules.product-fields', 'icon' => '🧬', 'label' => __('Product Fields'), 'permission' => 'modules.manage'],
+                ]],
+                ['route' => 'admin.stores.index', 'icon' => '🛍️', 'label' => __('Store Integrations'), 'permission' => 'stores.view', 'children' => [
                     ['route' => 'admin.stores.orders', 'icon' => '📦', 'label' => __('Store Orders'), 'permission' => 'stores.view'],
                     ['route' => 'admin.api-docs', 'icon' => '📖', 'label' => __('API Docs'), 'permission' => 'stores.view'],
                 ]],
-                ['route' => 'admin.translations.index', 'icon' => '🌍', 'label' => __('Translations'), 'permission' => 'settings.view', 'gradient' => 'from-cyan-500 to-cyan-600'],
-                ['route' => 'admin.currencies.index', 'icon' => '💱', 'label' => __('Currencies'), 'permission' => 'settings.view', 'gradient' => 'from-yellow-500 to-yellow-600', 'children' => [
+                ['route' => 'admin.translations.index', 'icon' => '🌍', 'label' => __('Translations'), 'permission' => 'settings.view'],
+                ['route' => 'admin.currencies.index', 'icon' => '💱', 'label' => __('Currencies'), 'permission' => 'settings.view', 'children' => [
                     ['route' => 'admin.currency-rates.index', 'icon' => '📈', 'label' => __('Exchange Rates'), 'permission' => 'settings.view'],
                 ]],
-                ['route' => 'admin.media.index', 'icon' => '🖼️', 'label' => __('Media Library'), 'permission' => 'media.view', 'gradient' => 'from-rose-500 to-rose-600'],
-                ['route' => 'admin.logs.audit', 'icon' => '📜', 'label' => __('Audit Logs'), 'permission' => 'logs.audit.view', 'gradient' => 'from-gray-500 to-gray-600', 'children' => [
-                    ['route' => 'admin.activity-log', 'icon' => '📋', 'label' => __('Activity Log'), 'permission' => 'logs.audit.view'],
+                ['route' => 'admin.media.index', 'icon' => '🖼️', 'label' => __('Media Library'), 'permission' => 'media.view'],
+                ['route' => 'admin.logs.audit', 'icon' => '📜', 'label' => __('Audit Logs'), 'permission' => 'logs.audit.view', 'children' => [
+                    ['route' => 'admin.activity-log', 'icon' => '🗒️', 'label' => __('Activity Log'), 'permission' => 'logs.audit.view'],
                 ]],
-            ]
+            ],
         ],
     ];
+
+    $menuSections = array_values(array_merge($baseSections, $dynamicSections));
 @endphp
 
 <aside
-    class="sidebar-enhanced fixed md:relative inset-y-0 {{ $dir === 'rtl' ? 'right-0' : 'left-0' }} w-72 lg:w-80 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 text-slate-100 shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-out"
+    class="sidebar-enhanced fixed md:relative inset-y-0 {{ $dir === 'rtl' ? 'right-0' : 'left-0' }} w-72 lg:w-80 bg-slate-950/95 text-slate-100 shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-out"
     :class="sidebarOpen ? 'translate-x-0' : '{{ $dir === 'rtl' ? 'translate-x-full' : '-translate-x-full' }} md:translate-x-0'"
     x-cloak
     x-data="{
         groups: {},
-        initGroup(key, hasActive) {
-            const stored = localStorage.getItem('sidebar_group_' + key);
-            this.groups[key] = stored !== null ? stored === 'true' : hasActive;
+        init() {
+            Object.keys(localStorage)
+                .filter(key => key.startsWith('sidebar_section_'))
+                .forEach(key => this.groups[key.replace('sidebar_section_', '')] = localStorage.getItem(key) === 'true');
         },
-        toggleGroup(key) {
+        toggle(key) {
             this.groups[key] = !this.groups[key];
-            localStorage.setItem('sidebar_group_' + key, this.groups[key]);
+            localStorage.setItem('sidebar_section_' + key, this.groups[key]);
         }
     }"
 >
     {{-- Logo & User Section (Fixed at top) --}}
-    <div class="sidebar-header flex-shrink-0 flex items-center justify-between px-4 py-4 border-b border-slate-700 bg-slate-900/50 backdrop-blur">
+    <div class="sidebar-header flex-shrink-0 flex items-center justify-between px-4 py-4 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold text-lg shadow-md group-hover:shadow-emerald-500/50 transition-all duration-300">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold text-lg shadow-md group-hover:shadow-emerald-500/40 transition-all duration-300">
                 {{ strtoupper(mb_substr(config('app.name', 'G'), 0, 1)) }}
             </span>
             <div class="flex flex-col min-w-0">
                 <span class="text-sm font-semibold truncate text-white">{{ $user->name ?? 'User' }}</span>
-                <span class="text-xs text-slate-400 truncate">{{ $user?->roles?->first()?->name ?? __('User') }}</span>
+                <span class="text-xs text-emerald-200 truncate">{{ $user?->roles?->first()?->name ?? __('User') }}</span>
             </div>
         </a>
-        
+
         {{-- Mobile Close Button --}}
-        <button @click="sidebarOpen = false" class="md:hidden p-2 rounded-lg hover:bg-slate-800 transition-colors">
+        <button @click="sidebarOpen = false" class="md:hidden p-2 rounded-lg hover:bg-slate-800 transition-colors" aria-label="Close sidebar">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
@@ -203,96 +260,84 @@
     </div>
 
     {{-- Scrollable Navigation (Independent scroll) --}}
-    <nav class="sidebar-nav flex-1 overflow-y-auto py-3 px-2 space-y-2 custom-scrollbar">
-        @foreach($menuGroups as $groupIndex => $group)
+    <nav class="sidebar-nav flex-1 overflow-y-auto py-4 px-3 space-y-3 custom-scrollbar">
+        @foreach($menuSections as $sectionIndex => $section)
             @php
-                $groupKey = 'group_' . $groupIndex;
-                // Check if any item in group is active
+                $sectionKey = 'section_' . $sectionIndex;
                 $hasActive = false;
-                foreach ($group['items'] as $item) {
-                    if ($canAccess($item['permission'] ?? 'none') && $isActive($item['route'])) {
+                foreach ($section['items'] as $item) {
+                    if ($isActive($item['route'])) {
                         $hasActive = true;
                         break;
                     }
+                    foreach ($item['children'] ?? [] as $child) {
+                        if ($isActive($child['route'])) {
+                            $hasActive = true;
+                            break 2;
+                        }
+                    }
                 }
             @endphp
-            
-            {{-- Group Header with Collapse/Expand --}}
-            <div x-init="initGroup('{{ $groupKey }}', {{ $hasActive ? 'true' : 'false' }})">
-                <button 
-                    @click="toggleGroup('{{ $groupKey }}')"
-                    class="w-full flex items-center gap-2 px-3 py-2 text-xs uppercase tracking-wider text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all duration-200 group"
+
+            <div class="sidebar-section" x-init="groups['{{ $sectionKey }}'] = groups['{{ $sectionKey }}'] ?? {{ $hasActive ? 'true' : 'false' }}">
+                <button
+                    @click="toggle('{{ $sectionKey }}')"
+                    class="sidebar-section__header"
+                    type="button"
                 >
-                    <span class="text-sm">{{ $group['icon'] }}</span>
-                    <span class="flex-1 text-start font-semibold">{{ $group['title'] }}</span>
-                    <svg 
-                        class="w-4 h-4 transition-transform duration-200" 
-                        :class="groups['{{ $groupKey }}'] ? 'rotate-0' : '-rotate-90'"
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                    >
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">{{ $section['icon'] }}</span>
+                        <span class="font-semibold text-sm">{{ $section['title'] }}</span>
+                    </div>
+                    <svg class="w-4 h-4 transition-transform duration-200" :class="groups['{{ $sectionKey }}'] ? 'rotate-180' : 'rotate-0'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
-                
-                {{-- Group Items --}}
-                <ul 
-                    x-show="groups['{{ $groupKey }}']"
+
+                <ul
+                    x-show="groups['{{ $sectionKey }}']"
                     x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="opacity-0 -translate-y-2"
                     x-transition:enter-end="opacity-100 translate-y-0"
                     x-transition:leave="transition ease-in duration-150"
                     x-transition:leave-start="opacity-100 translate-y-0"
                     x-transition:leave-end="opacity-0 -translate-y-2"
-                    class="space-y-1 mt-1"
+                    class="space-y-1 mt-2"
                 >
-                    @foreach($group['items'] as $item)
-                        @if($canAccess($item['permission'] ?? 'none'))
-                            <li x-data="{ childrenOpen: {{ $isActive($item['route']) ? 'true' : 'false' }} }">
-                                @if(isset($item['children']) && count($item['children']) > 0)
-                                    {{-- Item with children --}}
-                                    <button 
-                                        @click="childrenOpen = !childrenOpen" 
+                    @foreach($section['items'] as $item)
+                        @if($canAccess($item['permission'] ?? null) && $safeRoute($item['route']) !== '#')
+                            <li x-data="{ open: {{ $isActive($item['route']) ? 'true' : 'false' }} }" class="sidebar-item">
+                                @if(!empty($item['children']))
+                                    <button
                                         type="button"
-                                        class="w-full sidebar-link bg-gradient-to-r {{ $item['gradient'] ?? 'from-slate-600 to-slate-700' }} {{ $isActive($item['route']) ? 'ring-2 ring-white/30' : '' }}"
+                                        @click="open = !open"
+                                        class="sidebar-link"
                                     >
                                         <span class="text-lg">{{ $item['icon'] }}</span>
-                                        <span class="text-sm font-medium flex-1 text-start">{{ $item['label'] }}</span>
-                                        <svg 
-                                            class="w-4 h-4 transition-transform duration-200" 
-                                            :class="childrenOpen ? 'rotate-180' : ''"
-                                            fill="none" 
-                                            stroke="currentColor" 
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                        </svg>
+                                        <div class="flex-1 flex items-center justify-between gap-2">
+                                            <span class="text-sm font-medium">{{ $item['label'] }}</span>
+                                            <svg class="w-4 h-4 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                            </svg>
+                                        </div>
                                         @if($isActive($item['route']))
-                                            <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                                         @endif
                                     </button>
-                                    
-                                    {{-- Children --}}
-                                    <ul 
-                                        x-show="childrenOpen"
-                                        x-transition:enter="transition ease-out duration-200"
-                                        x-transition:enter-start="opacity-0 -translate-y-1"
-                                        x-transition:enter-end="opacity-100 translate-y-0"
-                                        class="ms-4 mt-1 space-y-0.5"
-                                    >
+
+                                    <ul x-show="open" x-transition class="sidebar-children mt-1 space-y-0.5">
                                         @foreach($item['children'] as $child)
-                                            @if($canAccess($child['permission'] ?? 'none'))
+                                            @if($canAccess($child['permission'] ?? null) && $safeRoute($child['route']) !== '#')
                                                 <li>
-                                                    <a 
-                                                        href="{{ route($child['route']) }}"
+                                                    <a
+                                                        href="{{ $safeRoute($child['route']) }}"
                                                         @click="sidebarOpen = false"
-                                                        class="sidebar-link-secondary {{ $isActive($child['route']) ? 'active bg-slate-800/80' : '' }}"
+                                                        class="sidebar-link-secondary {{ $isActive($child['route']) ? 'active' : '' }}"
                                                     >
                                                         <span class="text-base">{{ $child['icon'] }}</span>
                                                         <span class="text-sm">{{ $child['label'] }}</span>
                                                         @if($isActive($child['route']))
-                                                            <span class="ms-auto w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                                            <span class="ml-auto rtl:mr-auto rtl:ml-0 w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                                                         @endif
                                                     </a>
                                                 </li>
@@ -300,16 +345,15 @@
                                         @endforeach
                                     </ul>
                                 @else
-                                    {{-- Simple item without children --}}
-                                    <a 
-                                        href="{{ route($item['route']) }}"
+                                    <a
+                                        href="{{ $safeRoute($item['route']) }}"
                                         @click="sidebarOpen = false"
-                                        class="sidebar-link bg-gradient-to-r {{ $item['gradient'] ?? 'from-slate-600 to-slate-700' }} {{ $isActive($item['route']) ? 'ring-2 ring-white/30' : '' }}"
+                                        class="sidebar-link {{ $isActive($item['route']) ? 'active' : '' }}"
                                     >
                                         <span class="text-lg">{{ $item['icon'] }}</span>
                                         <span class="text-sm font-medium">{{ $item['label'] }}</span>
                                         @if($isActive($item['route']))
-                                            <span class="ms-auto w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                                            <span class="ml-auto rtl:mr-auto rtl:ml-0 w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                                         @endif
                                     </a>
                                 @endif
@@ -322,166 +366,119 @@
     </nav>
 
     {{-- Footer Section (Fixed at bottom) --}}
-    <div class="sidebar-footer flex-shrink-0 border-t border-slate-700 bg-slate-900/50 backdrop-blur">
-        {{-- Quick Actions --}}
+    <div class="sidebar-footer flex-shrink-0 border-t border-slate-800 bg-slate-900/70 backdrop-blur-xl">
         <div class="px-3 py-3 space-y-2">
-            <a href="{{ route('profile.edit') }}" 
-               @click="sidebarOpen = false"
-               class="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all duration-200">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
-                <span>{{ __('My Profile') }}</span>
-            </a>
-            
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" 
-                        class="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-all duration-200">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    <span>{{ __('Logout') }}</span>
-                </button>
-            </form>
-        </div>
-        
-        {{-- Language Switcher --}}
-        <div class="px-3 py-2 border-t border-slate-700">
-            <div class="flex items-center justify-center gap-2">
-                <a href="?lang=ar" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 {{ app()->getLocale() === 'ar' ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600' }}">
-                    العربية
-                </a>
-                <a href="?lang=en" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 {{ app()->getLocale() === 'en' ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600' }}">
-                    English
-                </a>
+            <div class="flex items-center justify-between text-[13px] text-slate-300">
+                <span class="inline-flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    {{ __('Ready to work') }}
+                </span>
+                <span class="text-slate-400">LTR/RTL</span>
             </div>
-        </div>
-        
-        <div class="px-3 py-2 border-t border-slate-700">
-            <div class="text-xs text-slate-500 text-center">
-                <p>&copy; {{ date('Y') }} {{ config('app.name') }}</p>
+
+            <div class="grid grid-cols-2 gap-2">
+                @if($canAccess('modules.manage') && Route::has('admin.modules.create'))
+                    <a href="{{ route('admin.modules.create') }}" @click="sidebarOpen = false" class="sidebar-chip">
+                        <span>🧩</span>
+                        <span class="text-xs font-semibold">{{ __('Add Module') }}</span>
+                    </a>
+                @endif
+                @if($canAccess('profile.update') && Route::has('profile.edit'))
+                    <a href="{{ route('profile.edit') }}" @click="sidebarOpen = false" class="sidebar-chip">
+                        <span>👤</span>
+                        <span class="text-xs font-semibold">{{ __('My Profile') }}</span>
+                    </a>
+                @endif
+                @if(Route::has('notifications.center'))
+                    <a href="{{ route('notifications.center') }}" @click="sidebarOpen = false" class="sidebar-chip">
+                        <span>🔔</span>
+                        <span class="text-xs font-semibold">{{ __('Alerts') }}</span>
+                    </a>
+                @endif
+                @if(Route::has('support.center'))
+                    <a href="{{ route('support.center') }}" @click="sidebarOpen = false" class="sidebar-chip">
+                        <span>💬</span>
+                        <span class="text-xs font-semibold">{{ __('Support') }}</span>
+                    </a>
+                @endif
             </div>
         </div>
     </div>
 </aside>
 
 <style>
-/* Enhanced Sidebar Styles */
-.sidebar-enhanced {
-    height: 100vh;
-    height: 100dvh; /* Dynamic viewport height for mobile */
-}
-
-/* Custom Scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.3);
-    border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.3);
-    border-radius: 3px;
-    transition: background 0.2s;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.5);
-}
-
-/* Firefox */
-.custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.3) rgba(15, 23, 42, 0.3);
-}
-
-/* Smooth scroll behavior */
-.sidebar-nav {
-    scroll-behavior: smooth;
-    overscroll-behavior: contain;
-}
-
-/* Mobile optimizations */
-@media (max-width: 768px) {
     .sidebar-enhanced {
-        position: fixed;
         height: 100vh;
         height: 100dvh;
-        width: 85vw;
-        max-width: 320px;
     }
-    
-    /* Touch-friendly sizing */
-    .sidebar-link,
+
+    .sidebar-section {
+        @apply rounded-2xl bg-slate-900/60 border border-white/5 p-3 shadow-lg shadow-black/20;
+    }
+
+    .sidebar-section__header {
+        @apply w-full flex items-center justify-between gap-2 px-2 py-1.5 text-slate-200 hover:text-white rounded-xl transition-all duration-200;
+    }
+
+    .sidebar-link {
+        @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-white bg-gradient-to-r from-slate-800/80 via-slate-800/60 to-slate-900/60 border border-white/5 shadow-sm transition-all duration-300 ease-out;
+    }
+
+    .sidebar-link:hover {
+        @apply shadow-lg -translate-y-0.5 ring-1 ring-emerald-500/30;
+    }
+
+    .sidebar-link.active {
+        @apply ring-2 ring-emerald-400/40 shadow-lg scale-[1.01] bg-emerald-500/20 text-emerald-100;
+    }
+
     .sidebar-link-secondary {
-        min-height: 44px;
-        touch-action: manipulation;
+        @apply flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/80 hover:text-white transition-all duration-200;
     }
-    
-    /* Prevent overscroll on mobile */
-    .sidebar-nav {
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior-y: contain;
+
+    .sidebar-link-secondary.active {
+        @apply bg-emerald-500/20 text-emerald-100 border border-emerald-400/30;
     }
-}
 
-/* RTL Support */
-html[dir="rtl"] .sidebar-enhanced {
-    border-left: 1px solid rgb(51, 65, 85);
-    border-right: none;
-}
+    .sidebar-chip {
+        @apply flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/60 text-slate-100 border border-white/5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200;
+    }
 
-html[dir="rtl"] .ms-4 {
-    margin-right: 1rem;
-    margin-left: 0;
-}
+    .sidebar-children {
+        border-inline-start: 1px solid rgba(51, 65, 85, 0.7);
+        padding-inline-start: 0.75rem;
+        margin-inline-start: 0.75rem;
+    }
 
-/* Enhanced link styles */
-.sidebar-link {
-    @apply flex items-center gap-2 px-3 py-2.5 rounded-xl text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02];
-}
+    .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.35); border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.6); }
+    .custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(148,163,184,0.35) rgba(15,23,42,0.35); }
 
-.sidebar-link-secondary {
-    @apply flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all duration-200;
-}
+    html[dir="rtl"] .sidebar-enhanced { border-left: 1px solid rgb(30 41 59); border-right: none; }
+    html[dir="rtl"] .sidebar-section__header { justify-content: space-between; }
 
-.sidebar-link-secondary.active {
-    @apply bg-slate-800/80 text-white;
-}
-
-/* Animation for active indicators */
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
+    @media (max-width: 768px) {
+        .sidebar-enhanced { position: fixed; width: 85vw; max-width: 340px; }
+        .sidebar-link, .sidebar-link-secondary { min-height: 44px; touch-action: manipulation; }
+        .sidebar-nav { -webkit-overflow-scrolling: touch; }
+    }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-scroll to active menu item with improved logic
-    setTimeout(() => {
-        const activePrimary = document.querySelector('.sidebar-link.ring-2');
-        const activeSecondary = document.querySelector('.sidebar-link-secondary.active');
-        const activeItem = activeSecondary || activePrimary;
-        
-        if (activeItem) {
-            const sidebarNav = document.querySelector('.sidebar-nav');
-            if (sidebarNav) {
-                // Calculate position to scroll active item to center
-                const navRect = sidebarNav.getBoundingClientRect();
-                const itemRect = activeItem.getBoundingClientRect();
-                const scrollTop = itemRect.top - navRect.top - (navRect.height / 2) + (itemRect.height / 2);
-                
-                sidebarNav.scrollBy({
-                    top: scrollTop,
-                    behavior: 'smooth'
-                });
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            const activeItem = document.querySelector('.sidebar-link.active') || document.querySelector('.sidebar-link-secondary.active');
+            if (activeItem) {
+                const sidebarNav = document.querySelector('.sidebar-nav');
+                if (sidebarNav) {
+                    const navRect = sidebarNav.getBoundingClientRect();
+                    const itemRect = activeItem.getBoundingClientRect();
+                    const offset = itemRect.top - navRect.top - (navRect.height / 2) + (itemRect.height / 2);
+                    sidebarNav.scrollBy({ top: offset, behavior: 'smooth' });
+                }
             }
-        }
-    }, 200);
-});
+        }, 200);
+    });
 </script>
