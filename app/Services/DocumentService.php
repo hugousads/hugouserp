@@ -10,12 +10,16 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class DocumentService
 {
+    private string $documentsDisk;
+
     public function __construct(
         protected UIHelperService $uiHelper
     ) {
+        $this->documentsDisk = (string) config('filesystems.document_disk', 'local');
     }
     /**
      * Upload a new document
@@ -23,11 +27,13 @@ class DocumentService
     public function uploadDocument(UploadedFile $file, array $data): Document
     {
         return DB::transaction(function () use ($file, $data) {
-            // Store the file
-            $path = $file->store('documents', 'public');
+            // Store the file on the configured private disk
+            $disk = $this->documentsDisk;
+            $path = $file->store('documents', $disk);
 
             // Create document record
             $document = Document::create([
+                'code' => $data['code'] ?? Str::uuid()->toString(),
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
                 'file_name' => $file->getClientOriginalName(),
@@ -73,8 +79,9 @@ class DocumentService
     public function uploadVersion(Document $document, UploadedFile $file, ?string $changeNotes = null): DocumentVersion
     {
         return DB::transaction(function () use ($document, $file, $changeNotes) {
-            // Store the file
-            $path = $file->store('documents', 'public');
+            // Store the file on the configured private disk
+            $disk = $this->documentsDisk;
+            $path = $file->store('documents', $disk);
 
             // Get next version number
             $nextVersion = $document->versions()->max('version_number') + 1;
@@ -182,10 +189,12 @@ class DocumentService
     {
         return DB::transaction(function () use ($document) {
             // Delete all file versions from storage
-            Storage::disk('public')->delete($document->file_path);
-            
+            $documentDisk = $this->resolveDisk($document->file_path);
+            Storage::disk($documentDisk)->delete($document->file_path);
+
             foreach ($document->versions as $version) {
-                Storage::disk('public')->delete($version->file_path);
+                $versionDisk = $this->resolveDisk($version->file_path);
+                Storage::disk($versionDisk)->delete($version->file_path);
             }
 
             // Log activity before deletion
@@ -218,7 +227,25 @@ class DocumentService
             $share->incrementAccessCount();
         }
 
-        return Storage::disk('public')->path($document->file_path);
+        $disk = $this->resolveDisk($document->file_path);
+
+        return Storage::disk($disk)->path($document->file_path);
+    }
+
+    public function documentsDisk(): string
+    {
+        return $this->documentsDisk;
+    }
+
+    private function resolveDisk(string $path): string
+    {
+        $primaryDisk = $this->documentsDisk;
+
+        if (Storage::disk($primaryDisk)->exists($path)) {
+            return $primaryDisk;
+        }
+
+        return 'public';
     }
 
     /**

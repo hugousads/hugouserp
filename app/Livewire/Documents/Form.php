@@ -9,6 +9,7 @@ use App\Models\DocumentTag;
 use App\Services\DocumentService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\UploadedFile;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -27,7 +28,7 @@ class Form extends Component
 
     public string $description = '';
 
-    public $file = null;
+    public ?UploadedFile $file = null;
 
     public string $folder = '';
 
@@ -87,7 +88,7 @@ class Form extends Component
             $this->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'file' => 'required|file|max:51200',
+                'file' => 'required|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,png,jpg,jpeg,gif,csv,txt',
                 'folder' => 'nullable|string|max:255',
                 'category' => 'nullable|string|max:100',
             ]);

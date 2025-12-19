@@ -93,9 +93,10 @@ Route::prefix('v1')->group(function () {
         require __DIR__.'/api/auth.php';
     });
 
-    // Notifications routes (requires api-core + api-auth)
+    // Notifications and file upload routes (requires api-core + api-auth)
     Route::middleware(['api-core', 'api-auth', 'impersonate'])->group(function () {
         require __DIR__.'/api/notifications.php';
+        require __DIR__.'/api/files.php';
     });
 
     // Admin routes (requires api-core + api-auth + impersonate)

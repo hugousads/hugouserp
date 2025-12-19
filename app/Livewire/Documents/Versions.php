@@ -18,7 +18,7 @@ class Versions extends Component
     use WithFileUploads;
 
     public Document $document;
-    public $file = null;
+    public ?\Illuminate\Http\UploadedFile $file = null;
     public string $changeNotes = '';
 
     protected DocumentService $documentService;
@@ -42,7 +42,7 @@ class Versions extends Component
     public function uploadVersion(): void
     {
         $this->validate([
-            'file' => 'required|file|max:51200',
+            'file' => 'required|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,png,jpg,jpeg,gif,csv,txt',
             'changeNotes' => 'nullable|string',
         ]);
 
