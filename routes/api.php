@@ -47,38 +47,38 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    Route::middleware(['store.token', 'throttle:api'])->group(function () {
+    Route::middleware(['throttle:api'])->group(function () {
         Route::prefix('products')->group(function () {
-            Route::get('/', [ProductsController::class, 'index']);
-            Route::post('/', [ProductsController::class, 'store']);
-            Route::get('/external/{externalId}', [ProductsController::class, 'byExternalId']);
-            Route::get('/{id}', [ProductsController::class, 'show']);
-            Route::put('/{id}', [ProductsController::class, 'update']);
-            Route::delete('/{id}', [ProductsController::class, 'destroy']);
+            Route::get('/', [ProductsController::class, 'index'])->middleware('store.token:products.read');
+            Route::post('/', [ProductsController::class, 'store'])->middleware('store.token:products.write');
+            Route::get('/external/{externalId}', [ProductsController::class, 'byExternalId'])->middleware('store.token:products.read');
+            Route::get('/{id}', [ProductsController::class, 'show'])->middleware('store.token:products.read');
+            Route::put('/{id}', [ProductsController::class, 'update'])->middleware('store.token:products.write');
+            Route::delete('/{id}', [ProductsController::class, 'destroy'])->middleware('store.token:products.write');
         });
 
         Route::prefix('inventory')->group(function () {
-            Route::get('/stock', [InventoryController::class, 'getStock']);
-            Route::post('/update-stock', [InventoryController::class, 'updateStock']);
-            Route::post('/bulk-update-stock', [InventoryController::class, 'bulkUpdateStock']);
-            Route::get('/movements', [InventoryController::class, 'getMovements']);
+            Route::get('/stock', [InventoryController::class, 'getStock'])->middleware('store.token:inventory.read');
+            Route::post('/update-stock', [InventoryController::class, 'updateStock'])->middleware('store.token:inventory.write');
+            Route::post('/bulk-update-stock', [InventoryController::class, 'bulkUpdateStock'])->middleware('store.token:inventory.write');
+            Route::get('/movements', [InventoryController::class, 'getMovements'])->middleware('store.token:inventory.read');
         });
 
         Route::prefix('orders')->group(function () {
-            Route::get('/', [OrdersController::class, 'index']);
-            Route::post('/', [OrdersController::class, 'store']);
-            Route::get('/external/{externalId}', [OrdersController::class, 'byExternalId']);
-            Route::get('/{id}', [OrdersController::class, 'show']);
-            Route::patch('/{id}/status', [OrdersController::class, 'updateStatus']);
+            Route::get('/', [OrdersController::class, 'index'])->middleware('store.token:orders.read');
+            Route::post('/', [OrdersController::class, 'store'])->middleware('store.token:orders.write');
+            Route::get('/external/{externalId}', [OrdersController::class, 'byExternalId'])->middleware('store.token:orders.read');
+            Route::get('/{id}', [OrdersController::class, 'show'])->middleware('store.token:orders.read');
+            Route::patch('/{id}/status', [OrdersController::class, 'updateStatus'])->middleware('store.token:orders.write');
         });
 
         Route::prefix('customers')->group(function () {
-            Route::get('/', [CustomersController::class, 'index']);
-            Route::post('/', [CustomersController::class, 'store']);
-            Route::get('/email/{email}', [CustomersController::class, 'byEmail']);
-            Route::get('/{id}', [CustomersController::class, 'show']);
-            Route::put('/{id}', [CustomersController::class, 'update']);
-            Route::delete('/{id}', [CustomersController::class, 'destroy']);
+            Route::get('/', [CustomersController::class, 'index'])->middleware('store.token:customers.read');
+            Route::post('/', [CustomersController::class, 'store'])->middleware('store.token:customers.write');
+            Route::get('/email/{email}', [CustomersController::class, 'byEmail'])->middleware('store.token:customers.read');
+            Route::get('/{id}', [CustomersController::class, 'show'])->middleware('store.token:customers.read');
+            Route::put('/{id}', [CustomersController::class, 'update'])->middleware('store.token:customers.write');
+            Route::delete('/{id}', [CustomersController::class, 'destroy'])->middleware('store.token:customers.write');
         });
     });
 

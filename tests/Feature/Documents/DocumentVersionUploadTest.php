@@ -74,4 +74,35 @@ class DocumentVersionUploadTest extends TestCase
 
         Storage::disk('local')->assertExists('documents');
     }
+
+    public function test_uploading_new_version_updates_document_metadata(): void
+    {
+        Storage::fake('local');
+        config(['filesystems.document_disk' => 'local']);
+        Gate::define('documents.versions.manage', fn () => true);
+
+        $user = User::factory()->create();
+        $document = $this->makeDocument($user);
+
+        $newFile = UploadedFile::fake()->create(
+            'contract.docx',
+            20,
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        );
+
+        Livewire::actingAs($user)
+            ->test(Versions::class, ['document' => $document])
+            ->set('file', $newFile)
+            ->call('uploadVersion')
+            ->assertHasNoErrors();
+
+        $document->refresh();
+
+        $this->assertSame('contract.docx', $document->file_name);
+        $this->assertSame('docx', $document->file_type);
+        $this->assertSame(
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            $document->mime_type
+        );
+    }
 }

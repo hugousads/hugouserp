@@ -6,6 +6,7 @@ namespace App\Livewire\Components;
 
 use App\Models\Attachment;
 use App\Models\Note;
+use App\Services\AttachmentAuthorizationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -41,15 +42,25 @@ class NotesAttachments extends Component
 
     protected $listeners = ['refreshNotesAttachments' => 'loadData'];
 
+    protected AttachmentAuthorizationService $authorizer;
+
+    public function boot(AttachmentAuthorizationService $authorizer): void
+    {
+        $this->authorizer = $authorizer;
+    }
+
     public function mount(string $modelType, int $modelId): void
     {
         $this->modelType = $modelType;
         $this->modelId = $modelId;
+        $this->ensureAuthorized();
         $this->loadData();
     }
 
     public function loadData(): void
     {
+        $this->ensureAuthorized();
+
         $this->notes = Note::where('noteable_type', $this->modelType)
             ->where('noteable_id', $this->modelId)
             ->with('creator')
@@ -87,6 +98,7 @@ class NotesAttachments extends Component
 
     public function saveNote(): void
     {
+        $this->ensureAuthorized();
         $this->validate([
             'newNote' => 'required|string|min:2|max:5000',
         ]);
@@ -121,6 +133,8 @@ class NotesAttachments extends Component
 
     public function editNote(int $noteId): void
     {
+        $this->ensureAuthorized();
+
         $note = Note::where('noteable_type', $this->modelType)
             ->where('noteable_id', $this->modelId)
             ->findOrFail($noteId);
@@ -132,6 +146,8 @@ class NotesAttachments extends Component
 
     public function deleteNote(int $noteId): void
     {
+        $this->ensureAuthorized();
+
         Note::where('noteable_type', $this->modelType)
             ->where('noteable_id', $this->modelId)
             ->findOrFail($noteId)
@@ -142,6 +158,8 @@ class NotesAttachments extends Component
 
     public function togglePin(int $noteId): void
     {
+        $this->ensureAuthorized();
+
         $note = Note::where('noteable_type', $this->modelType)
             ->where('noteable_id', $this->modelId)
             ->findOrFail($noteId);
@@ -163,15 +181,16 @@ class NotesAttachments extends Component
 
     public function uploadFiles(): void
     {
+        $this->ensureAuthorized();
         $this->validate([
             'newFiles' => 'required|array|min:1',
-            'newFiles.*' => 'file|max:10240',
+            'newFiles.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,csv,txt',
         ]);
 
         $user = Auth::user();
 
         foreach ($this->newFiles as $file) {
-            $path = $file->store('attachments/'.strtolower(class_basename($this->modelType)), 'public');
+            $path = $file->store('attachments/'.strtolower(class_basename($this->modelType)), 'local');
 
             Attachment::create([
                 'attachable_type' => $this->modelType,
@@ -180,7 +199,7 @@ class NotesAttachments extends Component
                 'original_filename' => $file->getClientOriginalName(),
                 'mime_type' => $file->getMimeType(),
                 'size' => $file->getSize(),
-                'disk' => 'public',
+                'disk' => 'local',
                 'path' => $path,
                 'type' => $this->getFileType($file->getMimeType()),
                 'description' => $this->fileDescription,
@@ -196,6 +215,8 @@ class NotesAttachments extends Component
 
     public function deleteAttachment(int $attachmentId): void
     {
+        $this->ensureAuthorized();
+
         $attachment = Attachment::where('attachable_type', $this->modelType)
             ->where('attachable_id', $this->modelId)
             ->findOrFail($attachmentId);
@@ -231,5 +252,13 @@ class NotesAttachments extends Component
     public function render()
     {
         return view('livewire.components.notes-attachments');
+    }
+
+    private function ensureAuthorized(): void
+    {
+        $user = Auth::user();
+        abort_if(! $user, 403);
+
+        $this->authorizer->authorizeForModel($user, $this->modelType, $this->modelId);
     }
 }

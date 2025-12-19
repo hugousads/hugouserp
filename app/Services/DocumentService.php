@@ -126,6 +126,7 @@ class DocumentService
                 'file_path' => $path,
                 'file_size' => $file->getSize(),
                 'mime_type' => $file->getMimeType(),
+                'file_type' => $file->getClientOriginalExtension(),
             ]);
 
             // Log activity

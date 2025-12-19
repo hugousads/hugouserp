@@ -51,16 +51,20 @@ class SearchIndex extends BaseModel
     /**
      * Search across all indexed content.
      */
-    public static function search(string $query, ?int $branchId = null, ?string $module = null, int $limit = 20): array
+    public static function search(string $query, int $branchId, array|string|null $module = null, int $limit = 20): array
     {
-        $builder = static::query();
-
-        if ($branchId) {
-            $builder->where('branch_id', $branchId);
-        }
+        $builder = static::query()->where('branch_id', $branchId);
 
         if ($module) {
-            $builder->where('module', $module);
+            if (is_array($module)) {
+                if (empty($module)) {
+                    return [];
+                }
+
+                $builder->whereIn('module', $module);
+            } else {
+                $builder->where('module', $module);
+            }
         }
 
         // Use full-text search if available

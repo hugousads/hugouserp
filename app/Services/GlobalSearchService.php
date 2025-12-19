@@ -13,6 +13,8 @@ use App\Models\Sale;
 use App\Models\SearchHistory;
 use App\Models\SearchIndex;
 use App\Models\Supplier;
+use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class GlobalSearchService
 {
@@ -78,22 +80,33 @@ class GlobalSearchService
         ],
     ];
 
+    private const MODULE_PERMISSIONS = [
+        'inventory' => 'inventory.products.view',
+        'customers' => 'customers.view',
+        'suppliers' => 'suppliers.view',
+        'sales' => 'sales.view',
+        'purchases' => 'purchases.view',
+        'rentals' => 'rental.contracts.view',
+        'hrm' => 'hrm.employees.view',
+    ];
+
     /**
      * Perform global search.
      */
-    public function search(string $query, ?int $branchId = null, ?string $module = null, ?int $userId = null): array
+    public function search(string $query, User $user, ?int $branchId = null, ?string $module = null): array
     {
         if (strlen($query) < 2) {
             return ['results' => [], 'count' => 0];
         }
 
+        $resolvedBranchId = $this->resolveBranchId($user, $branchId);
+        $authorizedModules = $this->authorizedModulesForUser($user, $module);
+
         // Log search if user provided
-        if ($userId) {
-            $this->logSearch($userId, $query, $module);
-        }
+        $this->logSearch($user->id, $query, $module);
 
         // Search in index
-        $results = SearchIndex::search($query, $branchId, $module, 50);
+        $results = SearchIndex::search($query, $resolvedBranchId, $authorizedModules, 50);
 
         // Group by module
         $grouped = collect($results)->groupBy('module')->map(function ($items) {
@@ -201,9 +214,9 @@ class GlobalSearchService
     /**
      * Get available modules for filtering.
      */
-    public function getAvailableModules(): array
+    public function getAvailableModules(User $user): array
     {
-        return array_unique(array_column(self::SEARCHABLE_MODELS, 'module'));
+        return $this->authorizedModulesForUser($user);
     }
 
     /**
@@ -282,5 +295,44 @@ class GlobalSearchService
         }
 
         return $metadata;
+    }
+
+    private function resolveBranchId(User $user, ?int $branchId): int
+    {
+        $resolvedBranch = $branchId ?? $user->current_branch_id ?? $user->branch_id;
+
+        if (! $resolvedBranch) {
+            throw new AuthorizationException('Branch context is required for search.');
+        }
+
+        return (int) $resolvedBranch;
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function authorizedModulesForUser(User $user, ?string $module = null): array
+    {
+        $modules = [];
+
+        foreach (self::MODULE_PERMISSIONS as $moduleKey => $permission) {
+            if ($user->can($permission)) {
+                $modules[] = $moduleKey;
+            }
+        }
+
+        if ($module) {
+            if (! in_array($module, $modules, true)) {
+                throw new AuthorizationException('You are not allowed to search this module.');
+            }
+
+            return [$module];
+        }
+
+        if (empty($modules)) {
+            throw new AuthorizationException('You are not allowed to perform searches.');
+        }
+
+        return $modules;
     }
 }

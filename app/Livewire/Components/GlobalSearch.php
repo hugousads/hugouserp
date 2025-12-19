@@ -27,6 +27,7 @@ class GlobalSearch extends Component
 
     public function mount(): void
     {
+        abort_if(! auth()->check(), 403);
         $this->loadRecentSearches();
     }
 
@@ -52,13 +53,15 @@ class GlobalSearch extends Component
             $searchService = app(GlobalSearchService::class);
 
             $user = auth()->user();
-            $branchId = $user ? ($user->current_branch_id ?? null) : null;
+            if (! $user) {
+                abort(403, __('Unauthorized'));
+            }
 
             $result = $searchService->search(
                 $this->query,
-                $branchId,
+                $user,
+                $user->current_branch_id ?? null,
                 $this->selectedModule,
-                auth()->id()
             );
 
             $this->results = $result['results'];
@@ -107,7 +110,14 @@ class GlobalSearch extends Component
     {
         try {
             $searchService = app(GlobalSearchService::class);
-            $this->recentSearches = $searchService->getRecentSearches(auth()->id(), 5);
+            $userId = auth()->id();
+
+            if (! $userId) {
+                $this->recentSearches = [];
+                return;
+            }
+
+            $this->recentSearches = $searchService->getRecentSearches($userId, 5);
         } catch (\Exception $e) {
             $this->recentSearches = [];
         }
@@ -115,7 +125,17 @@ class GlobalSearch extends Component
 
     public function getAvailableModulesProperty(): array
     {
-        return app(GlobalSearchService::class)->getAvailableModules();
+        $user = auth()->user();
+
+        if (! $user) {
+            return [];
+        }
+
+        try {
+            return app(GlobalSearchService::class)->getAvailableModules($user);
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     public function render()

@@ -47,6 +47,13 @@ class AuthenticateStoreToken
             ], 403);
         }
 
+        if (empty($abilities) && ! $storeToken->hasAbility('*')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This endpoint requires explicit token abilities.',
+            ], 403);
+        }
+
         foreach ($abilities as $ability) {
             if (! $storeToken->hasAbility($ability)) {
                 return response()->json([
