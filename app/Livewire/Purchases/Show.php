@@ -19,11 +19,11 @@ class Show extends Component
         $user = auth()->user();
         throw_if(!$user || !$user->can('purchases.view'), new HttpException(403));
 
-        $branchId = (int) $user->branch_id;
+        $branchId = $user->branch_id;
         $isSuperAdmin = (bool) $user->hasRole('super-admin');
 
         throw_if(!$isSuperAdmin && !$branchId, new HttpException(403, __('You must be assigned to a branch to view purchases.')));
-        throw_if(!$isSuperAdmin && $branchId !== (int) $purchase->branch_id, new HttpException(403));
+        throw_if(!$isSuperAdmin && (int) $branchId !== (int) $purchase->branch_id, new HttpException(403));
 
         $this->purchase = $purchase->load(['items.product', 'supplier', 'branch']);
     }

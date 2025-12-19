@@ -48,9 +48,11 @@ return new class extends Migration
         DB::statement('UPDATE document_shares SET user_id = shared_with_user_id WHERE user_id IS NULL AND shared_with_user_id IS NOT NULL');
 
         if (Schema::hasTable('document_activities')) {
+            $actionValues = ['created', 'viewed', 'downloaded', 'edited', 'shared', 'unshared', 'deleted', 'restored', 'version_created'];
+            $actionEnumList = "'".implode("','", $actionValues)."'";
             $driver = Schema::getConnection()->getDriverName();
             if (in_array($driver, ['mysql', 'mariadb'])) {
-                DB::statement("ALTER TABLE document_activities MODIFY action ENUM('created','viewed','downloaded','edited','shared','unshared','deleted','restored','version_created') NOT NULL");
+                DB::statement("ALTER TABLE document_activities MODIFY action ENUM({$actionEnumList}) NOT NULL");
             } elseif ($driver === 'sqlite') {
                 // SQLite rebuilds tables during migration refresh; the base migration already includes the new value.
             } else {
