@@ -7,7 +7,7 @@
 <html lang="{{ str_replace('_', '-', $locale) }}" dir="{{ $dir }}" class="h-full antialiased">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>@yield('title', config('app.name', 'Ghanem ERP'))</title>
 
@@ -21,8 +21,14 @@
 
     <style>
         * { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif !important; }
-        body { min-height: 100vh; background-color: #f8fafc; padding: 1.5rem 1rem; }
-        img, svg { max-width: 100%; height: auto; }
+        body {
+            min-height: 100vh;
+            background-color: #f8fafc;
+            padding: 1.5rem 1rem;
+            overflow-x: hidden;
+        }
+        img, svg { max-width: 100%; height: auto; object-fit: contain; }
+        .erp-card { width: 100%; }
     </style>
 
     @livewireStyles

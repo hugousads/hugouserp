@@ -14,7 +14,8 @@
             <label for="credential" class="block text-sm font-medium text-slate-700">
                 {{ __('Email, Phone or Username') }}
             </label>
-            <input id="credential" type="text" wire:model.live="credential" autofocus
+            <input id="credential" type="text" wire:model.live="credential" autofocus required
+                   autocapitalize="none" spellcheck="false"
                    autocomplete="username"
                    placeholder="{{ __('Enter email, phone or username') }}"
                    class="erp-input @error('credential') !border-red-500 !ring-red-500/20 @enderror">
@@ -35,16 +36,17 @@
                 {{ __('Password') }}
             </label>
             <div class="relative" x-data="{ showPassword: false }">
-                <input id="password" 
+                <input id="password"
                        x-ref="passwordInput"
-                       :type="showPassword ? 'text' : 'password'" 
-                       wire:model.live="password" 
+                       :type="showPassword ? 'text' : 'password'"
+                       wire:model.live="password"
+                       required
                        autocomplete="current-password"
                        placeholder="{{ __('Enter your password') }}"
                        class="erp-input ltr:pr-10 rtl:pl-10 @error('password') !border-red-500 !ring-red-500/20 @enderror">
                 <button type="button" 
                         @click="showPassword = !showPassword; $nextTick(() => $refs.passwordInput.focus())"
-                        class="absolute inset-y-0 ltr:right-0 rtl:left-0 flex items-center px-3 text-slate-400 hover:text-slate-600 transition-colors">
+                       class="absolute inset-y-0 ltr:right-0 rtl:left-0 flex items-center px-3 text-slate-400 hover:text-slate-600 transition-colors">
                     <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -96,7 +98,7 @@
             <button type="submit" 
                     wire:loading.attr="disabled"
                     wire:loading.class="opacity-75 cursor-not-allowed"
-                    class="erp-btn-primary w-full justify-center text-base py-3">
+                       class="erp-btn-primary w-full justify-center text-base py-3">
                 <span wire:loading.remove wire:target="login">
                     {{ __('Sign in') }}
                 </span>

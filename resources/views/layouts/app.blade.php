@@ -9,7 +9,7 @@
 <html lang="{{ str_replace('_', '-', $locale) }}" dir="{{ $dir }}" class="h-full antialiased {{ $isDark ? 'dark' : '' }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>@yield('title', config('app.name', 'Ghanem ERP'))</title>
 
@@ -38,12 +38,18 @@
         * { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif !important; }
 
         html { scroll-behavior: smooth; }
-        body { min-height: 100vh; background-color: #f8fafc; }
+        body {
+            min-height: 100vh;
+            background-color: #f8fafc;
+            overflow-x: hidden;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+        }
 
-        img, svg, video, canvas { max-width: 100%; height: auto; }
-        .content-container { width: 100%; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
-        .toolbar-wrap { flex-wrap: wrap; }
+        img, svg, video, canvas { max-width: 100%; height: auto; object-fit: contain; }
+        main, .content-container, .erp-card { width: 100%; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; }
+        .toolbar-wrap { flex-wrap: wrap; row-gap: 0.5rem; }
+        button, input, select, textarea { max-width: 100%; }
 
         /* Performance optimizations */
         .erp-card, .sidebar-link, table {
@@ -122,7 +128,7 @@
         {{-- Navbar --}}
         @includeIf('layouts.navbar')
 
-        <main class="flex-1 w-full">
+        <main class="flex-1 w-full overflow-x-hidden">
             <div class="content-container mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-4 space-y-4">
 
                 @hasSection('page-header')
