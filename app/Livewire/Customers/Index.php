@@ -69,9 +69,13 @@ class Index extends Component
     public function render()
     {
         $query = Customer::query()
-            ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%")
-                ->orWhere('email', 'like', "%{$this->search}%")
-                ->orWhere('phone', 'like', "%{$this->search}%"))
+            ->when($this->search, function ($q) {
+                $q->where(function ($searchQuery) {
+                    $searchQuery->where('name', 'like', "%{$this->search}%")
+                        ->orWhere('email', 'like', "%{$this->search}%")
+                        ->orWhere('phone', 'like', "%{$this->search}%");
+                });
+            })
             ->when($this->customerType, fn ($q) => $q->where('customer_type', $this->customerType))
             ->orderBy($this->sortField, $this->sortDirection);
 
@@ -94,9 +98,13 @@ class Index extends Component
     public function export()
     {
         $data = Customer::query()
-            ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%")
-                ->orWhere('email', 'like', "%{$this->search}%")
-                ->orWhere('phone', 'like', "%{$this->search}%"))
+            ->when($this->search, function ($q) {
+                $q->where(function ($searchQuery) {
+                    $searchQuery->where('name', 'like', "%{$this->search}%")
+                        ->orWhere('email', 'like', "%{$this->search}%")
+                        ->orWhere('phone', 'like', "%{$this->search}%");
+                });
+            })
             ->when($this->customerType, fn ($q) => $q->where('customer_type', $this->customerType))
             ->orderBy($this->sortField, $this->sortDirection)
             ->select(['id', 'name', 'email', 'phone', 'address', 'balance', 'created_at'])
