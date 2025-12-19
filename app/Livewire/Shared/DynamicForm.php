@@ -29,6 +29,10 @@ class DynamicForm extends Component
 
     public bool $loading = false;
 
+    private array $defaultFileMimes = [
+        'pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt',
+    ];
+
     protected $listeners = ['resetForm' => 'resetFormData'];
 
     public function mount(
@@ -93,7 +97,8 @@ class DynamicForm extends Component
             if ($type === 'file' && $name && isset($this->data[$name])) {
                 $file = $this->data[$name];
                 if ($file && method_exists($file, 'store')) {
-                    $path = $file->store('uploads', 'public');
+                    $disk = $field['disk'] ?? 'local';
+                    $path = $file->store('dynamic-uploads', $disk);
                     $this->data[$name] = $path;
                 }
             }
@@ -115,12 +120,45 @@ class DynamicForm extends Component
         $rules = [];
         foreach ($this->schema as $field) {
             $name = $field['name'] ?? '';
-            if ($name && isset($field['rules'])) {
-                $rules["data.{$name}"] = $field['rules'];
+            if (!$name) {
+                continue;
+            }
+
+            $fieldRules = $this->normalizeRules($field['rules'] ?? []);
+
+            if (($field['type'] ?? 'text') === 'file') {
+                $fieldRules = $this->augmentFileRules($fieldRules, $field);
+            }
+
+            if (! empty($fieldRules)) {
+                $rules["data.{$name}"] = $fieldRules;
             }
         }
 
         return $rules;
+    }
+
+    private function normalizeRules(string|array $rules): array
+    {
+        if (is_string($rules)) {
+            return array_filter(explode('|', $rules));
+        }
+
+        return $rules;
+    }
+
+    private function augmentFileRules(array $rules, array $field): array
+    {
+        $rules[] = 'file';
+        $maxSize = $field['max'] ?? 10240;
+        $rules[] = "max:{$maxSize}";
+
+        $mimes = $field['mimes'] ?? $this->defaultFileMimes;
+        if (! empty($mimes)) {
+            $rules[] = 'mimes:' . implode(',', $mimes);
+        }
+
+        return array_values(array_unique($rules));
     }
 
     protected function validationAttributes(): array

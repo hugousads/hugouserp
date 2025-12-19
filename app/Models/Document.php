@@ -27,7 +27,9 @@ class Document extends Model
         'folder',
         'category',
         'status',
+        'access_level',
         'version',
+        'version_number',
         'is_public',
         'uploaded_by',
         'branch_id',
@@ -37,6 +39,7 @@ class Document extends Model
     protected $casts = [
         'file_size' => 'integer',
         'version' => 'integer',
+        'version_number' => 'integer',
         'is_public' => 'boolean',
         'metadata' => 'array',
     ];
@@ -48,6 +51,9 @@ class Document extends Model
         static::creating(function ($document) {
             if (!$document->version) {
                 $document->version = 1;
+            }
+            if (!$document->version_number) {
+                $document->version_number = 1;
             }
             if (!$document->status) {
                 $document->status = 'draft';
@@ -94,7 +100,10 @@ class Document extends Model
 
     public function scopePublic($query)
     {
-        return $query->where('is_public', true);
+        return $query->where(function ($q) {
+            $q->where('is_public', true)
+                ->orWhere('access_level', 'public');
+        });
     }
 
     public function scopeInFolder($query, string $folder)
@@ -128,7 +137,7 @@ class Document extends Model
     public function canBeAccessedBy(User $user): bool
     {
         // Public documents can be accessed by anyone
-        if ($this->is_public) {
+        if ($this->is_public || $this->access_level === 'public') {
             return true;
         }
 
@@ -139,7 +148,10 @@ class Document extends Model
 
         // Check if shared with user
         return $this->shares()
-            ->where('user_id', $user->id)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere('shared_with_user_id', $user->id);
+            })
             ->where(function ($query) {
                 $query->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());

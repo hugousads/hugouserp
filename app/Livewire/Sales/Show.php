@@ -16,6 +16,18 @@ class Show extends Component
     public function mount(Sale $sale): void
     {
         $this->authorize('sales.view');
+        $user = auth()->user();
+        $branchId = $user?->branch_id;
+        $isSuperAdmin = (bool) $user?->hasRole('super-admin');
+
+        if (!$isSuperAdmin && !$branchId) {
+            abort(403, __('You must be assigned to a branch to view sales.'));
+        }
+
+        if (!$isSuperAdmin && $branchId !== $sale->branch_id) {
+            abort(403);
+        }
+
         $this->sale = $sale->load(['items.product', 'customer', 'branch', 'payments']);
     }
 

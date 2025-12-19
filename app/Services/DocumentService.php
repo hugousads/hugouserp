@@ -49,6 +49,7 @@ class DocumentService
             // Store the file on the configured private disk
             $disk = $this->documentsDisk;
             $path = $file->store('documents', $disk);
+            $isPublic = (bool) ($data['is_public'] ?? false);
 
             // Create document record
             $document = Document::create([
@@ -62,7 +63,10 @@ class DocumentService
                 'mime_type' => $file->getMimeType(),
                 'folder' => $data['folder'] ?? null,
                 'category' => $data['category'] ?? null,
-                'is_public' => $data['is_public'] ?? false,
+                'is_public' => $isPublic,
+                'access_level' => $isPublic ? 'public' : 'private',
+                'version' => 1,
+                'version_number' => 1,
                 'uploaded_by' => auth()->id(),
                 'branch_id' => $data['branch_id'] ?? auth()->user()->branch_id,
                 'metadata' => $data['metadata'] ?? null,
@@ -78,6 +82,7 @@ class DocumentService
                 'mime_type' => $file->getMimeType(),
                 'uploaded_by' => auth()->id(),
                 'change_notes' => 'Initial upload',
+                'metadata' => $data['metadata'] ?? null,
             ]);
 
             // Log activity
@@ -122,6 +127,7 @@ class DocumentService
             // Update document with new version info
             $document->update([
                 'version' => $nextVersion,
+                'version_number' => $nextVersion,
                 'file_name' => $file->getClientOriginalName(),
                 'file_path' => $path,
                 'file_size' => $file->getSize(),
@@ -151,6 +157,7 @@ class DocumentService
                 'folder' => $data['folder'] ?? $document->folder,
                 'category' => $data['category'] ?? $document->category,
                 'is_public' => $data['is_public'] ?? $document->is_public,
+                'access_level' => ($data['is_public'] ?? $document->is_public) ? 'public' : 'private',
                 'metadata' => $data['metadata'] ?? $document->metadata,
             ]);
 
@@ -178,6 +185,7 @@ class DocumentService
                 ['user_id' => $userId],
                 [
                     'shared_by' => auth()->id(),
+                    'shared_with_user_id' => $userId,
                     'permission' => $permission,
                     'expires_at' => $expiresAt,
                 ]
@@ -199,7 +207,12 @@ class DocumentService
         $this->ensureCanManageShares($document);
 
         DB::transaction(function () use ($document, $userId) {
-            $document->shares()->where('user_id', $userId)->delete();
+            $document->shares()
+                ->where(function ($query) use ($userId) {
+                    $query->where('user_id', $userId)
+                        ->orWhere('shared_with_user_id', $userId);
+                })
+                ->delete();
 
             // Log activity
             $document->logActivity('unshared', auth()->user(), [
@@ -249,6 +262,7 @@ class DocumentService
 
         // Increment access count if shared
         $share = $document->shares()->where('user_id', $user->id)->first();
+        $share ??= $document->shares()->where('shared_with_user_id', $user->id)->first();
         if ($share) {
             $share->incrementAccessCount();
         }

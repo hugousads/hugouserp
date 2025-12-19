@@ -15,17 +15,22 @@ class DocumentShare extends Model
     protected $fillable = [
         'document_id',
         'user_id',
+        'shared_with_user_id',
+        'shared_with_role',
         'shared_by',
         'permission',
         'expires_at',
         'access_count',
         'last_accessed_at',
+        'password_hash',
+        'notify_on_access',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
         'last_accessed_at' => 'datetime',
         'access_count' => 'integer',
+        'notify_on_access' => 'boolean',
     ];
 
     // Relationships
@@ -37,6 +42,11 @@ class DocumentShare extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function sharedWithUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'shared_with_user_id');
     }
 
     public function sharer(): BelongsTo

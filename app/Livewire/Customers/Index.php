@@ -30,11 +30,22 @@ class Index extends Component
 
     public bool $hasMorePages = true;
 
+    public ?int $branchId = null;
+
+    public bool $isSuperAdmin = false;
+
     protected $queryString = ['search', 'customerType'];
 
     public function mount(): void
     {
         $this->initializeExport('customers');
+        $user = auth()->user();
+        $this->branchId = $user?->branch_id;
+        $this->isSuperAdmin = (bool) $user?->hasRole('super-admin');
+
+        if (!$this->branchId && !$this->isSuperAdmin) {
+            abort(403, __('You must be assigned to a branch to view customers.'));
+        }
     }
 
     public function updatingSearch(): void
@@ -62,13 +73,22 @@ class Index extends Component
     public function delete(int $id): void
     {
         $this->authorize('customers.manage');
-        Customer::findOrFail($id)->delete();
+        $query = Customer::query();
+
+        if ($this->branchId) {
+            $query->where('branch_id', $this->branchId);
+        } elseif (!$this->isSuperAdmin) {
+            abort(403);
+        }
+
+        $query->findOrFail($id)->delete();
         session()->flash('success', __('Customer deleted successfully'));
     }
 
     public function render()
     {
         $query = Customer::query()
+            ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
             ->when($this->search, function ($q) {
                 $q->where(function ($searchQuery) {
                     $searchQuery->where('name', 'like', "%{$this->search}%")
@@ -98,6 +118,7 @@ class Index extends Component
     public function export()
     {
         $data = Customer::query()
+            ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
             ->when($this->search, function ($q) {
                 $q->where(function ($searchQuery) {
                     $searchQuery->where('name', 'like', "%{$this->search}%")

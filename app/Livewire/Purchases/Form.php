@@ -59,7 +59,7 @@ class Form extends Component
     {
         return [
             'supplier_id' => 'required|exists:suppliers,id',
-            'warehouse_id' => 'nullable|exists:warehouses,id',
+            'warehouse_id' => 'required|exists:warehouses,id',
             'reference_no' => 'nullable|string|max:100',
             'status' => 'required|in:draft,pending,posted,received,cancelled',
             'currency' => 'nullable|string|max:3',
@@ -197,7 +197,7 @@ class Form extends Component
                     $purchaseData = [
                         'branch_id' => $user->branch_id ?? $user->branches()->first()?->id ?? 1,
                         'supplier_id' => $this->supplier_id,
-                        'warehouse_id' => $this->warehouse_id ?: null,
+                        'warehouse_id' => $this->warehouse_id,
                         'reference_no' => $this->reference_no,
                         'status' => $this->status,
                         'currency' => $this->currency,

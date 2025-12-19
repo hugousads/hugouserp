@@ -34,15 +34,16 @@ class Terminal extends Component
             abort(403);
         }
 
-        $this->branchId = (int) ($user->branch_id ?? 1);
+        $this->branchId = (int) ($user->branch_id ?? 0);
         $this->isSuperAdmin = $user->hasRole('super-admin');
 
-        if ($this->isSuperAdmin && ! $user->branch_id) {
-            $this->branchName = __('Super Admin');
-        } else {
-            $branch = Branch::find($this->branchId);
-            $this->branchName = $branch?->name ?? __('Main Branch');
+        if (!$this->isSuperAdmin && $this->branchId === 0) {
+            abort(403, __('You must be assigned to a branch to use the POS terminal.'));
         }
+
+        $branch = $this->branchId ? Branch::find($this->branchId) : null;
+        $this->branchName = $branch?->name
+            ?? ($this->isSuperAdmin ? __('Super Admin (select a branch)') : __('Branch not found'));
     }
 
     public function render()
