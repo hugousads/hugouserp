@@ -37,12 +37,17 @@ class CommandPalette extends Component
     protected function search(): array
     {
         $query = $this->query;
+        $branchId = auth()->user()?->branch_id;
         $results = [];
 
         // Search Products
         if (auth()->user()?->can('products.view')) {
-            $products = Product::where('name', 'like', "%{$query}%")
-                ->orWhere('sku', 'like', "%{$query}%")
+            $products = Product::query()
+                ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+                ->where(function ($q) use ($query) {
+                    $q->where('name', 'like', "%{$query}%")
+                        ->orWhere('sku', 'like', "%{$query}%");
+                })
                 ->limit(5)
                 ->get()
                 ->map(fn($p) => [
@@ -57,9 +62,13 @@ class CommandPalette extends Component
 
         // Search Customers
         if (auth()->user()?->can('customers.view')) {
-            $customers = Customer::where('name', 'like', "%{$query}%")
-                ->orWhere('email', 'like', "%{$query}%")
-                ->orWhere('phone', 'like', "%{$query}%")
+            $customers = Customer::query()
+                ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+                ->where(function ($q) use ($query) {
+                    $q->where('name', 'like', "%{$query}%")
+                        ->orWhere('email', 'like', "%{$query}%")
+                        ->orWhere('phone', 'like', "%{$query}%");
+                })
                 ->limit(5)
                 ->get()
                 ->map(fn($c) => [
@@ -67,16 +76,20 @@ class CommandPalette extends Component
                     'icon' => '👤',
                     'name' => $c->name,
                     'subtitle' => $c->phone ?? $c->email ?? '',
-                    'url' => route('customers.show', $c),
+                    'url' => route('customers.index', ['search' => $c->name]),
                 ]);
             $results = array_merge($results, $customers->toArray());
         }
 
         // Search Suppliers
         if (auth()->user()?->can('suppliers.view')) {
-            $suppliers = Supplier::where('name', 'like', "%{$query}%")
-                ->orWhere('email', 'like', "%{$query}%")
-                ->orWhere('phone', 'like', "%{$query}%")
+            $suppliers = Supplier::query()
+                ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+                ->where(function ($q) use ($query) {
+                    $q->where('name', 'like', "%{$query}%")
+                        ->orWhere('email', 'like', "%{$query}%")
+                        ->orWhere('phone', 'like', "%{$query}%");
+                })
                 ->limit(5)
                 ->get()
                 ->map(fn($s) => [
@@ -84,14 +97,16 @@ class CommandPalette extends Component
                     'icon' => '🏢',
                     'name' => $s->name,
                     'subtitle' => $s->phone ?? $s->email ?? '',
-                    'url' => route('suppliers.show', $s),
+                    'url' => route('suppliers.index', ['search' => $s->name]),
                 ]);
             $results = array_merge($results, $suppliers->toArray());
         }
 
         // Search Sales/Invoices
         if (auth()->user()?->can('sales.view')) {
-            $sales = Sale::where('id', 'like', "%{$query}%")
+            $sales = Sale::query()
+                ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+                ->where('id', 'like', "%{$query}%")
                 ->with('customer')
                 ->limit(5)
                 ->get()
