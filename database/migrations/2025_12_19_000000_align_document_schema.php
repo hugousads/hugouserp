@@ -50,7 +50,8 @@ return new class extends Migration
         DB::statement('UPDATE document_shares SET user_id = shared_with_user_id WHERE user_id IS NULL AND shared_with_user_id IS NOT NULL');
 
         if (Schema::hasTable('document_activities')) {
-            $actionEnumList = implode(',', array_map(fn ($value) => "'".str_replace("'", "''", $value)."'", self::DOCUMENT_ACTIONS));
+            $pdo = Schema::getConnection()->getPdo();
+            $actionEnumList = implode(',', array_map(fn ($value) => $pdo->quote($value), self::DOCUMENT_ACTIONS));
             $driver = Schema::getConnection()->getDriverName();
             if (in_array($driver, ['mysql', 'mariadb'])) {
                 DB::statement("ALTER TABLE document_activities MODIFY action ENUM({$actionEnumList}) NOT NULL");
