@@ -16,7 +16,7 @@ class Index extends Component
 
     public string $search = '';
     public ?string $status = null;
-    public ?string $priority = null;
+    public ?int $priorityId = null;
     public ?int $branchId = null;
 
     public function mount(): void
@@ -66,7 +66,7 @@ class Index extends Component
                 });
             })
             ->when($this->status, fn ($q) => $q->where('status', $this->status))
-            ->when($this->priority, fn ($q) => $q->where('priority', $this->priority))
+            ->when($this->priorityId, fn ($q) => $q->where('priority_id', $this->priorityId))
             ->orderByDesc('created_at');
 
         $tickets = $query->paginate(20);

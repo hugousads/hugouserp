@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\TicketPriority;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
+
+/** @mixin \Illuminate\Database\Eloquent\Builder */
 
 class TicketSLAPolicy extends Model
 {
@@ -71,7 +74,15 @@ class TicketSLAPolicy extends Model
         $minutes = $this->resolution_time_minutes;
 
         // Adjust based on priority if needed
-        $priorityModel = TicketPriority::where('name', $priority)->first();
+        $priorityModel = null;
+        if ($priority instanceof TicketPriority) {
+            $priorityModel = $priority;
+        } elseif (is_numeric($priority)) {
+            $priorityModel = TicketPriority::find((int) $priority);
+        } elseif (is_string($priority)) {
+            $priorityModel = TicketPriority::where('name', $priority)->first();
+        }
+
         if ($priorityModel && $priorityModel->resolution_time_minutes) {
             $minutes = min($minutes, $priorityModel->resolution_time_minutes);
         }
@@ -126,7 +137,7 @@ class TicketSLAPolicy extends Model
         return $dueDate;
     }
 
-    public function isBusinessHour(Carbon $time = null): bool
+    public function isBusinessHour(?Carbon $time = null): bool
     {
         $time = $time ?? Carbon::now();
 

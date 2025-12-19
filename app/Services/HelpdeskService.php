@@ -9,6 +9,7 @@ use App\Models\TicketCategory;
 use App\Models\TicketPriority;
 use App\Models\TicketReply;
 use App\Models\TicketSLAPolicy;
+use Illuminate\Cache\TaggableStore;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -221,8 +222,11 @@ class HelpdeskService
     public function getTicketStats(?int $branchId = null, ?int $userId = null): array
     {
         $cacheKey = "ticket_stats_{$branchId}_{$userId}";
+        $cache = Cache::getStore() instanceof TaggableStore
+            ? Cache::tags('ticket_stats')
+            : Cache::store();
 
-        return Cache::remember($cacheKey, 300, function () use ($branchId, $userId) {
+        return $cache->remember($cacheKey, 300, function () use ($branchId, $userId) {
             $query = Ticket::query();
 
             if ($branchId) {
@@ -309,10 +313,14 @@ class HelpdeskService
      */
     protected function clearTicketStatsCache(): void
     {
-        // Clear all ticket stats cache keys
-        Cache::forget('ticket_stats_');
-        
-        // You could implement a more specific cache-clearing strategy here
-        // For example, using cache tags if you're using a cache driver that supports them
+        $cache = Cache::getStore();
+
+        if ($cache instanceof TaggableStore) {
+            Cache::tags('ticket_stats')->flush();
+            return;
+        }
+
+        // Fallback: clear entire cache to avoid serving stale statistics when tags are unavailable
+        Cache::flush();
     }
 }

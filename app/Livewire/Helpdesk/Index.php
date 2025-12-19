@@ -27,7 +27,7 @@ class Index extends Component
     public string $status = '';
 
     #[Url]
-    public string $priority = '';
+    public ?int $priorityId = null;
 
     #[Url]
     public string $category = '';
@@ -90,7 +90,7 @@ class Index extends Component
                     ->orWhere('description', 'like', "%{$this->search}%");
             }))
             ->when($this->status, fn($q) => $q->where('status', $this->status))
-            ->when($this->priority, fn($q) => $q->where('priority', $this->priority))
+            ->when($this->priorityId, fn($q) => $q->where('priority_id', $this->priorityId))
             ->when($this->category, fn($q) => $q->where('category_id', $this->category))
             ->when($this->assigned === 'me', fn($q) => $q->where('assigned_to', $user->id))
             ->when($this->assigned === 'unassigned', fn($q) => $q->whereNull('assigned_to'));

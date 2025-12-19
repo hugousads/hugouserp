@@ -36,7 +36,7 @@ class TicketPriority extends Model
     // Relationships
     public function tickets()
     {
-        return $this->hasMany(Ticket::class, 'priority');
+        return $this->hasMany(Ticket::class, 'priority_id');
     }
 
     // Scopes

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Livewire\Helpdesk;
 
 use App\Models\Ticket;
+use App\Models\TicketPriority;
 use App\Services\HelpdeskService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -71,11 +73,20 @@ class Dashboard extends Component
         ];
 
         // Get tickets by priority
-        $ticketsByPriority = Ticket::select('priority', \DB::raw('count(*) as count'))
+        $ticketsByPriority = Ticket::select('priority_id', DB::raw('count(*) as count'))
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->whereNotIn('status', ['closed'])
-            ->groupBy('priority')
-            ->pluck('count', 'priority')
+            ->groupBy('priority_id')
+            ->pluck('count', 'priority_id')
+            ->toArray();
+
+        $priorityNames = TicketPriority::whereIn('id', array_keys($ticketsByPriority))
+            ->pluck('name', 'id');
+
+        $ticketsByPriority = collect($ticketsByPriority)
+            ->mapWithKeys(fn ($count, $priorityId) => [
+                $priorityNames[$priorityId] ?? __('Unknown') => $count,
+            ])
             ->toArray();
 
         return view('livewire.helpdesk.dashboard', [

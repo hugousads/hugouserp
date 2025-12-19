@@ -42,13 +42,13 @@
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">{{ __('Priority') }}</label>
-                <select wire:model="priority" class="erp-input w-full">
+                <select wire:model="priority_id" class="erp-input w-full">
                     <option value="">{{ __('Select Priority') }}</option>
                     @foreach($priorities as $p)
                         <option value="{{ $p->id }}">{{ $p->name }}</option>
                     @endforeach
                 </select>
-                @error('priority') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                @error('priority_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
             </div>
 
             <div>

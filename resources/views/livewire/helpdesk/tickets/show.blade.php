@@ -126,7 +126,7 @@
                     </div>
                     <div>
                         <dt class="text-slate-500 dark:text-slate-400">{{ __('Priority') }}</dt>
-                        <dd class="text-slate-700 dark:text-slate-200">{{ $ticket->priority }}</dd>
+                        <dd class="text-slate-700 dark:text-slate-200">{{ $ticket->priority?->name ?? '-' }}</dd>
                     </div>
                     <div>
                         <dt class="text-slate-500 dark:text-slate-400">{{ __('Customer') }}</dt>

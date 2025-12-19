@@ -33,7 +33,7 @@ class TicketForm extends Component
 
     public ?int $category_id = null;
 
-    public ?int $priority = null;
+    public ?int $priority_id = null;
 
     public ?int $assigned_to = null;
 
@@ -65,7 +65,7 @@ class TicketForm extends Component
                 'description',
                 'customer_id',
                 'category_id',
-                'priority',
+                'priority_id',
                 'assigned_to',
                 'sla_policy_id',
                 'status',
@@ -103,11 +103,13 @@ class TicketForm extends Component
             'description' => $this->description,
             'customer_id' => $this->customer_id,
             'category_id' => $this->category_id,
-            'priority' => $this->priority,
+            'priority_id' => $this->priority_id,
             'assigned_to' => $this->assigned_to,
             'sla_policy_id' => $this->sla_policy_id,
             'tags' => $this->tags,
         ];
+
+        $data['branch_id'] = auth()->user()?->branch_id ?? 1;
 
         if (! empty($this->due_date)) {
             $data['due_date'] = $this->due_date;
@@ -118,6 +120,8 @@ class TicketForm extends Component
                 'subject' => 'required|string|max:255',
                 'description' => 'required|string',
                 'status' => 'required|in:new,open,pending,resolved,closed',
+                'category_id' => 'required|exists:ticket_categories,id',
+                'priority_id' => 'required|exists:ticket_priorities,id',
             ]);
 
             $data['status'] = $this->status;
@@ -129,6 +133,8 @@ class TicketForm extends Component
             $this->validate([
                 'subject' => 'required|string|max:255',
                 'description' => 'required|string',
+                'category_id' => 'required|exists:ticket_categories,id',
+                'priority_id' => 'required|exists:ticket_priorities,id',
             ]);
 
             $this->ticket = $this->helpdeskService->createTicket($data);

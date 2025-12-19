@@ -16,7 +16,6 @@ class Ticket extends Model
         'subject',
         'description',
         'status',
-        'priority',
         'priority_id',
         'customer_id',
         'assigned_to',
@@ -55,10 +54,10 @@ class Ticket extends Model
             }
 
             // Calculate due date based on SLA policy
-            if ($ticket->sla_policy_id && !$ticket->due_date) {
+            if ($ticket->sla_policy_id && ! $ticket->due_date) {
                 $slaPolicy = TicketSLAPolicy::find($ticket->sla_policy_id);
                 if ($slaPolicy) {
-                    $ticket->due_date = $slaPolicy->calculateDueDate($ticket->priority);
+                    $ticket->due_date = $slaPolicy->calculateDueDate($ticket->priority_id);
                 }
             }
         });
@@ -82,7 +81,7 @@ class Ticket extends Model
 
     public function priority()
     {
-        return $this->belongsTo(TicketPriority::class, 'priority');
+        return $this->belongsTo(TicketPriority::class, 'priority_id');
     }
 
     public function slaPolicy()

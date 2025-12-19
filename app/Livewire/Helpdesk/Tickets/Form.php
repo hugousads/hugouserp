@@ -23,7 +23,7 @@ class Form extends Component
     public string $subject = '';
     public string $description = '';
     public string $status = 'new';
-    public ?int $priority = null;
+    public ?int $priority_id = null;
     public ?int $customer_id = null;
     public ?int $assigned_to = null;
     public ?int $category_id = null;
@@ -37,10 +37,10 @@ class Form extends Component
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'status' => ['required', 'string', 'in:new,open,pending,resolved,closed'],
-            'priority' => ['nullable', 'exists:ticket_priorities,id'],
+            'priority_id' => ['required', 'exists:ticket_priorities,id'],
             'customer_id' => ['nullable', 'exists:customers,id'],
             'assigned_to' => ['nullable', 'exists:users,id'],
-            'category_id' => ['nullable', 'exists:ticket_categories,id'],
+            'category_id' => ['required', 'exists:ticket_categories,id'],
             'sla_policy_id' => ['nullable', 'exists:ticket_sla_policies,id'],
             'due_date' => ['nullable', 'date'],
             'tags' => ['nullable', 'array'],
@@ -62,7 +62,7 @@ class Form extends Component
                 'subject' => $ticket->subject,
                 'description' => $ticket->description,
                 'status' => $ticket->status,
-                'priority' => $ticket->priority,
+                'priority_id' => $ticket->priority_id,
                 'customer_id' => $ticket->customer_id,
                 'assigned_to' => $ticket->assigned_to,
                 'category_id' => $ticket->category_id,
@@ -83,7 +83,7 @@ class Form extends Component
             'subject' => $this->subject,
             'description' => $this->description,
             'status' => $this->status,
-            'priority' => $this->priority,
+            'priority_id' => $this->priority_id,
             'customer_id' => $this->customer_id,
             'assigned_to' => $this->assigned_to,
             'category_id' => $this->category_id,

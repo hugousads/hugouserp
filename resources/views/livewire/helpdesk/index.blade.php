@@ -94,7 +94,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">{{ __('Priority') }}</label>
-                <select wire:model.live="priority" class="erp-input w-full">
+                <select wire:model.live="priorityId" class="erp-input w-full">
                     <option value="">{{ __('All Priorities') }}</option>
                     @foreach($priorities as $p)
                         <option value="{{ $p->id }}">{{ $p->name }}</option>
