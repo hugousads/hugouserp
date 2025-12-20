@@ -184,6 +184,8 @@ class TimeLogs extends Component
             ->get();
 
         // BUG-005 FIX: Consolidate aggregate queries into a single query
+        // Note: Both 'billable' and 'is_billable' columns are checked for backwards compatibility
+        // with legacy data that may have values in either column
         $stats = $this->project->timeLogs()
             ->selectRaw('
                 COALESCE(SUM(hours), 0) as total_hours,
