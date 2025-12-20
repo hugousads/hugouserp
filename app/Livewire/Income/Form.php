@@ -44,7 +44,7 @@ class Form extends Component
             'amount' => 'required|numeric|min:0',
             'payment_method' => 'nullable|string|max:50',
             'description' => 'nullable|string',
-            'attachment' => 'nullable|file|max:5120',
+            'attachment' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,csv,txt|mimetypes:image/jpeg,image/png,image/gif,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/csv,text/plain',
         ];
     }
 
