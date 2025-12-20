@@ -341,7 +341,19 @@ class DocumentService
     {
         $user = auth()->user();
 
-        if (!$user || ($document->uploaded_by !== $user->id && !$user->can('documents.manage'))) {
+        if (! $user) {
+            throw new AuthorizationException('You are not allowed to manage shares for this document.');
+        }
+
+        if (
+            $document->branch_id
+            && $user->branch_id
+            && $document->branch_id !== $user->branch_id
+        ) {
+            throw new AuthorizationException('You cannot manage shares for documents outside your branch.');
+        }
+
+        if ($document->uploaded_by !== $user->id && ! $user->can('documents.manage')) {
             throw new AuthorizationException('You are not allowed to manage shares for this document.');
         }
     }
