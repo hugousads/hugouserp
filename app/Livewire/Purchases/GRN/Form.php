@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\Features\SupportRedirects\Redirector;
 
 #[Layout('layouts.app')]
 class Form extends Component
@@ -203,7 +204,7 @@ class Form extends Component
         }
     }
 
-    public function save()
+    public function save(): Redirector|RedirectResponse|null
     {
         $this->validateGRN();
         DB::transaction(function () {
@@ -216,7 +217,7 @@ class Form extends Component
         return redirect()->route('app.purchases.grn.index');
     }
 
-    public function submit()
+    public function submit(): Redirector|RedirectResponse|null
     {
         $this->validateGRN();
         DB::transaction(function () {
