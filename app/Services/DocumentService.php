@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentService
 {
@@ -262,7 +263,7 @@ class DocumentService
     /**
      * Download document and log activity
      */
-    public function downloadDocument(Document $document, User $user): string
+    public function downloadDocument(Document $document, User $user, bool $inline = false): StreamedResponse
     {
         if (! $user->can('documents.download')) {
             abort(403, 'You do not have permission to download this document');
@@ -288,7 +289,28 @@ class DocumentService
 
         $disk = $this->resolveDisk($document->file_path);
 
-        return Storage::disk($disk)->path($document->file_path);
+        // Ensure the file exists on the resolved disk to avoid storage driver errors
+        abort_unless(
+            Storage::disk($disk)->exists($document->file_path),
+            404,
+            'File not found'
+        );
+
+        $headers = ['Content-Type' => $document->mime_type];
+
+        if ($inline) {
+            return Storage::disk($disk)->response(
+                $document->file_path,
+                $document->file_name,
+                $headers
+            );
+        }
+
+        return Storage::disk($disk)->download(
+            $document->file_path,
+            $document->file_name,
+            $headers
+        );
     }
 
     public function documentsDisk(): string

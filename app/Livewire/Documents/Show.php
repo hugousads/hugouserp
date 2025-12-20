@@ -53,9 +53,11 @@ class Show extends Component
     {
         $this->authorize('documents.download');
 
-        $path = $this->documentService->downloadDocument($this->document, auth()->user());
-
-        return response()->download($path, $this->document->file_name);
+        return $this->documentService->downloadDocument(
+            $this->document,
+            auth()->user(),
+            request()->boolean('inline', false)
+        );
     }
 
     public function shareDocument(): void
