@@ -168,6 +168,7 @@ class InventoryService implements InventoryServiceInterface
     {
         return $this->handleServiceOperation(
             callback: function () use ($data) {
+                return \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
                 $payload = [
                     'product_id' => $data['product_id'] ?? null,
                     'warehouse_id' => $data['warehouse_id'] ?? null,
@@ -193,7 +194,12 @@ class InventoryService implements InventoryServiceInterface
                 // Normalize quantity to positive (direction field captures the sign)
                 $payload['qty'] = abs((float) $payload['qty']);
 
-                return StockMovement::create($payload);
+                    // Lock product and warehouse rows to prevent races
+                    Product::whereKey($payload['product_id'])->lockForUpdate()->first();
+                    \App\Models\Warehouse::whereKey($payload['warehouse_id'])->lockForUpdate()->first();
+
+                    return StockMovement::create($payload);
+                });
             },
             operation: 'recordStockAdjustment',
             context: ['payload_keys' => array_keys($data)],

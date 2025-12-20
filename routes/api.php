@@ -89,7 +89,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // Auth routes (public routes + authenticated routes)
-    Route::middleware(['api-core'])->group(function () {
+    Route::middleware(['api-core', 'throttle:api'])->group(function () {
         require __DIR__.'/api/auth.php';
     });
 

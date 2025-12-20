@@ -8,19 +8,39 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AuthLoginRequest;
 use App\Models\User;
 use App\Services\Contracts\AuthServiceInterface as AuthService;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function __construct(protected AuthService $auth) {}
+    public function __construct(
+        protected AuthService $auth,
+        protected RateLimiter $limiter,
+    ) {}
 
     public function login(AuthLoginRequest $request)
     {
+        $key = $this->throttleKey($request);
+        $maxAttempts = 5;
+        $decaySeconds = 60;
+
+        if ($this->limiter->tooManyAttempts($key, $maxAttempts)) {
+            $retryAfter = $this->limiter->availableIn($key);
+
+            return $this->fail(__('Too many attempts. Please try again later.'), 429, [
+                'retry_after' => $retryAfter,
+            ]);
+        }
+
         $user = User::query()->where('email', $request->input('email'))->first();
         if (! $user || ! Hash::check($request->input('password'), $user->password)) {
+            $this->limiter->hit($key, $decaySeconds);
+
             return $this->fail(__('Invalid credentials'), 422);
         }
+
+        $this->limiter->clear($key);
 
         $hasIsActiveAttribute = array_key_exists('is_active', $user->getAttributes());
 
@@ -35,6 +55,11 @@ class AuthController extends Controller
             'token' => $token->plainTextToken,
             'user' => $user,
         ], __('Logged in successfully'));
+    }
+
+    protected function throttleKey(Request $request): string
+    {
+        return sha1(sprintf('login|%s|%s', $request->input('email'), $request->ip()));
     }
 
     public function me(Request $request)

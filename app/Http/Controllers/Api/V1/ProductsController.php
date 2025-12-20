@@ -22,6 +22,14 @@ class ProductsController extends BaseApiController
         $perPage = min((int) $request->get('per_page', 20), 100);
         $page = max((int) $request->get('page', 1), 1);
 
+        $userBranchId = auth()->user()?->branch_id;
+
+        if ($branchId !== null && $userBranchId !== null && $branchId !== $userBranchId) {
+            return $this->errorResponse(__('Unauthorized branch access'), 403);
+        }
+
+        $resolvedBranchId = $branchId ?? $userBranchId;
+
         if (strlen($query) < 2) {
             return $this->successResponse([
                 'data' => [],
@@ -33,8 +41,7 @@ class ProductsController extends BaseApiController
         }
 
         $productsQuery = Product::query()
-            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
-            ->when(! $branchId && auth()->user()?->branch_id, fn ($q) => $q->where('branch_id', auth()->user()->branch_id))
+            ->when($resolvedBranchId, fn ($q) => $q->where('branch_id', $resolvedBranchId))
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', '%'.$query.'%')
                     ->orWhere('sku', 'like', '%'.$query.'%')

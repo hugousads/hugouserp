@@ -9,6 +9,7 @@ use App\Models\Note;
 use App\Services\AttachmentAuthorizationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -184,7 +185,7 @@ class NotesAttachments extends Component
         $this->ensureAuthorized();
         $this->validate([
             'newFiles' => 'required|array|min:1',
-            'newFiles.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,csv,txt',
+            'newFiles.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,csv,txt|mimetypes:image/jpeg,image/png,image/gif,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/csv,text/plain',
         ]);
 
         $user = Auth::user();
@@ -192,20 +193,53 @@ class NotesAttachments extends Component
         foreach ($this->newFiles as $file) {
             $path = $file->store('attachments/'.strtolower(class_basename($this->modelType)), 'local');
 
+            $storedMime = \Illuminate\Support\Facades\Storage::disk('local')->mimeType($path) ?? $file->getMimeType();
+            $clientMime = $file->getMimeType();
+            $allowedExtensions = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','ppt','pptx','csv','txt'];
+            $allowedMimeTypes = [
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'text/csv',
+                'text/plain',
+            ];
+            if (! in_array($file->extension(), $allowedExtensions, true)
+                || ! in_array($storedMime, $allowedMimeTypes, true)
+                || ! in_array($clientMime, $allowedMimeTypes, true)
+                || $storedMime !== $clientMime) {
+                \Illuminate\Support\Facades\Storage::disk('local')->delete($path);
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'newFiles' => [__('Uploaded file type is not allowed after verification.')],
+                ]);
+            }
+
+            $hash = hash_file('sha256', storage_path('app/'.$path));
+
             $attachment = new Attachment([
                 'attachable_type' => $this->modelType,
                 'attachable_id' => $this->modelId,
                 'filename' => basename($path),
                 'original_filename' => $file->getClientOriginalName(),
                 'size' => $file->getSize(),
-                'type' => $this->getFileType($file->getMimeType()),
+                'type' => $this->getFileType($storedMime),
                 'description' => $this->fileDescription,
                 'branch_id' => $user?->branch_id,
                 'uploaded_by' => $user?->id,
+                'metadata' => [
+                    'sha256' => $hash,
+                ],
             ]);
             $attachment->disk = 'local';
             $attachment->path = $path;
-            $attachment->mime_type = $file->getMimeType();
+            $attachment->mime_type = $storedMime;
             $attachment->save();
         }
 

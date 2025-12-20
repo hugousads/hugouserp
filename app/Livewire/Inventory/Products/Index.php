@@ -81,7 +81,7 @@ class Index extends Component
         $user = auth()->user();
         $branchId = $user?->branch_id;
 
-        $data = Product::query()
+        $query = Product::query()
             ->leftJoin('modules', 'products.module_id', '=', 'modules.id')
             ->leftJoin('branches', 'products.branch_id', '=', 'branches.id')
             ->when($branchId, fn ($q) => $q->where('products.branch_id', $branchId))
@@ -110,9 +110,20 @@ class Index extends Component
                 'branches.name as branch_name',
                 'products.created_at',
             ])
-            ->orderByDesc('products.id')
-            ->get();
+            ->orderByDesc('products.id');
 
-        return $this->performExport('products', $data, __('Products Export'));
+        $maxRows = is_numeric($this->exportMaxRows) ? (int) $this->exportMaxRows : 1000;
+        $collection = collect();
+
+        $query->chunkById(500, function ($chunk) use (&$collection, $maxRows) {
+            if ($collection->count() >= $maxRows) {
+                return false;
+            }
+
+            $remaining = $maxRows - $collection->count();
+            $collection = $collection->merge($chunk->take($remaining));
+        });
+
+        return $this->performExport('products', $collection, __('Products Export'));
     }
 }

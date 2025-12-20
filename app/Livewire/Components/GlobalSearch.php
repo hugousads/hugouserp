@@ -49,13 +49,16 @@ class GlobalSearch extends Component
 
     public function performSearch(): void
     {
+        $user = auth()->user();
+        abort_if(! $user, 403);
+
+        $availableModules = array_keys($this->getAvailableModulesProperty());
+        if ($this->selectedModule && ! in_array($this->selectedModule, $availableModules, true)) {
+            abort(403, __('Unauthorized module selection'));
+        }
+
         try {
             $searchService = app(GlobalSearchService::class);
-
-            $user = auth()->user();
-            if (! $user) {
-                abort(403, __('Unauthorized'));
-            }
 
             $result = $searchService->search(
                 $this->query,

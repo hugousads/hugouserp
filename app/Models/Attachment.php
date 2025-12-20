@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class Attachment extends Model
 {
@@ -57,7 +58,7 @@ class Attachment extends Model
 
     public function getUrlAttribute(): string
     {
-        return route('attachments.download', $this);
+        return \Illuminate\Support\Facades\URL::signedRoute('attachments.download', $this);
     }
 
     public function getHumanSizeAttribute(): string

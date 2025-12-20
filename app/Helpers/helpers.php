@@ -36,18 +36,34 @@ if (! function_exists('current_branch_id')) {
 }
 
 if (! function_exists('money')) {
-    function money(float $amount, string $currency = 'EGP'): string
+    function money(float|string|int $amount, string $currency = 'EGP'): string
     {
-        $formatted = number_format($amount, 2, '.', ',');
+        $scales = [
+            'EGP' => 2,
+            'USD' => 2,
+            'EUR' => 2,
+            'GBP' => 2,
+            'KWD' => 3,
+            'BHD' => 3,
+            'OMR' => 3,
+            'JOD' => 3,
+            'IQD' => 3,
+        ];
+
+        $scale = $scales[$currency] ?? 2;
+        $normalized = bcadd((string) $amount, '0', $scale);
+        $formatted = number_format((float) $normalized, $scale, '.', ',');
 
         return $formatted.' '.$currency;
     }
 }
 
 if (! function_exists('percent')) {
-    function percent(float $value, int $decimals = 2): string
+    function percent(float|string|int $value, int $decimals = 2): string
     {
-        return number_format($value, $decimals, '.', ',').'%';
+        $normalized = bcadd((string) $value, '0', $decimals);
+
+        return number_format((float) $normalized, $decimals, '.', ',').'%';
     }
 }
 

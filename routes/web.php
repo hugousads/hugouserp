@@ -654,10 +654,10 @@ Route::middleware('auth')->group(function () {
             ->middleware(['auth', 'can:documents.view']);
     });
 
-    // Attachments
-    Route::get('/attachments/{attachment}/download', \App\Http\Controllers\Attachments\DownloadController::class)
-        ->name('attachments.download')
-        ->middleware(['auth']);
+// Attachments
+Route::get('/attachments/{attachment}/download', \App\Http\Controllers\Attachments\DownloadController::class)
+    ->name('attachments.download')
+    ->middleware(['auth', 'signed']);
 
     // HELPDESK MODULE
     Route::prefix('app/helpdesk')->name('app.helpdesk.')->group(function () {
