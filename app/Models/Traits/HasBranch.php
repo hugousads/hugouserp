@@ -43,7 +43,11 @@ trait HasBranch
 
         $branchIds = [];
 
-        if (method_exists($user, 'branches') && $user->relationLoaded('branches')) {
+        if (method_exists($user, 'branches')) {
+            if (! $user->relationLoaded('branches')) {
+                $user->load('branches');
+            }
+
             $branchIds = $user->branches->pluck('id')->toArray();
         }
 
