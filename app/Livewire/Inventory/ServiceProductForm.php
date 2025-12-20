@@ -264,7 +264,8 @@ class ServiceProductForm extends Component
         } else {
             $data['created_by'] = Auth::id();
             
-            // Create new product - explicitly set branch_id (guarded field)
+            // Create new product - branch_id is guarded so it must be set explicitly
+            // after instantiation to enforce branch scoping security
             $product = new Product($data);
             $product->branch_id = $userBranchId;
             $product->save();

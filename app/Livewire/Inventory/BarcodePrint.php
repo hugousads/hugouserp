@@ -88,9 +88,10 @@ class BarcodePrint extends Component
             ->get();
 
         // BUG-007 FIX: Eager load relations and apply branch filter
+        // Selection limit is enforced in addProduct(), so selectedProducts is already bounded
         $selectedProductDetails = Product::query()
             ->where('branch_id', $branchId)
-            ->whereIn('id', array_slice($this->selectedProducts, 0, self::MAX_SELECTED_PRODUCTS))
+            ->whereIn('id', $this->selectedProducts)
             ->with(['tax', 'priceGroup']) // Eager load relations used in view
             ->get();
 

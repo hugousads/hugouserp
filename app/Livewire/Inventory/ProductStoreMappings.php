@@ -204,19 +204,30 @@ class ProductStoreMappings extends Component
             $mapping->update($data);
             session()->flash('success', __('Mapping updated successfully'));
         } else {
-            // Use transaction with firstOrCreate to handle concurrency (BUG-004)
-            DB::transaction(function () use ($data) {
-                ProductStoreMapping::firstOrCreate(
-                    [
-                        'product_id' => $data['product_id'],
-                        'store_id' => $data['store_id'],
-                    ],
-                    [
-                        'external_id' => $data['external_id'],
-                        'external_sku' => $data['external_sku'],
-                    ]
-                );
-            });
+            // Use firstOrCreate to handle concurrency (BUG-004)
+            // The database has a unique constraint on (product_id, store_id)
+            try {
+                DB::transaction(function () use ($data) {
+                    ProductStoreMapping::firstOrCreate(
+                        [
+                            'product_id' => $data['product_id'],
+                            'store_id' => $data['store_id'],
+                        ],
+                        [
+                            'external_id' => $data['external_id'],
+                            'external_sku' => $data['external_sku'],
+                        ]
+                    );
+                });
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Handle unique constraint violation gracefully
+                if (str_contains($e->getMessage(), 'UNIQUE constraint failed') || 
+                    str_contains($e->getMessage(), 'Duplicate entry')) {
+                    $this->addError('store_id', __('This product is already mapped to this store'));
+                    return;
+                }
+                throw $e;
+            }
             
             session()->flash('success', __('Mapping created successfully'));
         }
