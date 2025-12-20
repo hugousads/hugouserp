@@ -264,6 +264,10 @@ class DocumentService
      */
     public function downloadDocument(Document $document, User $user): string
     {
+        if (! $user->can('documents.download')) {
+            abort(403, 'You do not have permission to download this document');
+        }
+
         // Check access
         if (!$document->canBeAccessedBy($user)) {
             abort(403, 'You do not have permission to download this document');

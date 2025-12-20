@@ -651,7 +651,7 @@ Route::middleware('auth')->group(function () {
         // Authenticated, permission-guarded download route
         Route::get('/{document}/download', \App\Http\Controllers\Documents\DownloadController::class)
             ->name('download')
-            ->middleware(['auth', 'can:documents.view']);
+            ->middleware(['auth', 'can:documents.download']);
     });
 
 // Attachments

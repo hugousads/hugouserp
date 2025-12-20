@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\Document;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -19,6 +20,7 @@ class DocumentCrossBranchIdorTest extends TestCase
 
     protected User $userBranchA;
     protected User $userBranchB;
+    protected User $userBranchAWithoutDownload;
     protected Branch $branchA;
     protected Branch $branchB;
     protected Document $documentBranchA;
@@ -36,10 +38,11 @@ class DocumentCrossBranchIdorTest extends TestCase
         Permission::create(['name' => 'documents.view', 'guard_name' => 'web']);
         Permission::create(['name' => 'documents.manage', 'guard_name' => 'web']);
         Permission::create(['name' => 'documents.edit', 'guard_name' => 'web']);
+        Permission::create(['name' => 'documents.download', 'guard_name' => 'web']);
 
         // Create role with document permissions
         $role = Role::create(['name' => 'Document Manager', 'guard_name' => 'web']);
-        $role->givePermissionTo(['documents.view', 'documents.manage', 'documents.edit']);
+        $role->givePermissionTo(['documents.view', 'documents.manage', 'documents.edit', 'documents.download']);
 
         // Create users in different branches
         $this->userBranchA = User::factory()->create(['branch_id' => $this->branchA->id]);
@@ -47,6 +50,9 @@ class DocumentCrossBranchIdorTest extends TestCase
 
         $this->userBranchB = User::factory()->create(['branch_id' => $this->branchB->id]);
         $this->userBranchB->assignRole($role);
+
+        $this->userBranchAWithoutDownload = User::factory()->create(['branch_id' => $this->branchA->id]);
+        $this->userBranchAWithoutDownload->givePermissionTo(['documents.view', 'documents.manage', 'documents.edit']);
 
         // Create documents in each branch
         $this->documentBranchA = Document::create([
@@ -145,5 +151,32 @@ class DocumentCrossBranchIdorTest extends TestCase
         $documentService->updateDocument($this->documentBranchB, [
             'title' => 'Hacked Title',
         ]);
+    }
+
+    public function test_inline_preview_respects_permissions_and_serves_inline(): void
+    {
+        Storage::disk('local')->put($this->documentBranchA->file_path, 'pdf content');
+
+        $this->actingAs($this->userBranchA);
+
+        $response = $this->get(route('app.documents.download', [
+            'document' => $this->documentBranchA->id,
+            'inline' => true,
+        ]));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('inline;', (string) $response->headers->get('content-disposition'));
+    }
+
+    public function test_user_without_download_permission_cannot_download_document(): void
+    {
+        $this->actingAs($this->userBranchAWithoutDownload);
+
+        $this->withoutExceptionHandling();
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectExceptionMessage('You do not have permission to download this document');
+
+        $this->get(route('app.documents.download', $this->documentBranchA->id));
     }
 }

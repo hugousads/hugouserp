@@ -90,7 +90,8 @@
                 <a href="{{ route('app.documents.show', $doc->id) }}" class="block">
                     <div class="flex items-center justify-center h-32 bg-slate-100 rounded-lg mb-3">
                         @if(str_contains($doc->mime_type, 'image'))
-                            <img src="{{ Storage::url($doc->file_path) }}" alt="{{ $doc->title }}" class="h-full w-full object-cover rounded-lg">
+                            @php($previewUrl = route('app.documents.download', ['document' => $doc->id, 'inline' => true]))
+                            <img src="{{ $previewUrl }}" alt="{{ $doc->title }}" class="h-full w-full object-cover rounded-lg">
                         @else
                             <svg class="w-16 h-16 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                         @endif

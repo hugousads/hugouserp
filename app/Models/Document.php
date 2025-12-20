@@ -131,7 +131,7 @@ class Document extends Model
 
     public function getDownloadUrl(): string
     {
-        return route('documents.download', $this->id);
+        return route('app.documents.download', ['document' => $this->id]);
     }
 
     public function canBeAccessedBy(User $user): bool

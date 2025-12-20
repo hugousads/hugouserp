@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Services\DocumentService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -23,6 +22,8 @@ class DownloadController extends Controller
         if ($user && $user->branch_id && $document->branch_id && $user->branch_id !== $document->branch_id) {
             abort(403, 'You cannot download documents from other branches.');
         }
+
+        $inline = request()->boolean('inline');
         
         $disk = $this->documentService->documentsDisk();
         $resolvedDisk = Storage::disk($disk)->exists($document->file_path)
@@ -34,11 +35,17 @@ class DownloadController extends Controller
         
         // Validate access and log download (throws 403 if unauthorized)
         $this->documentService->downloadDocument($document, Auth::user());
-        
-        return Storage::disk($resolvedDisk)->download(
-            $document->file_path,
-            $document->file_name,
-            ['Content-Type' => $document->mime_type]
-        );
+
+        $headers = ['Content-Type' => $document->mime_type];
+
+        if ($inline) {
+            return Storage::disk($resolvedDisk)->response(
+                $document->file_path,
+                $document->file_name,
+                $headers
+            );
+        }
+
+        return Storage::disk($resolvedDisk)->download($document->file_path, $document->file_name, $headers);
     }
 }

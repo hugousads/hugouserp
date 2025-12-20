@@ -25,10 +25,11 @@
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h2 class="text-lg font-semibold text-slate-800 mb-4">{{ __('Preview') }}</h2>
                 <div class="flex items-center justify-center h-96 bg-slate-100 rounded-lg">
+                    @php($previewUrl = route('app.documents.download', ['document' => $document->id, 'inline' => true]))
                     @if(str_contains($document->mime_type, 'image'))
-                        <img src="{{ Storage::url($document->file_path) }}" alt="{{ $document->title }}" class="max-h-full max-w-full object-contain">
+                        <img src="{{ $previewUrl }}" alt="{{ $document->title }}" class="max-h-full max-w-full object-contain">
                     @elseif(str_contains($document->mime_type, 'pdf'))
-                        <iframe src="{{ Storage::url($document->file_path) }}" class="w-full h-full"></iframe>
+                        <iframe src="{{ $previewUrl }}" class="w-full h-full"></iframe>
                     @else
                         <div class="text-center">
                             <svg class="mx-auto w-24 h-24 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
