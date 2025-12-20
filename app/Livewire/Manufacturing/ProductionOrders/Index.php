@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Manufacturing\ProductionOrders;
 
+use App\Livewire\Manufacturing\Concerns\StatsCacheVersion;
 use App\Models\ProductionOrder;
+use App\Traits\HasSortableColumns;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
@@ -16,6 +18,8 @@ class Index extends Component
 {
     use AuthorizesRequests;
     use WithPagination;
+    use HasSortableColumns;
+    use StatsCacheVersion;
 
     #[Url]
     public string $search = '';
@@ -40,34 +44,44 @@ class Index extends Component
         $this->resetPage();
     }
 
-    public function sortBy(string $field): void
+    protected function allowedSortColumns(): array
     {
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
-        }
+        return [
+            'created_at',
+            'order_number',
+            'status',
+            'priority',
+            'quantity_planned',
+            'quantity_produced',
+        ];
     }
 
     public function getStatistics(): array
     {
         $user = auth()->user();
-        $cacheKey = 'production_orders_stats_'.($user?->branch_id ?? 'all');
+        $baseQuery = ProductionOrder::query()
+            ->when($this->status, fn ($q) => $q->where('status', $this->status))
+            ->when($this->priority, fn ($q) => $q->where('priority', $this->priority));
 
-        return Cache::remember($cacheKey, 300, function () use ($user) {
-            $query = ProductionOrder::query();
+        if ($user && $user->branch_id) {
+            $baseQuery->where('branch_id', $user->branch_id);
+        }
 
-            if ($user && $user->branch_id) {
-                $query->where('branch_id', $user->branch_id);
-            }
+        $cacheKey = sprintf(
+            'production_orders_stats_%s_%s_%s_%s',
+            $user?->branch_id ?? 'all',
+            $this->status ?: 'all',
+            $this->priority ?: 'all',
+            $this->statsCacheVersion($baseQuery)
+        );
 
+        return Cache::remember($cacheKey, 300, function () use ($baseQuery) {
             return [
-                'total_orders' => $query->count(),
-                'in_progress' => $query->where('status', 'in_progress')->count(),
-                'completed' => $query->where('status', 'completed')->count(),
-                'planned_quantity' => $query->sum('quantity_planned'),
-                'produced_quantity' => $query->sum('quantity_produced'),
+                'total_orders' => (clone $baseQuery)->count(),
+                'in_progress' => (clone $baseQuery)->where('status', 'in_progress')->count(),
+                'completed' => (clone $baseQuery)->where('status', 'completed')->count(),
+                'planned_quantity' => (clone $baseQuery)->sum('quantity_planned'),
+                'produced_quantity' => (clone $baseQuery)->sum('quantity_produced'),
             ];
         });
     }
@@ -87,7 +101,7 @@ class Index extends Component
             }))
             ->when($this->status, fn ($q) => $q->where('status', $this->status))
             ->when($this->priority, fn ($q) => $q->where('priority', $this->priority))
-            ->orderBy($this->sortField, $this->sortDirection)
+            ->orderBy($this->getSortField(), $this->getSortDirection())
             ->paginate(15);
 
         $stats = $this->getStatistics();

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
@@ -310,27 +311,84 @@ class Product extends BaseModel
 
     public function reserveStock(float $quantity): bool
     {
-        if (!$this->isInStock($quantity)) {
-            return false;
+        $success = DB::transaction(function () use ($quantity): bool {
+            $product = self::whereKey($this->getKey())->lockForUpdate()->first();
+
+            if (! $product || $product->getAvailableQuantity() < $quantity) {
+                return false;
+            }
+
+            $product->reserved_quantity += $quantity;
+            $product->save();
+
+            return true;
+        }, 3);
+
+        if ($success) {
+            $this->refresh();
         }
 
-        $this->increment('reserved_quantity', $quantity);
-        return true;
+        return $success;
     }
 
     public function releaseStock(float $quantity): void
     {
-        $this->decrement('reserved_quantity', $quantity);
+        $updated = DB::transaction(function () use ($quantity): bool {
+            $product = self::whereKey($this->getKey())->lockForUpdate()->first();
+
+            if (! $product) {
+                return false;
+            }
+
+            $product->reserved_quantity = max(0, $product->reserved_quantity - $quantity);
+            $product->save();
+
+            return true;
+        }, 3);
+
+        if ($updated) {
+            $this->refresh();
+        }
     }
 
     public function addStock(float $quantity): void
     {
-        $this->increment('stock_quantity', $quantity);
+        $updated = DB::transaction(function () use ($quantity): bool {
+            $product = self::whereKey($this->getKey())->lockForUpdate()->first();
+
+            if (! $product) {
+                return false;
+            }
+
+            $product->stock_quantity += $quantity;
+            $product->save();
+
+            return true;
+        }, 3);
+
+        if ($updated) {
+            $this->refresh();
+        }
     }
 
     public function subtractStock(float $quantity): void
     {
-        $this->decrement('stock_quantity', $quantity);
+        $updated = DB::transaction(function () use ($quantity): bool {
+            $product = self::whereKey($this->getKey())->lockForUpdate()->first();
+
+            if (! $product) {
+                return false;
+            }
+
+            $product->stock_quantity = max(0, $product->stock_quantity - $quantity);
+            $product->save();
+
+            return true;
+        }, 3);
+
+        if ($updated) {
+            $this->refresh();
+        }
     }
 
     public function isExpired(): bool

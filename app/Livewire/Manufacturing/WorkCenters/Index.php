@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Manufacturing\WorkCenters;
 
+use App\Livewire\Manufacturing\Concerns\StatsCacheVersion;
 use App\Models\WorkCenter;
+use App\Traits\HasSortableColumns;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
@@ -16,6 +18,8 @@ class Index extends Component
 {
     use AuthorizesRequests;
     use WithPagination;
+    use HasSortableColumns;
+    use StatsCacheVersion;
 
     #[Url]
     public string $search = '';
@@ -37,33 +41,41 @@ class Index extends Component
         $this->resetPage();
     }
 
-    public function sortBy(string $field): void
+    protected function allowedSortColumns(): array
     {
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
-        }
+        return [
+            'name',
+            'code',
+            'status',
+            'capacity_per_hour',
+            'cost_per_hour',
+            'created_at',
+        ];
     }
 
     public function getStatistics(): array
     {
         $user = auth()->user();
-        $cacheKey = 'work_centers_stats_'.($user?->branch_id ?? 'all');
+        $baseQuery = WorkCenter::query()
+            ->when($this->status, fn ($q) => $q->where('status', $this->status));
 
-        return Cache::remember($cacheKey, 300, function () use ($user) {
-            $query = WorkCenter::query();
+        if ($user && $user->branch_id) {
+            $baseQuery->where('branch_id', $user->branch_id);
+        }
 
-            if ($user && $user->branch_id) {
-                $query->where('branch_id', $user->branch_id);
-            }
+        $cacheKey = sprintf(
+            'work_centers_stats_%s_%s_%s',
+            $user?->branch_id ?? 'all',
+            $this->status ?: 'all',
+            $this->statsCacheVersion($baseQuery)
+        );
 
+        return Cache::remember($cacheKey, 300, function () use ($baseQuery) {
             return [
-                'total_centers' => $query->count(),
-                'active_centers' => $query->where('status', 'active')->count(),
-                'total_capacity' => $query->sum('capacity_per_hour'),
-                'avg_cost_per_hour' => $query->avg('cost_per_hour'),
+                'total_centers' => (clone $baseQuery)->count(),
+                'active_centers' => (clone $baseQuery)->where('status', 'active')->count(),
+                'total_capacity' => (clone $baseQuery)->sum('capacity_per_hour'),
+                'avg_cost_per_hour' => (clone $baseQuery)->avg('cost_per_hour'),
             ];
         });
     }
@@ -82,7 +94,7 @@ class Index extends Component
                     ->orWhere('name_ar', 'like', "%{$this->search}%");
             }))
             ->when($this->status, fn ($q) => $q->where('status', $this->status))
-            ->orderBy($this->sortField, $this->sortDirection)
+            ->orderBy($this->getSortField(), $this->getSortDirection())
             ->paginate(15);
 
         $stats = $this->getStatistics();
