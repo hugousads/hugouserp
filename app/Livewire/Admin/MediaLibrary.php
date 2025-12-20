@@ -50,9 +50,11 @@ class MediaLibrary extends Component
         }
 
         $optimizationService = app(ImageOptimizationService::class);
+        $disk = 'local';
 
         foreach ($this->files as $file) {
-            $result = $optimizationService->optimizeUploadedFile($file, 'general', 'public');
+            $this->guardAgainstHtmlPayload($file);
+            $result = $optimizationService->optimizeUploadedFile($file, 'general', $disk);
 
             Media::create([
                 'name' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
@@ -65,7 +67,7 @@ class MediaLibrary extends Component
                 'optimized_size' => $result['optimized_size'],
                 'width' => $result['width'],
                 'height' => $result['height'],
-                'disk' => 'public',
+                'disk' => $disk,
                 'collection' => 'general',
                 'user_id' => $user->id,
                 'branch_id' => $user->branch_id,
@@ -124,5 +126,13 @@ class MediaLibrary extends Component
         return view('livewire.admin.media-library', [
             'media' => $media,
         ])->layout('layouts.app', ['title' => __('Media Library')]);
+    }
+
+    protected function guardAgainstHtmlPayload($file): void
+    {
+        $contents = strtolower((string) $file->get());
+        if (str_contains($contents, '<script') || str_contains($contents, '<iframe') || str_contains($contents, '<html')) {
+            abort(422, __('Uploaded file contains HTML content and was rejected.'));
+        }
     }
 }

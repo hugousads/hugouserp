@@ -6,8 +6,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Store;
 use App\Services\Store\StoreSyncService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class WebhooksController extends BaseApiController
 {
@@ -79,20 +81,41 @@ class WebhooksController extends BaseApiController
     protected function verifyShopifyWebhook(Request $request, Store $store): bool
     {
         $hmacHeader = $request->header('X-Shopify-Hmac-Sha256');
+        $deliveryId = $request->header('X-Shopify-Webhook-Id');
+        $timestamp = $request->header('X-Shopify-Triggered-At') ?? $request->header('X-Shopify-Webhook-Created-At');
+        $topic = $request->header('X-Shopify-Topic');
         $secret = $store->integration?->webhook_secret;
+        $allowedTopics = [
+            'products/create', 'products/update', 'products/delete',
+            'orders/create', 'orders/updated', 'inventory_levels/update',
+        ];
 
         if (! $hmacHeader || ! $secret) {
             return false;
         }
 
+        if ($topic && ! in_array($topic, $allowedTopics, true)) {
+            return false;
+        }
+
         $calculatedHmac = base64_encode(hash_hmac('sha256', $request->getContent(), $secret, true));
 
-        return hash_equals($hmacHeader, $calculatedHmac);
+        if (! hash_equals($hmacHeader, $calculatedHmac)) {
+            return false;
+        }
+
+        if (! $this->isFresh($timestamp)) {
+            return false;
+        }
+
+        return $this->reserveDelivery($deliveryId);
     }
 
     protected function verifyWooCommerceWebhook(Request $request, Store $store): bool
     {
         $signature = $request->header('X-WC-Webhook-Signature');
+        $deliveryId = $request->header('X-WC-Webhook-Delivery-ID');
+        $timestamp = $request->header('X-WC-Webhook-Timestamp');
         $secret = $store->integration?->webhook_secret;
 
         if (! $signature || ! $secret) {
@@ -101,7 +124,15 @@ class WebhooksController extends BaseApiController
 
         $calculatedSignature = base64_encode(hash_hmac('sha256', $request->getContent(), $secret, true));
 
-        return hash_equals($signature, $calculatedSignature);
+        if (! hash_equals($signature, $calculatedSignature)) {
+            return false;
+        }
+
+        if (! $this->isFresh($timestamp)) {
+            return false;
+        }
+
+        return $this->reserveDelivery($deliveryId);
     }
 
     /**
@@ -141,6 +172,8 @@ class WebhooksController extends BaseApiController
     protected function verifyLaravelWebhook(Request $request, Store $store): bool
     {
         $signature = $request->header('X-Webhook-Signature');
+        $deliveryId = $request->header('X-Webhook-Id');
+        $timestamp = $request->header('X-Webhook-Timestamp');
         $secret = $store->integration?->webhook_secret;
 
         if (! $signature || ! $secret) {
@@ -149,7 +182,15 @@ class WebhooksController extends BaseApiController
 
         $calculatedSignature = hash_hmac('sha256', $request->getContent(), $secret);
 
-        return hash_equals($signature, $calculatedSignature);
+        if (! hash_equals($signature, $calculatedSignature)) {
+            return false;
+        }
+
+        if (! $this->isFresh($timestamp)) {
+            return false;
+        }
+
+        return $this->reserveDelivery($deliveryId);
     }
 
     protected function handleLaravelProductDelete(Store $store, array $data): void
@@ -188,5 +229,29 @@ class WebhooksController extends BaseApiController
                 }
             }
         }
+    }
+
+    protected function isFresh(?string $timestamp, int $allowedSkewSeconds = 300): bool
+    {
+        if (! $timestamp) {
+            return false;
+        }
+
+        try {
+            $time = Carbon::parse($timestamp);
+        } catch (\Exception) {
+            return false;
+        }
+
+        return abs(now()->diffInSeconds($time, false)) <= $allowedSkewSeconds;
+    }
+
+    protected function reserveDelivery(?string $deliveryId): bool
+    {
+        if (! $deliveryId) {
+            return false;
+        }
+
+        return Cache::add('webhook_delivery_'.$deliveryId, true, now()->addMinutes(10));
     }
 }

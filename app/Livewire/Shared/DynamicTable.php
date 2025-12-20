@@ -47,6 +47,8 @@ class DynamicTable extends Component
 
     public array $selected = [];
 
+    public array $allowedActions = [];
+
     protected $queryString = [
         'search' => ['except' => ''],
         'sortField' => ['except' => ''],
@@ -63,7 +65,8 @@ class DynamicTable extends Component
         bool $showPagination = true,
         string $emptyMessage = '',
         array $actions = [],
-        bool $selectable = false
+        bool $selectable = false,
+        array $allowedActions = []
     ): void {
         $this->columns = $columns;
         $this->rows = $rows;
@@ -75,6 +78,7 @@ class DynamicTable extends Component
         $this->emptyMessage = $emptyMessage ?: __('No records found.');
         $this->actions = $actions;
         $this->selectable = $selectable;
+        $this->allowedActions = $allowedActions ?: array_filter(array_map(fn ($action) => $action['name'] ?? null, $actions));
 
         foreach ($this->filters as $filter) {
             $name = $filter['name'] ?? '';
@@ -139,11 +143,13 @@ class DynamicTable extends Component
 
     public function executeAction(string $action, $id): void
     {
+        $this->authorizeAction($action);
         $this->dispatch('action-executed', action: $action, id: $id);
     }
 
     public function executeBulkAction(string $action): void
     {
+        $this->authorizeAction($action);
         $this->dispatch('bulk-action-executed', action: $action, ids: $this->selected);
     }
 
@@ -214,5 +220,20 @@ class DynamicTable extends Component
             'totalPages' => $this->getTotalPages(),
             'currentPage' => $this->getPage(),
         ]);
+    }
+
+    protected function authorizeAction(string $action): void
+    {
+        $actionAllowed = empty($this->allowedActions) || in_array($action, $this->allowedActions, true);
+        if (! $actionAllowed) {
+            abort(403, __('Action is not allowed.'));
+        }
+
+        $definition = collect($this->actions)->firstWhere('name', $action);
+        $ability = $definition['ability'] ?? null;
+
+        if ($ability && ! auth()->user()?->can($ability)) {
+            abort(403);
+        }
     }
 }

@@ -22,6 +22,8 @@ class Terminal extends Component
 
     protected CurrencyService $currencyService;
 
+    protected array $rateCache = [];
+
     public function boot(CurrencyService $currencyService): void
     {
         $this->currencyService = $currencyService;
@@ -55,6 +57,8 @@ class Terminal extends Component
         $currencyData = [];
         $currencySymbols = [];
         $currencyRates = [$baseCurrency => 1.0];
+        $targetCurrencies = $currencies->where('is_base', false)->pluck('code')->all();
+        $this->rateCache = $this->rateCache ?: $this->currencyService->getRatesFor($baseCurrency, $targetCurrencies);
 
         foreach ($currencies as $currency) {
             $currencyData[$currency->code] = [
@@ -66,7 +70,7 @@ class Terminal extends Component
             $currencySymbols[$currency->code] = $currency->symbol;
 
             if (! $currency->is_base) {
-                $rate = $this->currencyService->getRate($baseCurrency, $currency->code);
+                $rate = $this->rateCache[$currency->code] ?? null;
                 $currencyRates[$currency->code] = $rate ?? 1.0;
             }
         }

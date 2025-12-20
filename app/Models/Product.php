@@ -314,8 +314,12 @@ class Product extends BaseModel
         $success = DB::transaction(function () use ($quantity): bool {
             $product = self::whereKey($this->getKey())->lockForUpdate()->first();
 
-            if (! $product || $product->getAvailableQuantity() < $quantity) {
-                return false;
+            if (! $product) {
+                throw new \RuntimeException('Product not found for reservation.');
+            }
+
+            if ($product->getAvailableQuantity() < $quantity) {
+                throw new \RuntimeException('Insufficient stock to reserve.');
             }
 
             $product->reserved_quantity += $quantity;
@@ -337,7 +341,7 @@ class Product extends BaseModel
             $product = self::whereKey($this->getKey())->lockForUpdate()->first();
 
             if (! $product) {
-                return false;
+                throw new \RuntimeException('Product not found for release.');
             }
 
             $product->reserved_quantity = max(0, $product->reserved_quantity - $quantity);
@@ -357,7 +361,7 @@ class Product extends BaseModel
             $product = self::whereKey($this->getKey())->lockForUpdate()->first();
 
             if (! $product) {
-                return false;
+                throw new \RuntimeException('Product not found for adjustment.');
             }
 
             $product->stock_quantity += $quantity;
@@ -377,7 +381,7 @@ class Product extends BaseModel
             $product = self::whereKey($this->getKey())->lockForUpdate()->first();
 
             if (! $product) {
-                return false;
+                throw new \RuntimeException('Product not found for adjustment.');
             }
 
             $product->stock_quantity = max(0, $product->stock_quantity - $quantity);

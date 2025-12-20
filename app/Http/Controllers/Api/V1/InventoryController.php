@@ -11,8 +11,10 @@ use App\Http\Requests\Api\Inventory\UpdateStockRequest;
 use App\Models\Product;
 use App\Models\ProductStoreMapping;
 use App\Models\StockMovement;
+use App\Models\Warehouse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class InventoryController extends BaseApiController
 {
@@ -34,7 +36,11 @@ class InventoryController extends BaseApiController
             ->leftJoin('stock_movements', 'products.id', '=', 'stock_movements.product_id')
             ->when($store?->branch_id, fn ($q) => $q->where('products.branch_id', $store->branch_id))
             ->when($request->filled('sku'), fn ($q) => $q->where('products.sku', $validated['sku']))
-            ->when($request->filled('warehouse_id'), fn ($q) => $q->where('stock_movements.warehouse_id', $validated['warehouse_id']))
+            ->when($request->filled('warehouse_id'), function ($q) use ($validated) {
+                $q->where('stock_movements.warehouse_id', $validated['warehouse_id'])
+                    ->addSelect('stock_movements.warehouse_id')
+                    ->groupBy('stock_movements.warehouse_id');
+            })
             ->groupBy('products.id', 'products.name', 'products.sku', 'products.min_stock', 'products.branch_id');
 
         // For low stock filter
@@ -72,20 +78,18 @@ class InventoryController extends BaseApiController
             return $this->errorResponse(__('Product not found'), 404);
         }
 
-        // Resolve warehouse_id using fallback logic
         $warehouseId = $this->resolveWarehouseId(
             $request->input('warehouse_id'),
-            $product->branch_id
+            $product->branch_id,
+            $store?->branch_id
         );
 
-        // Ensure warehouse_id is not null to prevent foreign key constraint violation
         if ($warehouseId === null) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'warehouse_id' => [__('No warehouse available for stock movement')]
             ]);
         }
 
-        // Get current quantity using helper method with warehouse and branch scoping
         $oldQuantity = $this->calculateCurrentStock($product->id, $warehouseId, $product->branch_id);
 
         // Calculate new quantity and direction
@@ -102,8 +106,8 @@ class InventoryController extends BaseApiController
                 : $oldQuantity - $actualQty;
         }
 
-        if ($actualQty > 0) {
-            DB::transaction(function () use ($product, $actualDirection, $actualQty, $validated, $warehouseId) {
+        $newQuantityPersisted = DB::transaction(function () use ($product, $actualDirection, $actualQty, $validated, $warehouseId) {
+            if ($actualQty > 0) {
                 StockMovement::create([
                     'product_id' => $product->id,
                     'warehouse_id' => $warehouseId,
@@ -113,14 +117,23 @@ class InventoryController extends BaseApiController
                     'reason' => $validated['reason'] ?? 'API stock update',
                     'reference_type' => 'api_sync',
                 ]);
-            });
-        }
+            }
+
+            $freshProduct = Product::lockForUpdate()->find($product->id);
+            if (! $freshProduct) {
+                throw new \RuntimeException('Product not found during stock update');
+            }
+            $calculated = $this->calculateCurrentStock($product->id, null, $product->branch_id);
+            $freshProduct->forceFill(['stock_quantity' => max(0, $calculated)])->save();
+
+            return max(0, $calculated);
+        });
 
         return $this->successResponse([
             'product_id' => $product->id,
             'sku' => $product->sku,
             'old_quantity' => $oldQuantity,
-            'new_quantity' => max(0, $newQuantity),
+            'new_quantity' => $newQuantityPersisted,
         ], __('Stock updated successfully'));
     }
 
@@ -160,10 +173,10 @@ class InventoryController extends BaseApiController
             }
 
             try {
-                // Resolve warehouse_id using fallback logic
                 $warehouseId = $this->resolveWarehouseId(
                     $item['warehouse_id'] ?? $request->input('warehouse_id'),
-                    $product->branch_id
+                    $product->branch_id,
+                    $store?->branch_id
                 );
 
                 // If warehouse cannot be resolved, record failure and continue
@@ -192,23 +205,34 @@ class InventoryController extends BaseApiController
                         : $oldQuantity - $actualQty;
                 }
 
-                if ($actualQty > 0) {
-                    StockMovement::create([
-                        'product_id' => $product->id,
-                        'warehouse_id' => $warehouseId,
-                        'branch_id' => $product->branch_id,
-                        'direction' => $actualDirection,
-                        'qty' => $actualQty,
-                        'reason' => 'API bulk stock update',
-                        'reference_type' => 'api_sync',
-                    ]);
-                }
+                $persistedQuantity = DB::transaction(function () use ($product, $actualDirection, $actualQty, $warehouseId) {
+                    if ($actualQty > 0) {
+                        StockMovement::create([
+                            'product_id' => $product->id,
+                            'warehouse_id' => $warehouseId,
+                            'branch_id' => $product->branch_id,
+                            'direction' => $actualDirection,
+                            'qty' => $actualQty,
+                            'reason' => 'API bulk stock update',
+                            'reference_type' => 'api_sync',
+                        ]);
+                    }
+
+                    $freshProduct = Product::lockForUpdate()->find($product->id);
+                    if (! $freshProduct) {
+                        throw new \RuntimeException('Product not found during stock update');
+                    }
+                    $calculated = $this->calculateCurrentStock($product->id, null, $product->branch_id);
+                    $freshProduct->forceFill(['stock_quantity' => max(0, $calculated)])->save();
+
+                    return max(0, $calculated);
+                });
 
                 $results['success'][] = [
                     'product_id' => $product->id,
                     'sku' => $product->sku,
                     'old_quantity' => $oldQuantity,
-                    'new_quantity' => max(0, $newQuantity),
+                    'new_quantity' => $persistedQuantity,
                 ];
             } catch (\Exception $e) {
                 $results['failed'][] = [
@@ -273,17 +297,36 @@ class InventoryController extends BaseApiController
      * @param  int|null  $branchId  Branch ID to filter warehouses
      * @return int|null Resolved warehouse ID or null if none available
      */
-    protected function resolveWarehouseId(?int $preferredId, ?int $branchId = null): ?int
+     protected function resolveWarehouseId(?int $preferredId, ?int $branchId = null, ?int $tokenBranchId = null): ?int
     {
-        // Return preferred ID if provided
         if ($preferredId !== null) {
-            return $preferredId;
+            $warehouse = Warehouse::query()
+                ->where('id', $preferredId)
+                ->when($branchId ?? $tokenBranchId, fn ($q, $branch) => $q->where('branch_id', $branch))
+                ->where('status', 'active')
+                ->first();
+
+            if (! $warehouse) {
+                throw ValidationException::withMessages([
+                    'warehouse_id' => [__('Invalid warehouse for this branch')],
+                ]);
+            }
+
+            return $warehouse->id;
         }
 
-        // Try default warehouse from settings
+        // Try default warehouse from settings scoped to branch if provided
         $defaultWarehouseId = setting('default_warehouse_id');
         if ($defaultWarehouseId !== null) {
-            return (int) $defaultWarehouseId;
+            $defaultWarehouse = Warehouse::query()
+                ->where('id', $defaultWarehouseId)
+                ->where('status', 'active')
+                ->when($branchId ?? $tokenBranchId, fn ($q, $branch) => $q->where('branch_id', $branch))
+                ->first();
+
+            if ($defaultWarehouse) {
+                return (int) $defaultWarehouse->id;
+            }
         }
 
         // Try to get warehouse from branch

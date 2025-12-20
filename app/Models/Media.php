@@ -53,7 +53,17 @@ class Media extends Model
 
     public function getUrlAttribute(): string
     {
-        return Storage::disk($this->disk)->url($this->file_path);
+        $disk = Storage::disk($this->disk);
+
+        if (method_exists($disk, 'temporaryUrl')) {
+            try {
+                return $disk->temporaryUrl($this->file_path, now()->addMinutes(10));
+            } catch (\Exception) {
+                // fallback below
+            }
+        }
+
+        return $disk->url($this->file_path);
     }
 
     public function getThumbnailUrlAttribute(): ?string
@@ -61,7 +71,17 @@ class Media extends Model
         if (!$this->thumbnail_path) {
             return null;
         }
-        return Storage::disk($this->disk)->url($this->thumbnail_path);
+        $disk = Storage::disk($this->disk);
+
+        if (method_exists($disk, 'temporaryUrl')) {
+            try {
+                return $disk->temporaryUrl($this->thumbnail_path, now()->addMinutes(10));
+            } catch (\Exception) {
+                // fallback below
+            }
+        }
+
+        return $disk->url($this->thumbnail_path);
     }
 
     public function getHumanSizeAttribute(): string

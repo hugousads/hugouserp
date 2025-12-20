@@ -27,10 +27,13 @@ class GlobalSearch extends Component
 
     public bool $isSearching = false;
 
+    protected static array $columnCache = [];
+
     protected function scopedQuery($query, User $user)
     {
         $model = $query->getModel();
-        $hasBranchColumn = Schema::hasColumn($model->getTable(), 'branch_id');
+        $table = $model->getTable();
+        $hasBranchColumn = self::$columnCache[$table] ??= Schema::hasColumn($table, 'branch_id');
 
         return $query->when($user->branch_id && $hasBranchColumn, fn ($q) => $q->where('branch_id', $user->branch_id));
     }
