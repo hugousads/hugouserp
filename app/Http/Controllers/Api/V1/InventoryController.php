@@ -290,19 +290,22 @@ class InventoryController extends BaseApiController
     }
 
     /**
-     * Resolve warehouse ID with fallback logic
-     * Priority: preferred ID → default setting → branch warehouse → first available
+     * Resolve warehouse ID with branch-safe fallback logic.
+     * Priority: preferred ID → default setting → branch warehouse.
      *
      * @param  int|null  $preferredId  Preferred warehouse ID from request
      * @param  int|null  $branchId  Branch ID to filter warehouses
+     * @param  int|null  $tokenBranchId  Branch ID from token/store context
      * @return int|null Resolved warehouse ID or null if none available
      */
-     protected function resolveWarehouseId(?int $preferredId, ?int $branchId = null, ?int $tokenBranchId = null): ?int
+    protected function resolveWarehouseId(?int $preferredId, ?int $branchId = null, ?int $tokenBranchId = null): ?int
     {
+        $branchContext = $branchId ?? $tokenBranchId;
+
         if ($preferredId !== null) {
             $warehouse = Warehouse::query()
                 ->where('id', $preferredId)
-                ->when($branchId ?? $tokenBranchId, fn ($q, $branch) => $q->where('branch_id', $branch))
+                ->when($branchContext, fn ($q, $branch) => $q->where('branch_id', $branch))
                 ->where('status', 'active')
                 ->first();
 
@@ -321,7 +324,7 @@ class InventoryController extends BaseApiController
             $defaultWarehouse = Warehouse::query()
                 ->where('id', $defaultWarehouseId)
                 ->where('status', 'active')
-                ->when($branchId ?? $tokenBranchId, fn ($q, $branch) => $q->where('branch_id', $branch))
+                ->when($branchContext, fn ($q, $branch) => $q->where('branch_id', $branch))
                 ->first();
 
             if ($defaultWarehouse) {
@@ -329,18 +332,21 @@ class InventoryController extends BaseApiController
             }
         }
 
-        // Try to get warehouse from branch
-        if ($branchId !== null) {
-            $branchWarehouse = \App\Models\Warehouse::where('branch_id', $branchId)
+        // Try to get warehouse from branch context
+        if ($branchContext !== null) {
+            $branchWarehouse = \App\Models\Warehouse::where('branch_id', $branchContext)
                 ->where('status', 'active')
                 ->first();
 
             if ($branchWarehouse) {
                 return $branchWarehouse->id;
             }
+
+            // Do not fall back to a warehouse from another branch
+            return null;
         }
 
-        // Fall back to first available active warehouse
+        // Fall back to first available active warehouse when no branch context is provided
         $firstWarehouse = \App\Models\Warehouse::where('status', 'active')->first();
 
         return $firstWarehouse?->id;
