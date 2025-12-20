@@ -150,6 +150,12 @@ class DocumentService
      */
     public function updateDocument(Document $document, array $data): Document
     {
+        // Prevent cross-branch document updates (IDOR protection)
+        $user = auth()->user();
+        if ($user && $user->branch_id && $document->branch_id && $user->branch_id !== $document->branch_id) {
+            throw new AuthorizationException('You cannot update documents from other branches.');
+        }
+        
         return DB::transaction(function () use ($document, $data) {
             $document->update([
                 'title' => $data['title'] ?? $document->title,

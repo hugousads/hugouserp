@@ -31,6 +31,13 @@ class Show extends Component
     public function mount(Document $document): void
     {
         $this->authorize('documents.view');
+        
+        // Prevent cross-branch document access (IDOR protection)
+        $user = auth()->user();
+        if ($user && $user->branch_id && $document->branch_id && $user->branch_id !== $document->branch_id) {
+            abort(403, 'You cannot access documents from other branches.');
+        }
+        
         $this->document = $document->load(['uploader', 'tags', 'versions.uploader', 'shares.user', 'activities.user']);
 
         // Check if user can access this document

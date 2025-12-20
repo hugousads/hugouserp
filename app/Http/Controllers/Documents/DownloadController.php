@@ -18,6 +18,12 @@ class DownloadController extends Controller
 
     public function __invoke(Document $document): StreamedResponse
     {
+        // Prevent cross-branch document download (IDOR protection)
+        $user = Auth::user();
+        if ($user && $user->branch_id && $document->branch_id && $user->branch_id !== $document->branch_id) {
+            abort(403, 'You cannot download documents from other branches.');
+        }
+        
         $disk = $this->documentService->documentsDisk();
         $resolvedDisk = Storage::disk($disk)->exists($document->file_path)
             ? $disk

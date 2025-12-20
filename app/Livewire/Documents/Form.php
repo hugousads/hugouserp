@@ -26,13 +26,16 @@ class Form extends Component
 
     public string $title = '';
 
-    public string $description = '';
+    // Nullable to match database schema and prevent type errors when filling from model
+    public ?string $description = null;
 
     public ?UploadedFile $file = null;
 
-    public string $folder = '';
+    // Nullable to match database schema and prevent type errors when filling from model
+    public ?string $folder = null;
 
-    public string $category = '';
+    // Nullable to match database schema and prevent type errors when filling from model
+    public ?string $category = null;
 
     public bool $is_public = false;
 
@@ -49,6 +52,13 @@ class Form extends Component
     {
         if ($document && $document->exists) {
             $this->authorize('documents.edit');
+            
+            // Prevent cross-branch document access (IDOR protection)
+            $user = auth()->user();
+            if ($user && $user->branch_id && $document->branch_id && $user->branch_id !== $document->branch_id) {
+                abort(403, 'You cannot access documents from other branches.');
+            }
+            
             $this->isEdit = true;
             $this->document = $document;
             $this->fill($document->only([

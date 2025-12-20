@@ -63,6 +63,28 @@ class Sale extends BaseModel
             $prefix = setting('sales.invoice_prefix', 'SO-');
             $m->code = $m->code ?: $prefix.Str::upper(Str::random(8));
         });
+
+        // Clear cache when sales are created, updated, or deleted (BUG-004 fix)
+        static::created(function ($sale) {
+            static::clearSalesStatsCache($sale->branch_id);
+        });
+
+        static::updated(function ($sale) {
+            static::clearSalesStatsCache($sale->branch_id);
+        });
+
+        static::deleted(function ($sale) {
+            static::clearSalesStatsCache($sale->branch_id);
+        });
+    }
+
+    /**
+     * Clear sales statistics cache for a given branch
+     */
+    protected static function clearSalesStatsCache(?int $branchId): void
+    {
+        $cacheKey = 'sales_stats_' . ($branchId ?? 'all');
+        \Illuminate\Support\Facades\Cache::forget($cacheKey);
     }
 
     public function customer(): BelongsTo
