@@ -45,6 +45,16 @@ class DocumentService
     public function uploadDocument(UploadedFile $file, array $data): Document
     {
         $this->validateFile($file);
+        $user = auth()->user();
+        $userBranchId = $user?->branch_id;
+
+        if (isset($data['branch_id']) && $userBranchId && (int) $data['branch_id'] !== $userBranchId) {
+            throw new AuthorizationException('You cannot upload documents to another branch.');
+        }
+
+        if (! $userBranchId) {
+            throw new AuthorizationException('Unable to resolve your branch for document uploads.');
+        }
 
         return DB::transaction(function () use ($file, $data) {
             // Store the file on the configured private disk
@@ -52,9 +62,11 @@ class DocumentService
             $path = $file->store('documents', $disk);
             $isPublic = (bool) ($data['is_public'] ?? false);
 
+            $user = auth()->user();
+            $branchId = $user?->branch_id;
+
             // Create document record
-            $document = Document::create([
-                'code' => $data['code'] ?? Str::uuid()->toString(),
+            $document = new Document([
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
                 'file_name' => $file->getClientOriginalName(),
@@ -66,12 +78,15 @@ class DocumentService
                 'category' => $data['category'] ?? null,
                 'is_public' => $isPublic,
                 'access_level' => $isPublic ? 'public' : 'private',
-                'version' => 1,
-                'version_number' => 1,
-                'uploaded_by' => auth()->id(),
-                'branch_id' => $data['branch_id'] ?? auth()->user()->branch_id,
                 'metadata' => $data['metadata'] ?? null,
             ]);
+
+            $document->code = Str::uuid()->toString();
+            $document->version = 1;
+            $document->version_number = 1;
+            $document->uploaded_by = $user?->id;
+            $document->branch_id = $branchId;
+            $document->save();
 
             // Create initial version
             DocumentVersion::create([
@@ -203,10 +218,9 @@ class DocumentService
 
         DB::transaction(function () use ($document, $userId, $permission, $expiresAt) {
             $document->shares()->updateOrCreate(
-                ['user_id' => $userId],
+                ['shared_with_user_id' => $userId],
                 [
                     'shared_by' => auth()->id(),
-                    'shared_with_user_id' => $userId,
                     'permission' => $permission,
                     'expires_at' => $expiresAt,
                 ]
@@ -229,10 +243,7 @@ class DocumentService
 
         DB::transaction(function () use ($document, $userId) {
             $document->shares()
-                ->where(function ($query) use ($userId) {
-                    $query->where('user_id', $userId)
-                        ->orWhere('shared_with_user_id', $userId);
-                })
+                ->where('shared_with_user_id', $userId)
                 ->delete();
 
             // Log activity
@@ -286,8 +297,7 @@ class DocumentService
         ]);
 
         // Increment access count if shared
-        $share = $document->shares()->where('user_id', $user->id)->first();
-        $share ??= $document->shares()->where('shared_with_user_id', $user->id)->first();
+        $share = $document->shares()->where('shared_with_user_id', $user->id)->first();
         if ($share) {
             $share->incrementAccessCount();
         }

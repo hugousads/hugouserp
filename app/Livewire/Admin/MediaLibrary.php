@@ -81,10 +81,13 @@ class MediaLibrary extends Component
     public function delete(int $id): void
     {
         $user = auth()->user();
-        $media = Media::findOrFail($id);
+        $canBypassBranch = !$user->branch_id || $user->can('media.manage-all');
+        $media = Media::query()
+            ->when($user->branch_id && ! $canBypassBranch, fn ($q) => $q->forBranch($user->branch_id))
+            ->findOrFail($id);
 
         // Check permissions
-        $canDelete = $user->can('media.manage') || 
+        $canDelete = ($user->can('media.manage') && $canBypassBranch) ||
                      ($user->can('media.delete') && $media->user_id === $user->id);
 
         if (!$canDelete) {
@@ -105,9 +108,11 @@ class MediaLibrary extends Component
     public function render()
     {
         $user = auth()->user();
-        
+        $canBypassBranch = !$user->branch_id || $user->can('media.manage-all');
+
         $query = Media::query()
             ->with('user')
+            ->when($user->branch_id && ! $canBypassBranch, fn ($q) => $q->forBranch($user->branch_id))
             ->when($this->search, fn ($q) =>
                 $q->where(function ($query) {
                     $query->where('name', 'like', "%{$this->search}%")

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Document extends Model
 {
@@ -49,6 +50,19 @@ class Document extends Model
         parent::boot();
 
         static::creating(function ($document) {
+            $document->code ??= Str::uuid()->toString();
+
+            if (auth()->check()) {
+                $user = auth()->user();
+
+                if ($user?->branch_id && $document->branch_id && $document->branch_id !== $user->branch_id) {
+                    $document->branch_id = $user->branch_id;
+                }
+
+                $document->branch_id ??= $user?->branch_id;
+                $document->uploaded_by ??= $user?->id;
+            }
+
             if (!$document->version) {
                 $document->version = 1;
             }
@@ -119,13 +133,14 @@ class Document extends Model
     // Business Methods
     public function getFileSizeFormatted(): string
     {
-        $size = $this->file_size;
+        $size = (int) ($this->file_size ?? 0);
         $units = ['B', 'KB', 'MB', 'GB'];
-        
-        for ($i = 0; $size >= 1024 && $i < count($units) - 1; $i++) {
+        $i = 0;
+
+        for (; $size >= 1024 && $i < count($units) - 1; $i++) {
             $size /= 1024;
         }
-        
+
         return round($size, 2) . ' ' . $units[$i];
     }
 
@@ -157,8 +172,7 @@ class Document extends Model
         // Check if shared with user
         return $this->shares()
             ->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                    ->orWhere('shared_with_user_id', $user->id);
+                $query->where('shared_with_user_id', $user->id);
             })
             ->where(function ($query) {
                 $query->whereNull('expires_at')

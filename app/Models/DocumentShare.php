@@ -14,7 +14,6 @@ class DocumentShare extends Model
 
     protected $fillable = [
         'document_id',
-        'user_id',
         'shared_with_user_id',
         'shared_with_role',
         'shared_by',
@@ -41,7 +40,7 @@ class DocumentShare extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'shared_with_user_id');
     }
 
     public function sharedWithUser(): BelongsTo

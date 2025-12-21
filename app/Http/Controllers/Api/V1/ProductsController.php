@@ -22,13 +22,25 @@ class ProductsController extends BaseApiController
         $perPage = min((int) $request->get('per_page', 20), 100);
         $page = max((int) $request->get('page', 1), 1);
 
-        $userBranchId = auth()->user()?->branch_id;
+        $user = auth()->user();
+
+        if (! $user) {
+            return $this->errorResponse(__('Authentication required'), 401);
+        }
+
+        $this->authorize('viewAny', Product::class);
+
+        $userBranchId = $user->branch_id;
 
         if ($branchId !== null && $userBranchId !== null && $branchId !== $userBranchId) {
             return $this->errorResponse(__('Unauthorized branch access'), 403);
         }
 
         $resolvedBranchId = $branchId ?? $userBranchId;
+
+        if (! $resolvedBranchId) {
+            return $this->errorResponse(__('Branch context required'), 403);
+        }
 
         if (strlen($query) < 2) {
             return $this->successResponse([
@@ -80,7 +92,17 @@ class ProductsController extends BaseApiController
 
     public function index(Request $request): JsonResponse
     {
+        if (! auth()->user()) {
+            return $this->errorResponse(__('Authentication required'), 401);
+        }
+
+        $this->authorize('viewAny', Product::class);
+
         $store = $this->getStore($request);
+
+        if (! $store || ! $store->branch_id) {
+            return $this->errorResponse(__('Store authentication required'), 401);
+        }
 
         $validated = $request->validate([
             'sort_by' => 'sometimes|string|in:created_at,id,name,sku,default_price',
@@ -116,6 +138,14 @@ class ProductsController extends BaseApiController
     {
         $store = $this->getStore($request);
 
+        if (! auth()->user()) {
+            return $this->errorResponse(__('Authentication required'), 401);
+        }
+
+        if (! $store || ! $store->branch_id) {
+            return $this->errorResponse(__('Store authentication required'), 401);
+        }
+
         $product = Product::query()
             ->when($store?->branch_id, fn ($q) => $q->where('branch_id', $store->branch_id))
             ->find($id);
@@ -123,6 +153,8 @@ class ProductsController extends BaseApiController
         if (! $product) {
             return $this->errorResponse(__('Product not found'), 404);
         }
+
+        $this->authorize('view', $product);
 
         $product->load(['category']);
 
@@ -146,6 +178,8 @@ class ProductsController extends BaseApiController
         if (! $store || ! $store->branch_id) {
             return $this->errorResponse(__('Store authentication required'), 401);
         }
+
+        $this->authorize('create', Product::class);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -212,6 +246,8 @@ class ProductsController extends BaseApiController
             return $this->errorResponse(__('Product not found'), 404);
         }
 
+        $this->authorize('update', $product);
+
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'sku' => 'sometimes|string|max:100|unique:products,sku,'.$product->id,
@@ -255,6 +291,14 @@ class ProductsController extends BaseApiController
     {
         $store = $this->getStore($request);
 
+        if (! auth()->user()) {
+            return $this->errorResponse(__('Authentication required'), 401);
+        }
+
+        if (! $store || ! $store->branch_id) {
+            return $this->errorResponse(__('Store authentication required'), 401);
+        }
+
         $product = Product::query()
             ->when($store?->branch_id, fn ($q) => $q->where('branch_id', $store->branch_id))
             ->find($id);
@@ -262,6 +306,8 @@ class ProductsController extends BaseApiController
         if (! $product) {
             return $this->errorResponse(__('Product not found'), 404);
         }
+
+        $this->authorize('delete', $product);
 
         $product->delete();
 
