@@ -15,15 +15,20 @@ class HREmployee extends BaseModel
     protected ?string $moduleKey = 'hr';
 
     protected $fillable = [
-        'branch_id', 'user_id', 'code', 'name', 'position', 'salary', 'is_active',
+        'branch_id', 'user_id', 'code', 'employee_code', 'name', 'email', 'phone', 'national_id',
+        'date_of_birth', 'gender', 'address', 'position', 'department', 'hire_date', 'salary', 'salary_type',
+        'employment_type', 'status', 'termination_date', 'bank_account_number', 'bank_name', 'is_active',
         'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
         'contract_start_date', 'contract_end_date', 'work_permit_number', 'work_permit_expiry',
         'extra_attributes'
     ];
 
     protected $casts = [
-        'salary' => 'decimal:2', 
+        'salary' => 'decimal:2',
         'is_active' => 'bool',
+        'date_of_birth' => 'date',
+        'hire_date' => 'date',
+        'termination_date' => 'date',
         'contract_start_date' => 'date',
         'contract_end_date' => 'date',
         'work_permit_expiry' => 'date'

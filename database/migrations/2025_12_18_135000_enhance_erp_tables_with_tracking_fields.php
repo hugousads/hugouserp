@@ -118,16 +118,102 @@ return new class extends Migration
             });
         }
 
-        // Enhance hr_employees table  
-        if (Schema::hasTable('hr_employees') && !Schema::hasColumn('hr_employees', 'emergency_contact_name')) {
+        // Enhance hr_employees table
+        if (Schema::hasTable('hr_employees')) {
             Schema::table('hr_employees', function (Blueprint $table) {
-                $table->string('emergency_contact_name')->nullable()->after('phone');
-                $table->string('emergency_contact_phone')->nullable()->after('emergency_contact_name');
-                $table->string('emergency_contact_relation')->nullable()->after('emergency_contact_phone');
-                $table->date('contract_start_date')->nullable()->after('hire_date');
-                $table->date('contract_end_date')->nullable()->after('contract_start_date');
-                $table->string('work_permit_number')->nullable()->after('contract_end_date');
-                $table->date('work_permit_expiry')->nullable()->after('work_permit_number');
+                // Core identity and contact fields
+                if (!Schema::hasColumn('hr_employees', 'employee_code')) {
+                    $table->string('employee_code', 50)->unique()->after('code');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'email')) {
+                    $table->string('email')->unique()->nullable()->after('employee_code');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'phone')) {
+                    $table->string('phone', 20)->nullable()->after('email');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'national_id')) {
+                    $table->string('national_id', 50)->nullable()->after('phone');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'date_of_birth')) {
+                    $table->date('date_of_birth')->nullable()->after('national_id');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'gender')) {
+                    $table->enum('gender', ['male', 'female'])->nullable()->after('date_of_birth');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'address')) {
+                    $table->text('address')->nullable()->after('gender');
+                }
+
+                // Employment and payroll details
+                if (!Schema::hasColumn('hr_employees', 'hire_date')) {
+                    $table->date('hire_date')->nullable()->after('address');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'department')) {
+                    $table->string('department', 100)->nullable()->after('hire_date');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'salary_type')) {
+                    $table->enum('salary_type', ['monthly', 'daily', 'hourly'])->default('monthly')->after('salary');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'employment_type')) {
+                    $table->enum('employment_type', ['full_time', 'part_time', 'contract', 'temporary'])
+                        ->default('full_time')
+                        ->after('salary_type');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'status')) {
+                    $table->enum('status', ['active', 'inactive', 'terminated', 'on_leave'])->default('active')->after('employment_type');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'termination_date')) {
+                    $table->date('termination_date')->nullable()->after('status');
+                }
+
+                // Banking information
+                if (!Schema::hasColumn('hr_employees', 'bank_account_number')) {
+                    $table->string('bank_account_number', 50)->nullable()->after('termination_date');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'bank_name')) {
+                    $table->string('bank_name', 100)->nullable()->after('bank_account_number');
+                }
+
+                // Emergency contact & compliance
+                if (!Schema::hasColumn('hr_employees', 'emergency_contact_name')) {
+                    $table->string('emergency_contact_name')->nullable()->after('bank_name');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'emergency_contact_phone')) {
+                    $table->string('emergency_contact_phone')->nullable()->after('emergency_contact_name');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'emergency_contact_relation')) {
+                    $table->string('emergency_contact_relation')->nullable()->after('emergency_contact_phone');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'contract_start_date')) {
+                    $table->date('contract_start_date')->nullable()->after('hire_date');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'contract_end_date')) {
+                    $table->date('contract_end_date')->nullable()->after('contract_start_date');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'work_permit_number')) {
+                    $table->string('work_permit_number')->nullable()->after('contract_end_date');
+                }
+
+                if (!Schema::hasColumn('hr_employees', 'work_permit_expiry')) {
+                    $table->date('work_permit_expiry')->nullable()->after('work_permit_number');
+                }
             });
         }
     }
@@ -238,7 +324,36 @@ return new class extends Migration
 
         if (Schema::hasTable('hr_employees')) {
             Schema::table('hr_employees', function (Blueprint $table) {
-                $table->dropColumn(['emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation', 'contract_start_date', 'contract_end_date', 'work_permit_number', 'work_permit_expiry']);
+                $columnsToDrop = [
+                    'employee_code',
+                    'email',
+                    'phone',
+                    'national_id',
+                    'date_of_birth',
+                    'gender',
+                    'address',
+                    'hire_date',
+                    'department',
+                    'salary_type',
+                    'employment_type',
+                    'status',
+                    'termination_date',
+                    'bank_account_number',
+                    'bank_name',
+                    'emergency_contact_name',
+                    'emergency_contact_phone',
+                    'emergency_contact_relation',
+                    'contract_start_date',
+                    'contract_end_date',
+                    'work_permit_number',
+                    'work_permit_expiry',
+                ];
+
+                $columnsToDrop = array_filter($columnsToDrop, fn ($column) => Schema::hasColumn('hr_employees', $column));
+
+                if (!empty($columnsToDrop)) {
+                    $table->dropColumn($columnsToDrop);
+                }
             });
         }
     }
