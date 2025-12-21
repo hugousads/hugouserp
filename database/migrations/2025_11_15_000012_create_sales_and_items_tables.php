@@ -25,14 +25,31 @@ return new class extends Migration
             $table->string('currency', 3)->nullable()->comment('currency');
             $table->decimal('sub_total', 18, 4)->default(0)->comment('sub_total');
             $table->decimal('discount_total', 18, 4)->default(0)->comment('discount_total');
+            $table->string('discount_type')->default('fixed')->comment('Discount type: fixed, percentage');
+            $table->decimal('discount_value', 18, 4)->default(0)->comment('discount value');
             $table->decimal('tax_total', 18, 4)->default(0)->comment('tax_total');
             $table->decimal('shipping_total', 18, 4)->default(0)->comment('shipping_total');
+            $table->string('shipping_method')->nullable()->comment('shipping_method');
+            $table->string('shipping_carrier', 100)->nullable()->comment('Shipping carrier');
+            $table->string('tracking_number')->nullable()->comment('tracking_number');
             $table->decimal('grand_total', 18, 4)->default(0)->comment('grand_total');
+            $table->decimal('estimated_profit_margin', 8, 4)->nullable()->comment('Estimated profit margin percentage');
             $table->decimal('paid_total', 18, 4)->default(0)->comment('paid_total');
             $table->decimal('due_total', 18, 4)->default(0)->comment('due_total');
+            $table->decimal('amount_paid', 18, 4)->default(0)->comment('Total amount paid');
+            $table->decimal('amount_due', 18, 4)->default(0)->comment('Total amount due');
+            $table->string('payment_status')->default('unpaid')->comment('Payment status: unpaid, partial, paid');
+            $table->date('payment_due_date')->nullable()->comment('Payment due date');
+            $table->date('delivery_date')->nullable()->comment('Delivery date');
+            $table->date('expected_delivery_date')->nullable()->comment('Expected delivery date');
+            $table->date('actual_delivery_date')->nullable()->comment('Actual delivery date');
+            $table->unsignedBigInteger('store_order_id')->nullable()->comment('Linked store order');
             $table->string('reference_no')->nullable()->comment('reference_no');
             $table->timestamp('posted_at')->nullable()->comment('posted_at');
+            $table->string('sales_person')->nullable()->comment('Sales person name or user ID');
             $table->text('notes')->nullable()->comment('notes');
+            $table->text('customer_notes')->nullable()->comment('Customer-facing notes');
+            $table->text('internal_notes')->nullable()->comment('Internal notes');
             $table->json('extra_attributes')->nullable()->comment('extra_attributes');
             $table->unsignedBigInteger('created_by')->nullable()->comment('created_by');
             $table->unsignedBigInteger('updated_by')->nullable()->comment('updated_by');
@@ -42,11 +59,17 @@ return new class extends Migration
             $table->softDeletes();
             $table->index('deleted_at');
 
+            $table->index('payment_status');
+            $table->index('payment_due_date');
+            $table->index(['branch_id', 'payment_status'], 'sales_branch_payment_idx');
+            $table->index('store_order_id');
+
             $table->foreign('branch_id')->references('id')->on('branches')->onDelete('cascade');
             $table->foreign('warehouse_id')->references('id')->on('warehouses')->onDelete('restrict');
             $table->foreign('customer_id')->references('id')->on('customers')->onDelete('set null');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
             $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('store_order_id')->references('id')->on('store_orders')->onDelete('set null');
 
             $table->index(['branch_id', 'customer_id', 'status'], 'sales_br_cust_stat_idx');
             $table->index('branch_id');

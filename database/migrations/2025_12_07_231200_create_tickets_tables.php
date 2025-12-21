@@ -102,10 +102,12 @@ return new class extends Migration
             $table->string('customer_name')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->json('metadata')->nullable();
-            $table->timestamp('created_at');
+            $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['ticket_id', 'created_at']);
             $table->index('user_id');
+            $table->index('deleted_at');
         });
 
         // Ticket attachments table

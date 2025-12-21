@@ -9,6 +9,7 @@ use App\Models\TicketReply;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Show extends Component
 {
@@ -32,6 +33,8 @@ class Show extends Component
             abort(403);
         }
 
+        $this->assertSameBranchOrManage($user, $ticket);
+
         $this->ticket = $ticket->load([
             'customer',
             'assignedAgent',
@@ -49,6 +52,8 @@ class Show extends Component
         $this->validate();
 
         $user = Auth::user();
+
+        $this->authorizeReply($user);
 
         $this->ticket->addReply($this->replyMessage, $user->id, $this->isInternal);
 
@@ -124,5 +129,37 @@ class Show extends Component
     public function render()
     {
         return view('livewire.helpdesk.tickets.show');
+    }
+
+    protected function authorizeReply($user): void
+    {
+        if (! $user) {
+            abort(403);
+        }
+
+        $this->assertSameBranchOrManage($user, $this->ticket);
+
+        $isAssignedAgent = (int) $this->ticket->assigned_to === (int) $user->id;
+
+        if (! $user->can('helpdesk.manage') && ! $isAssignedAgent) {
+            abort(403);
+        }
+
+        $canAddInternal = $user->can('helpdesk.manage') || $isAssignedAgent;
+
+        if ($this->isInternal && ! $canAddInternal) {
+            abort(403);
+        }
+    }
+
+    protected function assertSameBranchOrManage($user, Ticket $ticket): void
+    {
+        if ($user->can('helpdesk.manage')) {
+            return;
+        }
+
+        if ((int) $ticket->branch_id !== (int) $user->branch_id) {
+            throw new HttpException(403, 'Forbidden');
+        }
     }
 }
