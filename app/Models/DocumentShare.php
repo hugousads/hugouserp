@@ -14,6 +14,7 @@ class DocumentShare extends Model
 
     protected $fillable = [
         'document_id',
+        'user_id',
         'shared_with_user_id',
         'shared_with_role',
         'shared_by',
@@ -77,16 +78,16 @@ class DocumentShare extends Model
 
     public function canView(): bool
     {
-        return in_array($this->permission, ['view', 'edit', 'full']);
+        return in_array($this->permission, ['view', 'download', 'edit', 'manage']);
     }
 
     public function canEdit(): bool
     {
-        return in_array($this->permission, ['edit', 'full']);
+        return in_array($this->permission, ['edit', 'manage']);
     }
 
     public function canDelete(): bool
     {
-        return $this->permission === 'full';
+        return $this->permission === 'manage';
     }
 }

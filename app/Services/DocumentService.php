@@ -208,6 +208,12 @@ class DocumentService
      */
     public function shareDocument(Document $document, int $userId, string $permission = 'view', ?\DateTime $expiresAt = null): void
     {
+        $allowedPermissions = ['view', 'download', 'edit', 'manage'];
+
+        if (!in_array($permission, $allowedPermissions, true)) {
+            throw new AuthorizationException('Invalid share permission supplied.');
+        }
+
         $this->ensureCanManageShares($document);
         $targetUser = User::findOrFail($userId);
 
@@ -223,6 +229,7 @@ class DocumentService
             $document->shares()->updateOrCreate(
                 ['shared_with_user_id' => $userId],
                 [
+                    'user_id' => $userId,
                     'shared_by' => auth()->id(),
                     'permission' => $permission,
                     'expires_at' => $expiresAt,

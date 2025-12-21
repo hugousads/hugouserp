@@ -142,8 +142,9 @@
                             </select>
                             <select wire:model="sharePermission" class="erp-input w-full">
                                 <option value="view">{{ __('View Only') }}</option>
+                                <option value="download">{{ __('Can Download') }}</option>
                                 <option value="edit">{{ __('Can Edit') }}</option>
-                                <option value="full">{{ __('Full Access') }}</option>
+                                <option value="manage">{{ __('Full Access') }}</option>
                             </select>
                             <input type="datetime-local" wire:model="shareExpiresAt" class="erp-input w-full" placeholder="{{ __('Expires At (Optional)') }}">
                             <button wire:click="shareDocument" class="erp-btn erp-btn-primary w-full">{{ __('Share') }}</button>
@@ -159,7 +160,7 @@
                                                 <p class="text-sm text-slate-900">{{ $share->user->name }}</p>
                                                 <p class="text-xs text-slate-500">{{ ucfirst($share->permission) }}</p>
                                             </div>
-                                            <button wire:click="unshare({{ $share->user_id }})" class="text-xs text-red-600 hover:text-red-900">{{ __('Revoke') }}</button>
+                                            <button wire:click="unshare({{ $share->shared_with_user_id }})" class="text-xs text-red-600 hover:text-red-900">{{ __('Revoke') }}</button>
                                         </div>
                                     @endforeach
                                 </div>

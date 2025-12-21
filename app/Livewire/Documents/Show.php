@@ -66,7 +66,7 @@ class Show extends Component
 
         $this->validate([
             'shareUserId' => 'required|exists:users,id',
-            'sharePermission' => 'required|in:view,edit,full',
+            'sharePermission' => 'required|in:view,download,edit,manage',
             'shareExpiresAt' => 'nullable|date|after:now',
         ]);
 
