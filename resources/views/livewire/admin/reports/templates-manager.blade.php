@@ -14,7 +14,7 @@
         <div class="xl:col-span-2 space-y-3">
             <div class="flex items-center justify-between gap-2">
                 <div class="flex-1">
-                    <input type="text" wire:model.debounce.400ms="search"
+                    <input type="text" wire:model.live.debounce.400ms="search"
                            placeholder="{{ __('Search templates...') }}"
                            class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs md:text-sm">
                 </div>

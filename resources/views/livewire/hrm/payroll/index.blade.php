@@ -19,7 +19,7 @@
 
             <div class="w-full sm:w-48">
                 <input type="search"
-                       wire:model.debounce.500ms="search"
+                       wire:model.live.debounce.500ms="search"
                        placeholder="{{ __('Search employee (name, code)...') }}"
                        class="erp-input rounded-full">
             </div>

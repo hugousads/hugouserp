@@ -45,7 +45,7 @@
             <div class="relative">
                 <input
                     type="text"
-                    wire:model.debounce.300ms="search"
+                    wire:model.live.debounce.300ms="search"
                     placeholder="{{ __('Search reports...') }}"
                     class="block w-52 rounded-md border-gray-300 pl-8 pr-3 py-1.5 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 >

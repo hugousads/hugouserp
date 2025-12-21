@@ -79,7 +79,7 @@
                     <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                         Payroll period
                     </label>
-                    <input type="text" wire:model.debounce.500ms="filters.payroll_period"
+                    <input type="text" wire:model.live.debounce.500ms="filters.payroll_period"
                            class="erp-input"
                            placeholder="e.g. 2025-01" />
                 </div>

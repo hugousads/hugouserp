@@ -13,7 +13,7 @@
         <div class="flex flex-col sm:flex-row items-center gap-2">
             <div class="w-full sm:w-56">
                 <input type="search"
-                       wire:model.debounce.500ms="search"
+                       wire:model.live.debounce.500ms="search"
                        placeholder="{{ __('Search tenant, phone, unit code...') }}"
                        class="erp-input rounded-full">
             </div>

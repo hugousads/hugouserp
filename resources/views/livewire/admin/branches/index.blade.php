@@ -11,7 +11,7 @@
         </div>
         <div class="flex items-center gap-2">
             <div class="w-full sm:w-64">
-                <input type="search" wire:model.debounce.500ms="search"
+                <input type="search" wire:model.live.debounce.500ms="search"
                        placeholder="{{ __('Search branches...') }}"
                        class="erp-input rounded-full">
             </div>

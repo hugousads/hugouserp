@@ -16,7 +16,7 @@
             <label class="block text-[11px] font-medium text-slate-500 mb-0.5">
                 {{ __('Branch') }}
             </label>
-            <select wire:model.debounce.500ms="branchId"
+            <select wire:model.live.debounce.500ms="branchId"
                     class="rounded border border-slate-200 bg-white px-2 py-1 text-xs">
                 <option value="">{{ __('All') }}</option>
                 @foreach ($branches as $branch)
@@ -29,7 +29,7 @@
                 {{ __('From date') }}
             </label>
             <input type="date"
-                   wire:model.debounce.500ms="dateFrom"
+                   wire:model.live.debounce.500ms="dateFrom"
                    class="rounded border border-slate-200 bg-white px-2 py-1 text-xs">
         </div>
         <div>
@@ -37,7 +37,7 @@
                 {{ __('To date') }}
             </label>
             <input type="date"
-                   wire:model.debounce.500ms="dateTo"
+                   wire:model.live.debounce.500ms="dateTo"
                    class="rounded border border-slate-200 bg-white px-2 py-1 text-xs">
         </div>
     </div>
