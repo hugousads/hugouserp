@@ -20,7 +20,7 @@ class DocumentSharingAuthorizationTest extends TestCase
 
     private function createDocument(User $owner, Branch $branch): Document
     {
-        return Document::create([
+        return Document::forceCreate([
             'code' => 'DOC-' . uniqid(),
             'title' => 'Shared Doc',
             'description' => 'Test document',

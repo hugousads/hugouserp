@@ -55,7 +55,7 @@ class DocumentCrossBranchIdorTest extends TestCase
         $this->userBranchAWithoutDownload->givePermissionTo(['documents.view', 'documents.manage', 'documents.edit']);
 
         // Create documents in each branch
-        $this->documentBranchA = Document::create([
+        $this->documentBranchA = Document::forceCreate([
             'title' => 'Document in Branch A',
             'code' => 'DOC-A-' . Str::random(6),
             'file_name' => 'test-a.pdf',
@@ -68,7 +68,7 @@ class DocumentCrossBranchIdorTest extends TestCase
             'uploaded_by' => $this->userBranchA->id,
         ]);
 
-        $this->documentBranchB = Document::create([
+        $this->documentBranchB = Document::forceCreate([
             'title' => 'Document in Branch B',
             'code' => 'DOC-B-' . Str::random(6),
             'file_name' => 'test-b.pdf',

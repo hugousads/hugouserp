@@ -23,7 +23,7 @@ class DocumentVersionUploadTest extends TestCase
     {
         $branch ??= Branch::factory()->create();
 
-        return Document::create([
+        return Document::forceCreate([
             'code' => 'DOC-' . uniqid(),
             'title' => 'Spec',
             'description' => 'Test document',

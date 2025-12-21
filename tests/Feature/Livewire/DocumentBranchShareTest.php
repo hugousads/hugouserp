@@ -28,7 +28,7 @@ class DocumentBranchShareTest extends TestCase
         $otherBranchUser = User::factory()->create(['branch_id' => $branchB->id]);
         $this->giveDocumentPermissions($uploader);
 
-        $document = Document::create([
+        $document = Document::forceCreate([
             'code' => 'DOC-001',
             'title' => 'Shared Doc',
             'file_name' => 'doc.pdf',
@@ -57,7 +57,7 @@ class DocumentBranchShareTest extends TestCase
         $otherBranchUser = User::factory()->create(['branch_id' => $branchB->id]);
         $this->giveDocumentPermissions($uploader);
 
-        $document = Document::create([
+        $document = Document::forceCreate([
             'code' => 'DOC-002',
             'title' => 'Secure Doc',
             'file_name' => 'secure.pdf',

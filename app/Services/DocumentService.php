@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -18,6 +19,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class DocumentService
 {
     private string $documentsDisk;
+    private ?string $fallbackDisk;
     private array $allowedMimes = [
         'pdf',
         'doc',
@@ -38,6 +40,7 @@ class DocumentService
         protected UIHelperService $uiHelper
     ) {
         $this->documentsDisk = (string) config('filesystems.document_disk', 'local');
+        $this->fallbackDisk = config('filesystems.document_disk_fallback');
     }
     /**
      * Upload a new document
@@ -76,14 +79,14 @@ class DocumentService
                 'mime_type' => $file->getMimeType(),
                 'folder' => $data['folder'] ?? null,
                 'category' => $data['category'] ?? null,
-                'is_public' => $isPublic,
-                'access_level' => $isPublic ? 'public' : 'private',
                 'metadata' => $data['metadata'] ?? null,
             ]);
 
             $document->code = Str::uuid()->toString();
             $document->version = 1;
             $document->version_number = 1;
+            $document->is_public = $isPublic;
+            $document->access_level = $isPublic ? 'public' : 'private';
             $document->uploaded_by = $user?->id;
             $document->branch_id = $branchId;
             $document->save();
@@ -337,11 +340,27 @@ class DocumentService
     {
         $primaryDisk = $this->documentsDisk;
 
-        abort_unless(
-            Storage::disk($primaryDisk)->exists($path),
-            404,
-            'File not found'
-        );
+        if (Storage::disk($primaryDisk)->exists($path)) {
+            return $primaryDisk;
+        }
+
+        if ($this->fallbackDisk && Storage::disk($this->fallbackDisk)->exists($path)) {
+            Log::warning('Primary document disk missing file, using fallback.', [
+                'primary' => $primaryDisk,
+                'fallback' => $this->fallbackDisk,
+                'path' => $path,
+            ]);
+
+            return $this->fallbackDisk;
+        }
+
+        Log::warning('Document file missing on primary disk and fallback unavailable.', [
+            'primary' => $primaryDisk,
+            'fallback' => $this->fallbackDisk,
+            'path' => $path,
+        ]);
+
+        abort(503, 'File temporarily unavailable');
 
         return $primaryDisk;
     }

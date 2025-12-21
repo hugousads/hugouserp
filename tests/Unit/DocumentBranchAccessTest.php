@@ -23,7 +23,7 @@ class DocumentBranchAccessTest extends TestCase
         $owner = User::factory()->create(['branch_id' => $branchA->id]);
         $otherBranchUser = User::factory()->create(['branch_id' => $branchB->id]);
 
-        $document = Document::create([
+        $document = Document::forceCreate([
             'title' => 'Private Doc',
             'code' => 'DOC-PRIVATE',
             'file_name' => 'private.pdf',
@@ -56,7 +56,7 @@ class DocumentBranchAccessTest extends TestCase
         $owner = User::factory()->create(['branch_id' => $branchA->id]);
         $otherBranchUser = User::factory()->create(['branch_id' => $branchB->id]);
 
-        $document = Document::create([
+        $document = Document::forceCreate([
             'title' => 'Public Doc',
             'code' => 'DOC-PUBLIC',
             'file_name' => 'public.pdf',

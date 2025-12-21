@@ -28,13 +28,16 @@ class Document extends Model
         'folder',
         'category',
         'status',
-        'access_level',
         'version',
         'version_number',
-        'is_public',
+        'metadata',
+    ];
+
+    protected $guarded = [
         'uploaded_by',
         'branch_id',
-        'metadata',
+        'access_level',
+        'is_public',
     ];
 
     protected $casts = [

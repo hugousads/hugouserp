@@ -28,7 +28,7 @@ class DocumentSharingTest extends TestCase
 
         $this->actingAs($owner);
 
-        $document = Document::create([
+        $document = Document::forceCreate([
             'title' => 'Test Document',
             'code' => Str::uuid()->toString(),
             'file_name' => 'doc.pdf',

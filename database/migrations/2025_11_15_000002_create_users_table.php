@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('avatar')->nullable()->comment('avatar');
             $table->string('locale', 10)->nullable()->comment('locale');
             $table->string('timezone')->nullable()->comment('timezone');
-            $table->unsignedBigInteger('branch_id')->nullable(); // primaryBranch
+            $table->foreignId('branch_id')->constrained('branches')->restrictOnDelete(); // primaryBranch
             $table->rememberToken();
             $table->timestamp('last_login_at')->nullable()->comment('last_login_at');
             $table->decimal('max_discount_percent', 5, 2)->nullable()->comment('max_discount_percent');
@@ -38,8 +38,6 @@ return new class extends Migration
             $table->softDeletes();
             $table->index('deleted_at');
 
-            $table->foreign('branch_id')->references('id')->on('branches')->onDelete('set null');
-            $table->index('branch_id');
         });
     }
 

@@ -32,7 +32,7 @@ class DocumentDeletionTest extends TestCase
         $user = User::factory()->create(['branch_id' => $branchA->id]);
         $uploader = User::factory()->create(['branch_id' => $branchB->id]);
 
-        $document = Document::create([
+        $document = Document::forceCreate([
             'code' => 'DOC-1',
             'title' => 'Branch B Doc',
             'file_name' => 'doc.pdf',

@@ -8,6 +8,7 @@ use App\Models\Document;
 use App\Models\DocumentTag;
 use App\Services\DocumentService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -18,6 +19,8 @@ class Index extends Component
 {
     use AuthorizesRequests;
     use WithPagination;
+
+    private const ALLOWED_SORT_FIELDS = ['created_at', 'title', 'file_name'];
 
     #[Url]
     public string $search = '';
@@ -53,6 +56,13 @@ class Index extends Component
 
     public function sortBy(string $field): void
     {
+        if (! $this->isAllowedSortField($field)) {
+            $this->sortField = 'created_at';
+            $this->sortDirection = 'desc';
+
+            return;
+        }
+
         if ($this->sortField === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
@@ -74,10 +84,7 @@ class Index extends Component
                     ->orWhere('is_public', true)
                     ->orWhereHas('shares', function ($shareQuery) use ($user) {
                         $shareQuery
-                            ->where(function ($sq) use ($user) {
-                                $sq->where('user_id', $user?->id)
-                                    ->orWhere('shared_with_user_id', $user?->id);
-                            })
+                            ->where('shared_with_user_id', $user?->id)
                             ->active();
                     });
             })
@@ -86,10 +93,7 @@ class Index extends Component
         if ($user && $document->uploaded_by !== $user->id && ! $user->can('documents.manage')) {
             $share = $document->shares()
                 ->active()
-                ->where(function ($q) use ($user) {
-                    $q->where('user_id', $user->id)
-                        ->orWhere('shared_with_user_id', $user->id);
-                })
+                ->where('shared_with_user_id', $user->id)
                 ->first();
 
             if (! $share || ! $share->canDelete()) {
@@ -108,26 +112,30 @@ class Index extends Component
         $user = auth()->user();
         $branchId = $user->branch_id;
 
+        $sortField = $this->sanitizeSortField($this->sortField);
+        $sortDirection = $this->sanitizeSortDirection($this->sortDirection);
+        $search = $this->normalizedSearch();
+
         // Build query
         $query = Document::with(['uploader', 'tags'])
             ->where(function ($q) use ($user) {
                 $q->where('uploaded_by', $user->id)
                     ->orWhere('is_public', true)
                     ->orWhereHas('shares', function ($shareQuery) use ($user) {
-                        $shareQuery->where('user_id', $user->id)->active();
+                        $shareQuery->where('shared_with_user_id', $user->id)->active();
                     });
             })
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->when($this->search, fn($q) => $q->where(function ($query) {
-                $query->where('title', 'like', "%{$this->search}%")
-                    ->orWhere('description', 'like', "%{$this->search}%")
-                    ->orWhere('file_name', 'like', "%{$this->search}%");
+            ->when($search !== '', fn($q) => $q->where(function ($query) use ($search) {
+                $query->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('file_name', 'like', "%{$search}%");
             }))
             ->when($this->category, fn($q) => $q->where('category', $this->category))
             ->when($this->folder, fn($q) => $q->where('folder', $this->folder))
             ->when($this->tag, fn($q) => $q->whereHas('tags', fn($tq) => $tq->where('document_tags.id', $this->tag)));
 
-        $documents = $query->orderBy($this->sortField, $this->sortDirection)
+        $documents = $query->orderBy($sortField, $sortDirection)
             ->paginate(15);
 
         // Get statistics
@@ -153,5 +161,48 @@ class Index extends Component
             'categories' => $categories,
             'folders' => $folders,
         ]);
+    }
+
+    private function sanitizeSortField(string $field): string
+    {
+        if ($this->isAllowedSortField($field)) {
+            return $field;
+        }
+
+        $this->sortField = 'created_at';
+
+        return 'created_at';
+    }
+
+    private function sanitizeSortDirection(string $direction): string
+    {
+        $direction = strtolower($direction);
+
+        if (! in_array($direction, ['asc', 'desc'], true)) {
+            $direction = 'desc';
+        }
+
+        $this->sortDirection = $direction;
+
+        return $direction;
+    }
+
+    private function normalizedSearch(): string
+    {
+        $normalized = Str::of($this->search)
+            ->trim()
+            ->limit(100, '')
+            ->toString();
+
+        $normalized = str_replace(['%', '_'], '', $normalized);
+
+        $this->search = $normalized;
+
+        return $normalized;
+    }
+
+    private function isAllowedSortField(string $field): bool
+    {
+        return in_array($field, self::ALLOWED_SORT_FIELDS, true);
     }
 }

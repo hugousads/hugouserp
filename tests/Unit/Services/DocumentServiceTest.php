@@ -40,7 +40,7 @@ class DocumentServiceTest extends TestCase
 
     protected function createDocument(array $overrides = []): Document
     {
-        return Document::create(array_merge([
+        return Document::forceCreate(array_merge([
             'title' => 'Test Document',
             'code' => 'DOC-' . uniqid(),
             'file_name' => 'test.pdf',

@@ -28,7 +28,7 @@ class DocumentCrudTest extends TestCase
 
     protected function createDocument(array $overrides = []): Document
     {
-        return Document::create(array_merge([
+        return Document::forceCreate(array_merge([
             'title' => 'Test Document',
             'code' => 'DOC-' . Str::random(6),
             'file_name' => 'test.pdf',
