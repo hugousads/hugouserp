@@ -22,7 +22,7 @@ class Impersonate
         }
 
         $can = (method_exists($actor, 'hasPermissionTo') && $actor->hasPermissionTo('impersonate.users'))
-            || (method_exists($actor, 'hasRole') && $actor->hasRole('Super Admin'));
+            || (method_exists($actor, 'hasAnyRole') && $actor->hasAnyRole(['Super Admin', 'super-admin']));
 
         if (! $can) {
             return response()->json(['success' => false, 'message' => 'Impersonation not allowed.'], 403);

@@ -44,7 +44,7 @@ class ModuleReport extends Component
         $this->dateTo = now()->format('Y-m-d');
 
         $user = auth()->user();
-        if (! $user->hasRole('Super Admin')) {
+        if (! $user->hasAnyRole(['Super Admin', 'super-admin'])) {
             $branches = $this->branchAccessService->getUserBranches($user);
             $this->selectedBranchId = $branches->first()?->id;
         }
@@ -72,13 +72,14 @@ class ModuleReport extends Component
     {
         $user = auth()->user();
 
-        $branches = $user->hasRole('Super Admin')
+        $isSuperAdmin = $user->hasAnyRole(['Super Admin', 'super-admin']);
+        $branches = $isSuperAdmin
             ? \App\Models\Branch::active()->get()
             : $this->branchAccessService->getUserBranches($user);
 
         return view('livewire.admin.reports.module-report', [
             'branches' => $branches,
-            'isSuperAdmin' => $user->hasRole('Super Admin'),
+            'isSuperAdmin' => $isSuperAdmin,
         ])->layout('layouts.app');
     }
 }

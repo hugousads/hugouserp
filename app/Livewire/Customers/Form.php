@@ -6,6 +6,7 @@ namespace App\Livewire\Customers;
 
 use App\Livewire\Concerns\HandlesErrors;
 use App\Models\Customer;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
@@ -87,7 +88,7 @@ class Form extends Component
 
         if ($customer && $customer->exists) {
             $this->authorize('customers.manage');
-            if ($user?->branch_id && $customer->branch_id !== $user->branch_id && ! $user->hasRole('Super Admin')) {
+            if ($user?->branch_id && $customer->branch_id !== $user->branch_id && ! $this->isSuperAdmin($user)) {
                 abort(403);
             }
             $this->customer = $customer;
@@ -125,7 +126,7 @@ class Form extends Component
         $user = auth()->user();
         $branchId = $this->customer?->branch_id ?? $user?->branch_id ?? $user?->branches()->first()?->id;
 
-        if (! $branchId && ! $user?->hasRole('Super Admin')) {
+        if (! $branchId && ! $this->isSuperAdmin($user)) {
             abort(403);
         }
         
@@ -159,5 +160,10 @@ class Form extends Component
     {
         return view('livewire.customers.form')
             ->layout('layouts.app', ['title' => $this->editMode ? __('Edit Customer') : __('Add Customer')]);
+    }
+
+    private function isSuperAdmin(?User $user): bool
+    {
+        return (bool) $user?->hasAnyRole(['super-admin', 'Super Admin']);
     }
 }

@@ -148,6 +148,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'rental.contracts.manage',
             'customers.view',
             'customers.manage',
+            'customers.manage.all',
             'suppliers.view',
             'suppliers.manage',
             'sales.view',

@@ -59,11 +59,12 @@ class Form extends Component
         $this->authorize('expenses.manage');
 
         $user = auth()->user();
+        $isSuperAdmin = $user?->hasAnyRole(['Super Admin', 'super-admin']);
 
         $this->expense_date = now()->format('Y-m-d');
 
         if ($expense && $expense->exists) {
-            if ($user?->branch_id && $expense->branch_id !== $user->branch_id && ! $user->hasRole('Super Admin')) {
+            if ($user?->branch_id && $expense->branch_id !== $user->branch_id && ! $isSuperAdmin) {
                 abort(403);
             }
             $this->expense = $expense;
@@ -85,12 +86,13 @@ class Form extends Component
         $validated = $this->validate();
         $user = auth()->user();
         $branchId = $this->expense?->branch_id ?? $user?->branch_id ?? $user?->branches()->first()?->id;
+        $isSuperAdmin = $user?->hasAnyRole(['Super Admin', 'super-admin']);
 
-        if (! $branchId && ! $user?->hasRole('Super Admin')) {
+        if (! $branchId && ! $isSuperAdmin) {
             abort(403);
         }
 
-        if ($this->expense && $branchId && $this->expense->branch_id !== $branchId && ! $user?->hasRole('Super Admin')) {
+        if ($this->expense && $branchId && $this->expense->branch_id !== $branchId && ! $isSuperAdmin) {
             abort(403);
         }
 

@@ -35,7 +35,8 @@ class DailyReport extends Component
         $this->date = now()->format('Y-m-d');
 
         $user = auth()->user();
-        if (! $user->hasRole('Super Admin')) {
+        $isSuperAdmin = $user->hasAnyRole(['Super Admin', 'super-admin']);
+        if (! $isSuperAdmin) {
             $branches = $this->branchAccessService->getUserBranches($user);
             $this->branchId = $branches->first()?->id;
         }
@@ -110,7 +111,8 @@ class DailyReport extends Component
     public function render()
     {
         $user = auth()->user();
-        $branches = $user->hasRole('Super Admin')
+        $isSuperAdmin = $user->hasAnyRole(['Super Admin', 'super-admin']);
+        $branches = $isSuperAdmin
             ? \App\Models\Branch::active()->get()
             : $this->branchAccessService->getUserBranches($user);
 
@@ -125,7 +127,7 @@ class DailyReport extends Component
         return view('livewire.pos.daily-report', [
             'branches' => $branches,
             'sales' => $salesQuery->latest()->paginate(20),
-            'isSuperAdmin' => $user->hasRole('Super Admin'),
+            'isSuperAdmin' => $isSuperAdmin,
         ])->layout('layouts.app');
     }
 }

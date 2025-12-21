@@ -100,7 +100,7 @@ class AuthService implements AuthServiceInterface
                     return null;
                 }
 
-                if (method_exists($actor, 'hasRole') && $actor->hasRole('Super Admin')) {
+                if (method_exists($actor, 'hasAnyRole') && $actor->hasAnyRole(['Super Admin', 'super-admin'])) {
                 } elseif (method_exists($actor, 'hasPermissionTo') && $actor->hasPermissionTo('impersonate.users')) {
                 } else {
                     abort(403, 'Not allowed to impersonate');

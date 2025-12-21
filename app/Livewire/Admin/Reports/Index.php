@@ -56,7 +56,7 @@ class Index extends Component
         $this->dateTo = now()->format('Y-m-d');
 
         $user = auth()->user();
-        if (! $user->hasRole('Super Admin')) {
+        if (! $user->hasAnyRole(['Super Admin', 'super-admin'])) {
             $branches = $this->branchAccessService->getUserBranches($user);
             $this->selectedBranchId = $branches->first()?->id;
         }
@@ -174,7 +174,8 @@ class Index extends Component
     {
         $user = auth()->user();
 
-        $branches = $user->hasRole('Super Admin')
+        $isSuperAdmin = $user->hasAnyRole(['Super Admin', 'super-admin']);
+        $branches = $isSuperAdmin
             ? Branch::active()->get()
             : $this->branchAccessService->getUserBranches($user);
 
@@ -190,7 +191,7 @@ class Index extends Component
             'modules' => $modules,
             'reports' => $reports,
             'availableColumns' => $availableColumns,
-            'isSuperAdmin' => $user->hasRole('Super Admin'),
+            'isSuperAdmin' => $isSuperAdmin,
         ])->layout('layouts.app');
     }
 }

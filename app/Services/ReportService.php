@@ -90,7 +90,7 @@ class ReportService implements ReportServiceInterface
                     $query->where('module_id', $moduleId);
                 }
 
-                if ($user && ! $user->hasRole('Super Admin')) {
+                if ($user && ! $user->hasAnyRole(['Super Admin', 'super-admin'])) {
                     $query->where('is_branch_specific', true);
                 }
 
@@ -141,7 +141,7 @@ class ReportService implements ReportServiceInterface
                     ->with(['module', 'branch', 'fieldValues.field'])
                     ->parentsOnly();
 
-                if ($user && ! $user->hasRole('Super Admin')) {
+                if ($user && ! $user->hasAnyRole(['Super Admin', 'super-admin'])) {
                     $query = $this->branchAccessService->filterQueryByBranch($query, $user);
                 }
 
@@ -195,7 +195,7 @@ class ReportService implements ReportServiceInterface
                     ->leftJoin('customers', 'sales.customer_id', '=', 'customers.id')
                     ->leftJoin('branches', 'sales.branch_id', '=', 'branches.id');
 
-                if ($user && ! $user->hasRole('Super Admin')) {
+                if ($user && ! $user->hasAnyRole(['Super Admin', 'super-admin'])) {
                     $branchIds = $this->branchAccessService->getUserBranches($user)->pluck('id');
                     $query->whereIn('sales.branch_id', $branchIds);
                 }
@@ -234,7 +234,7 @@ class ReportService implements ReportServiceInterface
                     ->leftJoin('suppliers', 'purchases.supplier_id', '=', 'suppliers.id')
                     ->leftJoin('branches', 'purchases.branch_id', '=', 'branches.id');
 
-                if ($user && ! $user->hasRole('Super Admin')) {
+                if ($user && ! $user->hasAnyRole(['Super Admin', 'super-admin'])) {
                     $branchIds = $this->branchAccessService->getUserBranches($user)->pluck('id');
                     $query->whereIn('purchases.branch_id', $branchIds);
                 }
@@ -268,7 +268,7 @@ class ReportService implements ReportServiceInterface
                     ->leftJoin('expense_categories', 'expenses.category_id', '=', 'expense_categories.id')
                     ->leftJoin('branches', 'expenses.branch_id', '=', 'branches.id');
 
-                if ($user && ! $user->hasRole('Super Admin')) {
+                if ($user && ! $user->hasAnyRole(['Super Admin', 'super-admin'])) {
                     $branchIds = $this->branchAccessService->getUserBranches($user)->pluck('id');
                     $query->whereIn('expenses.branch_id', $branchIds);
                 }
@@ -306,7 +306,7 @@ class ReportService implements ReportServiceInterface
                     ->leftJoin('income_categories', 'incomes.category_id', '=', 'income_categories.id')
                     ->leftJoin('branches', 'incomes.branch_id', '=', 'branches.id');
 
-                if ($user && ! $user->hasRole('Super Admin')) {
+                if ($user && ! $user->hasAnyRole(['Super Admin', 'super-admin'])) {
                     $branchIds = $this->branchAccessService->getUserBranches($user)->pluck('id');
                     $query->whereIn('incomes.branch_id', $branchIds);
                 }
@@ -340,7 +340,7 @@ class ReportService implements ReportServiceInterface
             callback: function () use ($filters, $user) {
                 $query = DB::table('customers')->select('customers.*');
 
-                if ($user && ! $user->hasRole('Super Admin')) {
+                if ($user && ! $user->hasAnyRole(['Super Admin', 'super-admin'])) {
                     $branchIds = $this->branchAccessService->getUserBranches($user)->pluck('id');
                     $query->whereIn('customers.branch_id', $branchIds);
                 }
@@ -365,7 +365,7 @@ class ReportService implements ReportServiceInterface
             callback: function () use ($filters, $user) {
                 $query = DB::table('suppliers')->select('suppliers.*');
 
-                if ($user && ! $user->hasRole('Super Admin')) {
+                if ($user && ! $user->hasAnyRole(['Super Admin', 'super-admin'])) {
                     $branchIds = $this->branchAccessService->getUserBranches($user)->pluck('id');
                     $query->whereIn('suppliers.branch_id', $branchIds);
                 }
@@ -388,7 +388,7 @@ class ReportService implements ReportServiceInterface
     {
         return $this->handleServiceOperation(
             callback: function () use ($filters, $user) {
-                $branches = $user->hasRole('Super Admin')
+                $branches = $user->hasAnyRole(['Super Admin', 'super-admin'])
                     ? Branch::active()->get()
                     : $this->branchAccessService->getUserBranches($user);
 

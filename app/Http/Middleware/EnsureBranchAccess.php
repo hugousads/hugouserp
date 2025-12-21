@@ -34,7 +34,7 @@ class EnsureBranchAccess
         }
 
         // Super admin shortcut
-        if (method_exists($user, 'hasRole') && $user->hasRole('Super Admin')) {
+        if (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['Super Admin', 'super-admin'])) {
             return $next($request);
         }
 

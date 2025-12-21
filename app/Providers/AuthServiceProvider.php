@@ -66,7 +66,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // Super Admin shortcut (works with spatie/permission)
         Gate::before(function ($user, $ability) {
-            if (method_exists($user, 'hasRole') && $user->hasRole('Super Admin')) {
+            if (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['Super Admin', 'super-admin'])) {
                 return true;
             }
 
@@ -76,7 +76,7 @@ class AuthServiceProvider extends ServiceProvider
         // Ability for impersonation if you use it
         Gate::define('impersonate', function ($user) {
             return (method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo('impersonate.users'))
-                || (method_exists($user, 'hasRole') && $user->hasRole('Super Admin'));
+                || (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['Super Admin', 'super-admin']));
         });
     }
 }

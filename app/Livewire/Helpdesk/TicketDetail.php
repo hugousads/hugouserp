@@ -65,16 +65,17 @@ class TicketDetail extends Component
 
         $branchId = $this->ticket->branch_id;
         $user = auth()->user();
+        $isSuperAdmin = $user?->hasAnyRole(['Super Admin', 'super-admin']);
 
         $this->validate([
             'assignToUser' => [
                 'required',
-                Rule::exists('users', 'id')->where(function ($query) use ($branchId, $user) {
-                    if (! $user?->hasRole('Super Admin') && $branchId) {
+                Rule::exists('users', 'id')->where(function ($query) use ($branchId, $user, $isSuperAdmin) {
+                    if (! $isSuperAdmin && $branchId) {
                         $query->where('branch_id', $branchId);
                     }
 
-                    if (! $branchId && $user?->branch_id && ! $user?->hasRole('Super Admin')) {
+                    if (! $branchId && $user?->branch_id && ! $isSuperAdmin) {
                         $query->where('branch_id', $user->branch_id);
                     }
                 }),
@@ -136,9 +137,10 @@ class TicketDetail extends Component
         $agents = User::whereHas('roles', function ($query) {
             $query->where('name', 'like', '%agent%')
                   ->orWhere('name', 'like', '%support%')
-                  ->orWhere('name', 'Super Admin');
+                  ->orWhere('name', 'Super Admin')
+                  ->orWhere('name', 'super-admin');
         })
-            ->when(! $user?->hasRole('Super Admin') && $branchId, fn ($query) => $query->where('branch_id', $branchId))
+            ->when(! $user?->hasAnyRole(['Super Admin', 'super-admin']) && $branchId, fn ($query) => $query->where('branch_id', $branchId))
             ->get();
 
         // Calculate SLA compliance
@@ -160,7 +162,7 @@ class TicketDetail extends Component
             $user->branch_id
             && $ticket->branch_id
             && $user->branch_id !== $ticket->branch_id
-            && ! $user->hasRole('Super Admin')
+            && ! $user->hasAnyRole(['Super Admin', 'super-admin'])
         ) {
             abort(403);
         }

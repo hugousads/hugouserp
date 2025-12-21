@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Customers;
 
 use App\Models\Customer;
+use App\Models\User;
 use App\Traits\HasExport;
 use App\Traits\HasSortableColumns;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -38,6 +39,8 @@ class Index extends Component
 
     public bool $isSuperAdmin = false;
 
+    public bool $canManageAll = false;
+
     protected $queryString = ['search', 'customerType'];
 
     /**
@@ -50,14 +53,17 @@ class Index extends Component
 
     public function mount(): void
     {
-        $this->initializeExport('customers');
+        $this->authorize('customers.view');
         $user = auth()->user();
-        $this->branchId = $user?->branch_id;
-        $this->isSuperAdmin = (bool) $user?->hasRole('super-admin');
+        $this->branchId = $this->resolveBranchId($user);
+        $this->isSuperAdmin = $this->userIsSuperAdmin($user);
+        $this->canManageAll = $this->isSuperAdmin || (bool) $user?->can('customers.manage.all');
 
-        if (!$this->branchId && !$this->isSuperAdmin) {
+        if (!$this->branchId && !$this->canManageAll) {
             abort(403, __('You must be assigned to a branch to view customers.'));
         }
+
+        $this->initializeExport('customers');
     }
 
     public function updatingSearch(): void
@@ -93,12 +99,11 @@ class Index extends Component
     public function delete(int $id): void
     {
         $this->authorize('customers.manage');
+        $this->ensureBranchAccess();
         $query = Customer::query();
 
         if ($this->branchId) {
             $query->where('branch_id', $this->branchId);
-        } elseif (!$this->isSuperAdmin) {
-            abort(403);
         }
 
         $query->findOrFail($id)->delete();
@@ -137,6 +142,8 @@ class Index extends Component
 
     public function export()
     {
+        $this->authorize('customers.view');
+        $this->ensureBranchAccess();
         $data = Customer::query()
             ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
             ->when($this->search, function ($q) {
@@ -152,5 +159,22 @@ class Index extends Component
             ->get();
 
         return $this->performExport('customers', $data, __('Customers Export'));
+    }
+
+    private function resolveBranchId(?User $user): ?int
+    {
+        return $user?->branch_id ?? $user?->branches()->first()?->id;
+    }
+
+    private function userIsSuperAdmin(?User $user): bool
+    {
+        return (bool) $user?->hasAnyRole(['super-admin', 'Super Admin']);
+    }
+
+    private function ensureBranchAccess(): void
+    {
+        if (!$this->branchId && !$this->canManageAll) {
+            abort(403, __('You must be assigned to a branch to view customers.'));
+        }
     }
 }

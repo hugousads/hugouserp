@@ -82,7 +82,7 @@ class HelpdeskService
             $ticket->branch_id
             && $assignee->branch_id
             && $ticket->branch_id !== $assignee->branch_id
-            && ! $actor?->hasRole('Super Admin')
+            && ! $actor?->hasAnyRole(['Super Admin', 'super-admin'])
         ) {
             throw new AuthorizationException('You cannot assign this ticket outside its branch.');
         }

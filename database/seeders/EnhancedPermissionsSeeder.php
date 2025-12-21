@@ -63,6 +63,7 @@ class EnhancedPermissionsSeeder extends Seeder
             ['name' => 'customers.delete', 'group' => 'Customers', 'description' => 'Delete customers'],
             ['name' => 'customers.export', 'group' => 'Customers', 'description' => 'Export customers'],
             ['name' => 'customers.import', 'group' => 'Customers', 'description' => 'Import customers'],
+            ['name' => 'customers.manage.all', 'group' => 'Customers', 'description' => 'Manage customers across all branches'],
             
             // Suppliers - Enhanced
             ['name' => 'suppliers.view', 'group' => 'Suppliers', 'description' => 'View suppliers'],

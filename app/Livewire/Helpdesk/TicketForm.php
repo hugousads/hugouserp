@@ -58,10 +58,11 @@ class TicketForm extends Component
     public function mount(?Ticket $ticket = null): void
     {
         $user = auth()->user();
+        $isSuperAdmin = $user?->hasAnyRole(['Super Admin', 'super-admin']);
 
         if ($ticket && $ticket->exists) {
             $this->authorize('helpdesk.edit');
-            if ($user && $user->branch_id && $ticket->branch_id !== $user->branch_id && ! $user->hasRole('Super Admin')) {
+            if ($user && $user->branch_id && $ticket->branch_id !== $user->branch_id && ! $isSuperAdmin) {
                 abort(403);
             }
             $this->isEdit = true;
@@ -118,12 +119,13 @@ class TicketForm extends Component
 
         $user = auth()->user();
         $branchId = $this->ticket?->branch_id ?? $user?->branch_id;
+        $isSuperAdmin = $user?->hasAnyRole(['Super Admin', 'super-admin']);
 
-        if (! $branchId && ! $user?->hasRole('Super Admin')) {
+        if (! $branchId && ! $isSuperAdmin) {
             abort(403);
         }
 
-        if ($this->ticket && $branchId && $this->ticket->branch_id !== $branchId && ! $user?->hasRole('Super Admin')) {
+        if ($this->ticket && $branchId && $this->ticket->branch_id !== $branchId && ! $isSuperAdmin) {
             abort(403);
         }
 
@@ -180,9 +182,10 @@ class TicketForm extends Component
     {
         $user = auth()->user();
         $branchId = $user?->branch_id;
+        $isSuperAdmin = $user?->hasAnyRole(['Super Admin', 'super-admin']);
 
         $customers = Customer::query()
-            ->when(! $user?->hasRole('Super Admin') && $branchId, fn ($q) => $q->where('branch_id', $branchId))
+            ->when(! $isSuperAdmin && $branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->orderBy('name')
             ->get();
         $categories = TicketCategory::active()->ordered()->get();
@@ -191,9 +194,10 @@ class TicketForm extends Component
         $agents = User::whereHas('roles', function ($query) {
             $query->where('name', 'like', '%agent%')
                 ->orWhere('name', 'like', '%support%')
-                ->orWhere('name', 'Super Admin');
+                ->orWhere('name', 'Super Admin')
+                ->orWhere('name', 'super-admin');
         })
-            ->when(! $user?->hasRole('Super Admin') && $branchId, fn ($q) => $q->where('branch_id', $branchId))
+            ->when(! $isSuperAdmin && $branchId, fn ($q) => $q->where('branch_id', $branchId))
             ->where('is_active', true)
             ->get();
 

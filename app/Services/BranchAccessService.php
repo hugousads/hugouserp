@@ -17,7 +17,7 @@ class BranchAccessService
     {
         return $this->handleServiceOperation(
             callback: function () use ($user) {
-                if ($user->hasRole('Super Admin')) {
+                if ($this->isSuperAdmin($user)) {
                     return Branch::active()->get();
                 }
 
@@ -46,7 +46,7 @@ class BranchAccessService
     {
         return $this->handleServiceOperation(
             callback: function () use ($user, $branchId) {
-                if ($user->hasRole('Super Admin')) {
+                if ($this->isSuperAdmin($user)) {
                     return true;
                 }
 
@@ -64,7 +64,7 @@ class BranchAccessService
     {
         return $this->handleServiceOperation(
             callback: function () use ($user, $branchId) {
-                if ($user->hasRole('Super Admin')) {
+                if ($this->isSuperAdmin($user)) {
                     return true;
                 }
 
@@ -85,7 +85,7 @@ class BranchAccessService
     {
         return $this->handleServiceOperation(
             callback: function () use ($user, $branchId) {
-                if ($user->hasRole('Super Admin')) {
+                if ($this->isSuperAdmin($user)) {
                     return true;
                 }
 
@@ -106,7 +106,7 @@ class BranchAccessService
     {
         return $this->handleServiceOperation(
             callback: function () use ($user, $branchId) {
-                if ($user->hasRole('Super Admin')) {
+                if ($this->isSuperAdmin($user)) {
                     return true;
                 }
 
@@ -127,7 +127,7 @@ class BranchAccessService
     {
         return $this->handleServiceOperation(
             callback: function () use ($user, $branchId) {
-                if ($user->hasRole('Super Admin')) {
+                if ($this->isSuperAdmin($user)) {
                     return true;
                 }
 
@@ -215,7 +215,7 @@ class BranchAccessService
     {
         return $this->handleServiceOperation(
             callback: function () use ($user, $branchId, $moduleKey) {
-                if ($user->hasRole('Super Admin')) {
+                if ($this->isSuperAdmin($user)) {
                     return true;
                 }
 
@@ -324,7 +324,7 @@ class BranchAccessService
     {
         return $this->handleServiceOperation(
             callback: function () use ($query, $user, $branchColumn) {
-                if ($user->hasRole('Super Admin')) {
+                if ($this->isSuperAdmin($user)) {
                     return $query;
                 }
 
@@ -346,7 +346,7 @@ class BranchAccessService
     {
         return $this->handleServiceOperation(
             callback: function () use ($user) {
-                if ($user->hasRole('Super Admin')) {
+                if ($this->isSuperAdmin($user)) {
                     return Module::active()->get();
                 }
 
@@ -365,5 +365,10 @@ class BranchAccessService
             operation: 'getAccessibleModulesForUser',
             context: ['user_id' => $user->id]
         );
+    }
+
+    private function isSuperAdmin(User $user): bool
+    {
+        return method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['Super Admin', 'super-admin']);
     }
 }
