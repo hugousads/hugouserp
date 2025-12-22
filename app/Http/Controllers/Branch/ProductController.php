@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Branch;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductImageRequest;
 use App\Http\Requests\ProductImportRequest;
+use App\Models\Branch;
 use App\Models\Product;
 use App\Services\Contracts\ProductServiceInterface as Products;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $branchId = (int) $request->attributes->get('branch_id');
+        $branchId = $this->resolveBranchId($request);
         $per = min(max($request->integer('per_page', 20), 1), 100);
 
         $query = Product::where('branch_id', $branchId);
@@ -56,7 +57,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         // Security: Ensure product belongs to current branch
-        $branchId = (int) request()->attributes->get('branch_id');
+        $branchId = $this->resolveBranchId(request());
         abort_if($product->branch_id !== $branchId, 404, 'Product not found in this branch');
 
         return $this->ok($product->load(['category', 'tax']));
@@ -68,7 +69,7 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         // Note: Using Request instead of ProductStoreRequest until it's created
-        $branchId = (int) $request->attributes->get('branch_id');
+        $branchId = $this->resolveBranchId($request);
 
         // Basic validation
         $data = $request->validate([
@@ -96,7 +97,7 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         // Security: Ensure product belongs to current branch
-        $branchId = (int) $request->attributes->get('branch_id');
+        $branchId = $this->resolveBranchId($request);
         abort_if($product->branch_id !== $branchId, 404, 'Product not found in this branch');
 
         // Basic validation
@@ -124,7 +125,9 @@ class ProductController extends Controller
         $q = (string) $request->query('q', '');
         $perPage = (int) $request->query('per_page', 15);
 
-        $results = $this->products->search($q, $perPage);
+        $branchId = $this->resolveBranchId($request);
+
+        $results = $this->products->search($branchId, $q, $perPage);
 
         return $this->ok($results);
     }
@@ -134,7 +137,8 @@ class ProductController extends Controller
         $file = $request->file('file');
         $path = $file->store('imports', 'local');
 
-        $count = $this->products->importCsv('local', $path);
+        $branchId = $this->resolveBranchId($request);
+        $count = $this->products->importCsv($branchId, 'local', $path);
 
         return $this->ok(['imported' => $count], __('Imported'));
     }
@@ -153,6 +157,9 @@ class ProductController extends Controller
     {
         $this->authorize('products.manage');
 
+        $branchId = $this->resolveBranchId($request);
+        abort_if($product->branch_id !== $branchId, 404, 'Product not found in this branch');
+
         $path = $request->file('image')->store('product-images', 'public');
         $product->image_path = $path;
         $product->save();
@@ -165,11 +172,35 @@ class ProductController extends Controller
         $this->authorize('products.delete');
 
         // Security: Ensure product belongs to current branch
-        $branchId = (int) request()->attributes->get('branch_id');
+        $branchId = $this->resolveBranchId(request());
         abort_if($product->branch_id !== $branchId, 404, 'Product not found in this branch');
 
         $product->delete();
 
         return $this->ok(null, __('Product deleted successfully'));
+    }
+
+    protected function resolveBranchId(Request $request): int
+    {
+        $branchFromAttributes = $request->attributes->get('branch');
+        if ($branchFromAttributes instanceof Branch) {
+            return (int) $branchFromAttributes->getKey();
+        }
+
+        $attributeId = $request->attributes->get('branch_id');
+        if ($attributeId !== null) {
+            return (int) $attributeId;
+        }
+
+        $routeBranch = $request->route('branch');
+        if ($routeBranch instanceof Branch) {
+            return (int) $routeBranch->getKey();
+        }
+
+        if (is_numeric($routeBranch)) {
+            return (int) $routeBranch;
+        }
+
+        return app()->has('req.branch_id') ? (int) app('req.branch_id') : 0;
     }
 }

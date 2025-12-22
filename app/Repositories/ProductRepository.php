@@ -58,9 +58,9 @@ final class ProductRepository extends EloquentBaseRepository implements ProductR
     /**
      * Search products by query string
      */
-    public function search(string $query = '', int $perPage = 15): LengthAwarePaginator
+    public function search(int $branchId, string $query = '', int $perPage = 15): LengthAwarePaginator
     {
-        $builder = $this->query();
+        $builder = $this->query()->where('branch_id', $branchId);
 
         if ($query !== '') {
             $like = '%'.$query.'%';
@@ -77,9 +77,12 @@ final class ProductRepository extends EloquentBaseRepository implements ProductR
     /**
      * Find product by SKU
      */
-    public function findBySku(string $sku): ?Product
+    public function findBySku(string $sku, int $branchId): ?Product
     {
-        return $this->query()->where('sku', $sku)->first();
+        return $this->query()
+            ->where('branch_id', $branchId)
+            ->where('sku', $sku)
+            ->first();
     }
 
     /**

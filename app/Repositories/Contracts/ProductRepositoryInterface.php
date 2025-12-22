@@ -13,9 +13,9 @@ interface ProductRepositoryInterface extends BaseRepositoryInterface
 
     public function createForBranch(int $branchId, array $data);
 
-    public function search(string $query = '', int $perPage = 15): LengthAwarePaginator;
+    public function search(int $branchId, string $query = '', int $perPage = 15): LengthAwarePaginator;
 
-    public function findBySku(string $sku): ?Product;
+    public function findBySku(string $sku, int $branchId): ?Product;
 
     public function getAllChunked(int $chunkSize, callable $callback): void;
 }

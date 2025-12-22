@@ -23,19 +23,19 @@ class ProductService implements ProductServiceInterface
     ) {}
 
     /** @return \Illuminate\Contracts\Pagination\LengthAwarePaginator */
-    public function search(string $q = '', int $perPage = 15)
+    public function search(int $branchId, string $q = '', int $perPage = 15)
     {
         return $this->handleServiceOperation(
-            callback: fn() => $this->productRepository->search($q, $perPage),
+            callback: fn() => $this->productRepository->search($branchId, $q, $perPage),
             operation: 'search',
-            context: ['query' => $q, 'per_page' => $perPage]
+            context: ['branch_id' => $branchId, 'query' => $q, 'per_page' => $perPage]
         );
     }
 
-    public function importCsv(string $disk, string $path): int
+    public function importCsv(int $branchId, string $disk, string $path): int
     {
         return $this->handleServiceOperation(
-            callback: function () use ($disk, $path) {
+            callback: function () use ($branchId, $disk, $path) {
                 if (! Storage::disk($disk)->exists($path)) {
                     return 0;
                 }
@@ -95,8 +95,10 @@ class ProductService implements ProductServiceInterface
 
                         /** @var Product $product */
                         $product = $sku
-                            ? $this->productRepository->findBySku($sku) ?? new Product
+                            ? $this->productRepository->findBySku($sku, $branchId) ?? new Product
                             : new Product;
+
+                        $product->branch_id = $branchId;
 
                         if ($sku !== null) {
                             $product->sku = $sku;
@@ -148,7 +150,7 @@ class ProductService implements ProductServiceInterface
                 return $imported;
             },
             operation: 'importCsv',
-            context: ['disk' => $disk, 'path' => $path],
+            context: ['branch_id' => $branchId, 'disk' => $disk, 'path' => $path],
             defaultValue: 0
         );
     }
