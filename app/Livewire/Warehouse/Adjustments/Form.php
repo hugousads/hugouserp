@@ -7,6 +7,7 @@ namespace App\Livewire\Warehouse\Adjustments;
 use App\Models\Adjustment;
 use App\Models\AdjustmentItem;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\Warehouse;
 use App\Services\InventoryService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -121,6 +122,13 @@ class Form extends Component
                 $this->adjustment = Adjustment::create($data);
             }
 
+            $existingItemIds = $this->adjustment->items()->pluck('id');
+            if ($existingItemIds->isNotEmpty()) {
+                StockMovement::where('reference_type', AdjustmentItem::class)
+                    ->whereIn('reference_id', $existingItemIds)
+                    ->delete();
+            }
+
             $this->adjustment->items()->delete();
 
             foreach ($this->items as $item) {
@@ -136,10 +144,12 @@ class Form extends Component
                     'product_id' => $product->id,
                     'warehouse_id' => $warehouse->id,
                     'branch_id' => $branchId,
+                    'reference_type' => AdjustmentItem::class,
+                    'reference_id' => $adjustmentItem->id,
                     'qty' => abs((float) $item['qty']),
                     'direction' => (float) $item['qty'] >= 0 ? 'in' : 'out',
                     'reason' => $this->reason,
-                    'meta' => [
+                    'extra_attributes' => [
                         'adjustment_id' => $this->adjustment->id,
                         'adjustment_item_id' => $adjustmentItem->id,
                     ],

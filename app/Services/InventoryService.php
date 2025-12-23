@@ -169,30 +169,32 @@ class InventoryService implements InventoryServiceInterface
         return $this->handleServiceOperation(
             callback: function () use ($data) {
                 return \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
-                $payload = [
-                    'product_id' => $data['product_id'] ?? null,
-                    'warehouse_id' => $data['warehouse_id'] ?? null,
-                    'branch_id' => $data['branch_id'] ?? $this->currentBranchId(),
-                    'direction' => $data['direction'] ?? $data['type'] ?? null,
-                    'qty' => $data['qty'] ?? $data['quantity'] ?? null,
-                    'reason' => $data['reason'] ?? null,
-                    'meta' => $data['meta'] ?? [],
-                ];
+                    $payload = [
+                        'product_id' => $data['product_id'] ?? null,
+                        'warehouse_id' => $data['warehouse_id'] ?? null,
+                        'branch_id' => $data['branch_id'] ?? $this->currentBranchId(),
+                        'direction' => $data['direction'] ?? $data['type'] ?? null,
+                        'qty' => $data['qty'] ?? $data['quantity'] ?? null,
+                        'reason' => $data['reason'] ?? null,
+                        'reference_type' => $data['reference_type'] ?? $data['source_type'] ?? null,
+                        'reference_id' => $data['reference_id'] ?? $data['source_id'] ?? null,
+                        'extra_attributes' => $data['extra_attributes'] ?? $data['meta'] ?? [],
+                    ];
 
-                $validator = $this->validator->make($payload, [
-                    'product_id' => ['required', 'integer', 'exists:products,id'],
-                    'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
-                    'branch_id' => ['required', 'integer', 'exists:branches,id'],
-                    'direction' => ['required', 'in:in,out'],
-                    'qty' => ['required', 'numeric', 'not_in:0'],
-                ]);
+                    $validator = $this->validator->make($payload, [
+                        'product_id' => ['required', 'integer', 'exists:products,id'],
+                        'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
+                        'branch_id' => ['required', 'integer', 'exists:branches,id'],
+                        'direction' => ['required', 'in:in,out'],
+                        'qty' => ['required', 'numeric', 'not_in:0'],
+                    ]);
 
-                $validator->validate();
+                    $validator->validate();
 
-                $payload['created_by'] = $this->currentUser()?->getAuthIdentifier();
+                    $payload['created_by'] = $this->currentUser()?->getAuthIdentifier();
 
-                // Normalize quantity to positive (direction field captures the sign)
-                $payload['qty'] = abs((float) $payload['qty']);
+                    // Normalize quantity to positive (direction field captures the sign)
+                    $payload['qty'] = abs((float) $payload['qty']);
 
                     // Lock product and warehouse rows to prevent races
                     Product::whereKey($payload['product_id'])->lockForUpdate()->first();

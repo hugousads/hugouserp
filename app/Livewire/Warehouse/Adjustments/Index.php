@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Warehouse\Adjustments;
 
 use App\Models\Adjustment;
+use App\Models\AdjustmentItem;
+use App\Models\StockMovement;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
@@ -54,6 +56,15 @@ class Index extends Component
         $user = auth()->user();
         if ($user->branch_id && $adjustment->branch_id !== $user->branch_id) {
             abort(403, 'Unauthorized access to this branch data');
+        }
+
+        $itemIds = $adjustment->items()->pluck('id');
+        if ($itemIds->isNotEmpty()) {
+            StockMovement::where('reference_type', AdjustmentItem::class)
+                ->whereIn('reference_id', $itemIds)
+                ->delete();
+
+            $adjustment->items()->delete();
         }
 
         $adjustment->delete();
