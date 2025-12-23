@@ -8,11 +8,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class MediaDownloadController extends Controller
 {
-    public function __invoke(Media $media, Request $request): StreamedResponse
+    public function __invoke(Media $media, Request $request): Response
     {
         $user = $request->user();
         $canManageAll = $user?->can('media.manage-all') ?? false;
@@ -47,8 +47,11 @@ class MediaDownloadController extends Controller
 
         $headers = [
             'Content-Type' => $media->mime_type ?? 'application/octet-stream',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
         ];
 
-        return $disk->response($path, $filename, $headers);
+        $content = $disk->get($path);
+
+        return response($content, 200, $headers);
     }
 }

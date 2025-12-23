@@ -122,6 +122,10 @@ class ProductController extends Controller
 
     public function search(Request $request)
     {
+        $this->validate($request, [
+            'q' => ['required', 'string', 'min:2'],
+        ]);
+
         $q = (string) $request->query('q', '');
         $perPage = (int) $request->query('per_page', 15);
 

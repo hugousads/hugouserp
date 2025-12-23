@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Support\ApiResponse;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class PosCheckoutRequest extends FormRequest
 {
@@ -26,5 +29,12 @@ class PosCheckoutRequest extends FormRequest
             'customer_id' => ['sometimes', 'integer', 'exists:customers,id'],
             'warehouse_id' => ['sometimes', 'integer', 'exists:warehouses,id'],
         ];
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(
+            ApiResponse::validationError($validator->errors()->toArray())
+        );
     }
 }

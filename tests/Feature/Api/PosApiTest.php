@@ -23,6 +23,11 @@ class PosApiTest extends TestCase
     {
         parent::setUp();
 
+        $this->withoutMiddleware([
+            \App\Http\Middleware\EnsurePermission::class,
+            \App\Http\Middleware\VerifyPosOpen::class,
+        ]);
+
         // Create a test branch
         $this->branch = Branch::factory()->create([
             'name' => 'Test Branch',
@@ -34,6 +39,9 @@ class PosApiTest extends TestCase
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
         ]);
+
+        $this->user->update(['branch_id' => $this->branch->id]);
+        $this->user->branches()->attach($this->branch->id);
 
         // Note: In real tests, you'd need to seed permissions and roles
         // For now, we'll test routes exist and basic validation

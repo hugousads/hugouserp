@@ -54,7 +54,7 @@ class MediaDownloadControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('file contents');
-        $response->assertHeader('content-type', 'text/plain');
+        $this->assertStringContainsString('text/plain', $response->headers->get('content-type'));
     }
 
     public function test_user_without_view_others_permission_cannot_access_foreign_media(): void

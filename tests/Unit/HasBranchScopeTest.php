@@ -25,6 +25,16 @@ class HasBranchScopeTest extends TestCase
         $user->branches()->attach($secondaryBranch->id);
         $this->assertFalse($user->relationLoaded('branches'));
 
+        $projectInPrimary = Project::create([
+            'branch_id' => $primaryBranch->id,
+            'code' => 'PRJ-' . Str::random(5),
+            'name' => 'Primary Project',
+            'description' => 'Ensures primary branch is included.',
+            'status' => 'planning',
+            'start_date' => now()->format('Y-m-d'),
+            'end_date' => now()->addWeek()->format('Y-m-d'),
+        ]);
+
         $projectInSecondary = Project::create([
             'branch_id' => $secondaryBranch->id,
             'code' => 'PRJ-' . Str::random(5),
