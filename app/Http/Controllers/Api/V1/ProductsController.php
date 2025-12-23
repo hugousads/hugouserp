@@ -92,12 +92,6 @@ class ProductsController extends BaseApiController
 
     public function index(Request $request): JsonResponse
     {
-        if (! auth()->user()) {
-            return $this->errorResponse(__('Authentication required'), 401);
-        }
-
-        $this->authorize('viewAny', Product::class);
-
         $store = $this->getStore($request);
 
         if (! $store || ! $store->branch_id) {
@@ -179,8 +173,6 @@ class ProductsController extends BaseApiController
             return $this->errorResponse(__('Store authentication required'), 401);
         }
 
-        $this->authorize('create', Product::class);
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'sku' => 'required|string|max:100|unique:products,sku',
@@ -245,8 +237,6 @@ class ProductsController extends BaseApiController
         if (! $product) {
             return $this->errorResponse(__('Product not found'), 404);
         }
-
-        $this->authorize('update', $product);
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',

@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class HREmployee extends BaseModel
 {
@@ -85,5 +86,14 @@ class HREmployee extends BaseModel
             })
             ->with('shift')
             ->first();
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $employee): void {
+            if (empty($employee->employee_code)) {
+                $employee->employee_code = $employee->code ?? 'EMP-'.Str::upper(Str::random(8));
+            }
+        });
     }
 }
