@@ -31,7 +31,6 @@ class Product extends BaseModel
         'id',
         'uuid',
         'code',
-        'branch_id',
         'created_by',
         'updated_by',
     ];
@@ -40,6 +39,7 @@ class Product extends BaseModel
         'name', 'sku', 'barcode',
         'thumbnail', 'image', 'gallery',
         'module_id',
+        'branch_id',
         'category_id',
         'product_type',
         'type',

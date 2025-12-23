@@ -677,6 +677,11 @@ Route::get('/attachments/{attachment}/download', \App\Http\Controllers\Attachmen
     ->name('attachments.download')
     ->middleware(['auth', 'signed']);
 
+// Media downloads for app users
+Route::get('/app/media/{media}/download', \App\Http\Controllers\Admin\MediaDownloadController::class)
+    ->name('app.media.download')
+    ->middleware(['auth', 'can:media.view']);
+
     // HELPDESK MODULE
     Route::prefix('app/helpdesk')->name('app.helpdesk.')->group(function () {
         Route::get('/', \App\Livewire\Helpdesk\Index::class)
