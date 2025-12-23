@@ -25,7 +25,10 @@ return new class extends Migration
             $table->string('avatar')->nullable()->comment('avatar');
             $table->string('locale', 10)->nullable()->comment('locale');
             $table->string('timezone')->nullable()->comment('timezone');
-            $table->foreignId('branch_id')->constrained('branches')->restrictOnDelete(); // primaryBranch
+            $table->foreignId('branch_id')
+                ->nullable()
+                ->constrained('branches')
+                ->nullOnDelete(); // primaryBranch
             $table->rememberToken();
             $table->timestamp('last_login_at')->nullable()->comment('last_login_at');
             $table->decimal('max_discount_percent', 5, 2)->nullable()->comment('max_discount_percent');

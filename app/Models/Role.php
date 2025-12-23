@@ -16,5 +16,5 @@ class Role extends SpatieRole
     /**
      * Default guard for API-based auth.
      */
-    protected $guard_name = 'api';
+    protected $guard_name = 'web';
 }

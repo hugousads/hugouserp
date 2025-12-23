@@ -25,7 +25,7 @@ class ExportDownloadAuthorizationTest extends TestCase
     public function test_user_without_permission_cannot_download_even_with_session(): void
     {
         $user = User::factory()->create();
-        $path = storage_path('app/exports/test.txt');
+        $path = Storage::disk('local')->path('exports/test.txt');
         Storage::disk('local')->put('exports/test.txt', 'secret');
 
         $response = $this->actingAs($user)
@@ -48,7 +48,10 @@ class ExportDownloadAuthorizationTest extends TestCase
         $user->givePermissionTo('reports.download');
 
         Storage::disk('local')->put('exports/valid.csv', 'data');
-        $path = storage_path('app/exports/valid.csv');
+        $path = Storage::disk('local')->path('exports/valid.csv');
+
+        $this->assertTrue($user->can('reports.download'));
+        $this->assertFileExists($path);
 
         $response = $this->actingAs($user)
             ->withSession([

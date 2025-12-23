@@ -51,6 +51,7 @@ use App\Livewire\Suppliers\Form as SupplierFormPage;
 use App\Livewire\Suppliers\Index as SuppliersIndexPage;
 use App\Livewire\Warehouse\Index as WarehouseIndexPage;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /*
@@ -112,8 +113,13 @@ Route::get('/download/export', function () {
         abort(403, 'You are not authorized to download this export');
     }
 
+    if (! auth()->user()?->can('reports.download')) {
+        abort(403, 'You are not authorized to download this export');
+    }
+
+    $disk = Storage::disk(config('filesystems.default'));
     $resolvedPath = realpath($exportInfo['path']);
-    $allowedBase = realpath(storage_path('app/exports')) ?: storage_path('app/exports');
+    $allowedBase = realpath($disk->path('exports')) ?: $disk->path('exports');
 
     if (! $resolvedPath || ! Str::startsWith($resolvedPath, $allowedBase) || ! file_exists($resolvedPath)) {
         abort(403, 'Invalid export path');
@@ -128,7 +134,7 @@ Route::get('/download/export', function () {
     }
 
     return response()->download($resolvedPath, $exportInfo['name'])->deleteFileAfterSend(true);
-})->middleware(['web', 'auth', 'can:reports.download'])->name('download.export');
+})->middleware(['web', 'auth'])->name('download.export');
 
 /*
 |--------------------------------------------------------------------------

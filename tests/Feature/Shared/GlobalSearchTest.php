@@ -7,6 +7,7 @@ namespace Tests\Feature\Shared;
 use App\Models\Branch;
 use App\Models\Sale;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,6 +17,7 @@ class GlobalSearchTest extends TestCase
 
     protected User $user;
     protected Branch $branch;
+    protected Warehouse $warehouse;
 
     protected function setUp(): void
     {
@@ -24,6 +26,12 @@ class GlobalSearchTest extends TestCase
         $this->branch = Branch::create([
             'name' => 'Test Branch',
             'code' => 'TB001',
+        ]);
+
+        $this->warehouse = Warehouse::create([
+            'name' => 'Main Warehouse',
+            'code' => 'WH001',
+            'branch_id' => $this->branch->id,
         ]);
 
         $this->user = User::factory()->create([
@@ -39,6 +47,7 @@ class GlobalSearchTest extends TestCase
         $sale = Sale::create([
             'code' => 'INV-2024-001',
             'branch_id' => $this->branch->id,
+            'warehouse_id' => $this->warehouse->id,
             'status' => 'completed',
             'type' => 'invoice',
             'total_amount' => 100,
@@ -63,6 +72,7 @@ class GlobalSearchTest extends TestCase
             'code' => 'INV-2024-002',
             'reference_no' => 'REF-TEST-123',
             'branch_id' => $this->branch->id,
+            'warehouse_id' => $this->warehouse->id,
             'status' => 'completed',
             'type' => 'invoice',
             'total_amount' => 200,
@@ -80,6 +90,7 @@ class GlobalSearchTest extends TestCase
         $sale = Sale::create([
             'code' => 'INV-2024-003',
             'branch_id' => $this->branch->id,
+            'warehouse_id' => $this->warehouse->id,
             'status' => 'completed',
             'type' => 'invoice',
             'total_amount' => 300,
