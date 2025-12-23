@@ -68,7 +68,10 @@ class Index extends Component
     public function delete(int $id): void
     {
         $this->authorize('income.delete');
-        Income::findOrFail($id)->delete();
+
+        $income = Income::findOrFail($id);
+        $this->ensureBranchAccess($income);
+        $income->delete();
         Cache::forget('income_stats_'.(auth()->user()?->branch_id ?? 'all'));
         session()->flash('success', __('Income deleted successfully'));
     }
@@ -125,5 +128,15 @@ class Index extends Component
             'categories' => $categories,
             'stats' => $stats,
         ]);
+    }
+
+    private function ensureBranchAccess(Income $income): void
+    {
+        $user = auth()->user();
+        $isSuperAdmin = $user?->hasAnyRole(['Super Admin', 'super-admin']);
+
+        if ($user?->branch_id && $income->branch_id && $income->branch_id !== $user->branch_id && ! $isSuperAdmin) {
+            abort(403, __('You cannot modify income records from another branch.'));
+        }
     }
 }

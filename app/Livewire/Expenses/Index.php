@@ -36,6 +36,12 @@ class Index extends Component
 
     protected $queryString = ['search', 'categoryId'];
 
+    public function mount(): void
+    {
+        $this->authorize('expenses.view');
+        $this->initializeExport('expenses');
+    }
+
     /**
      * Define allowed sort columns to prevent SQL injection.
      */
@@ -52,11 +58,6 @@ class Index extends Component
         return 'expense_date';
     }
 
-    public function mount(): void
-    {
-        $this->initializeExport('expenses');
-    }
-
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -65,7 +66,11 @@ class Index extends Component
     public function delete(int $id): void
     {
         $this->authorize('expenses.manage');
-        Expense::findOrFail($id)->delete();
+
+        $expense = Expense::findOrFail($id);
+        $this->ensureBranchAccess($expense);
+
+        $expense->delete();
         session()->flash('success', __('Expense deleted successfully'));
     }
 
@@ -73,12 +78,18 @@ class Index extends Component
     {
         $sortField = $this->getSortField();
         $sortDirection = $this->getSortDirection();
+        $branchId = $this->userBranchId();
 
         $data = Expense::query()
             ->leftJoin('expense_categories', 'expenses.category_id', '=', 'expense_categories.id')
             ->leftJoin('branches', 'expenses.branch_id', '=', 'branches.id')
-            ->when($this->search, fn ($q) => $q->where('expenses.description', 'like', "%{$this->search}%")
-                ->orWhere('expenses.reference_number', 'like', "%{$this->search}%"))
+            ->when($branchId, fn ($q) => $q->where('expenses.branch_id', $branchId))
+            ->when($this->search, function ($q) {
+                $q->where(function ($query) {
+                    $query->where('expenses.description', 'like', "%{$this->search}%")
+                        ->orWhere('expenses.reference_number', 'like', "%{$this->search}%");
+                });
+            })
             ->when($this->categoryId, fn ($q) => $q->where('expenses.category_id', $this->categoryId))
             ->when($this->dateFrom, fn ($q) => $q->whereDate('expenses.expense_date', '>=', $this->dateFrom))
             ->when($this->dateTo, fn ($q) => $q->whereDate('expenses.expense_date', '<=', $this->dateTo))
@@ -100,10 +111,15 @@ class Index extends Component
 
     public function render()
     {
+        $branchId = $this->userBranchId();
+
         $expenses = Expense::query()
             ->with(['category', 'branch', 'creator'])
-            ->when($this->search, fn ($q) => $q->where('description', 'like', "%{$this->search}%")
-                ->orWhere('reference_number', 'like', "%{$this->search}%"))
+            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+            ->when($this->search, fn ($q) => $q->where(function ($query) {
+                $query->where('description', 'like', "%{$this->search}%")
+                    ->orWhere('reference_number', 'like', "%{$this->search}%");
+            }))
             ->when($this->categoryId, fn ($q) => $q->where('category_id', $this->categoryId))
             ->when($this->dateFrom, fn ($q) => $q->whereDate('expense_date', '>=', $this->dateFrom))
             ->when($this->dateTo, fn ($q) => $q->whereDate('expense_date', '<=', $this->dateTo))
@@ -116,5 +132,22 @@ class Index extends Component
             'expenses' => $expenses,
             'categories' => $categories,
         ])->layout('layouts.app', ['title' => __('Expenses')]);
+    }
+
+    private function userBranchId(): ?int
+    {
+        $user = auth()->user();
+
+        return $user?->branch_id;
+    }
+
+    private function ensureBranchAccess(Expense $expense): void
+    {
+        $user = auth()->user();
+        $isSuperAdmin = $user?->hasAnyRole(['Super Admin', 'super-admin']);
+
+        if ($user?->branch_id && $expense->branch_id && $expense->branch_id !== $user->branch_id && ! $isSuperAdmin) {
+            abort(403, __('You cannot manage expenses from another branch.'));
+        }
     }
 }
