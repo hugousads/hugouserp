@@ -189,11 +189,12 @@ class NotesAttachments extends Component
         ]);
 
         $user = Auth::user();
+        $storage = Storage::disk('local');
 
         foreach ($this->newFiles as $file) {
-            $path = $file->store('attachments/'.strtolower(class_basename($this->modelType)), 'local');
+            $path = $file->store('attachments/' . strtolower(class_basename($this->modelType)), 'local');
 
-            $storedMime = \Illuminate\Support\Facades\Storage::disk('local')->mimeType($path) ?? $file->getMimeType();
+            $storedMime = $storage->mimeType($path) ?? $file->getMimeType();
             $clientMime = $file->getMimeType();
             $allowedExtensions = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','ppt','pptx','csv','txt'];
             $allowedMimeTypes = [
@@ -215,13 +216,26 @@ class NotesAttachments extends Component
                 || ! in_array($storedMime, $allowedMimeTypes, true)
                 || ! in_array($clientMime, $allowedMimeTypes, true)
                 || $storedMime !== $clientMime) {
-                \Illuminate\Support\Facades\Storage::disk('local')->delete($path);
+                $storage->delete($path);
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'newFiles' => [__('Uploaded file type is not allowed after verification.')],
                 ]);
             }
 
-            $hash = hash_file('sha256', storage_path('app/'.$path));
+            if (! $storage->exists($path)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'newFiles' => [__('Uploaded file could not be saved. Please try again.')],
+                ]);
+            }
+
+            $hash = hash_file('sha256', $storage->path($path));
+
+            if ($hash === false) {
+                $storage->delete($path);
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'newFiles' => [__('Uploaded file could not be processed. Please try again.')],
+                ]);
+            }
 
             $attachment = new Attachment([
                 'attachable_type' => $this->modelType,
