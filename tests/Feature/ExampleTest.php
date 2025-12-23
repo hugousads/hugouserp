@@ -14,6 +14,9 @@ class ExampleTest extends TestCase
      */
     public function test_unauthenticated_users_are_redirected_to_login(): void
     {
+        // Re-enable exception handling for this test since we're testing redirects
+        $this->withExceptionHandling();
+
         // Test protected route redirect
         $response = $this->get('/dashboard');
 
@@ -45,6 +48,9 @@ class ExampleTest extends TestCase
      */
     public function test_unauthenticated_json_requests_return_401(): void
     {
+        // Re-enable exception handling for this test since we're testing 401 responses
+        $this->withExceptionHandling();
+
         $response = $this->getJson('/dashboard');
 
         $this->assertGuest();

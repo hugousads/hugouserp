@@ -30,9 +30,8 @@ return new class extends Migration
                 if (!$this->indexExists('sales', 'sales_posted_at_index')) {
                     $table->index('posted_at');
                 }
-                if (!$this->indexExists('sales', 'sales_reference_index')) {
-                    $table->index('reference');
-                }
+                // Note: reference_no index already exists via unique constraint sales_branch_reference_unique
+                // so we skip the separate reference_no index to avoid SQLite issues
             });
         }
 
@@ -66,9 +65,8 @@ return new class extends Migration
                 if (!$this->indexExists('products', 'products_category_id_index')) {
                     $table->index('category_id');
                 }
-                if (!$this->indexExists('products', 'products_is_active_index')) {
-                    $table->index('is_active');
-                }
+                // Note: status index already exists via composite prod_br_status_idx
+                // so we skip the separate is_active index
             });
         }
 
@@ -185,11 +183,7 @@ return new class extends Migration
                 } catch (\Exception $e) {
                     // Index may not exist
                 }
-                try {
-                    $table->dropIndex(['reference']);
-                } catch (\Exception $e) {
-                    // Index may not exist
-                }
+                // Note: reference_no index not created separately (uses unique constraint)
             });
         }
 
@@ -235,11 +229,7 @@ return new class extends Migration
                 } catch (\Exception $e) {
                     // Index may not exist
                 }
-                try {
-                    $table->dropIndex(['is_active']);
-                } catch (\Exception $e) {
-                    // Index may not exist
-                }
+                // Note: is_active index not created separately (uses composite prod_br_status_idx)
             });
         }
 

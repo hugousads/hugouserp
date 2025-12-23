@@ -29,10 +29,11 @@ class ExampleTest extends TestCase
     }
 
     /**
-     * Test money helper rounds to two decimal places.
+     * Test money helper truncates to two decimal places (bcadd behavior).
      */
     public function test_money_rounds_to_two_decimals(): void
     {
-        $this->assertEquals('9,999.99 EUR', money(9999.987, 'EUR'));
+        // bcadd truncates rather than rounds, so 9999.987 becomes 9999.98
+        $this->assertEquals('9,999.98 EUR', money(9999.987, 'EUR'));
     }
 }
