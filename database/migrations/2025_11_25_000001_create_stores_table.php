@@ -37,6 +37,7 @@ return new class extends Migration
             $table->json('permissions')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('store_tokens', function (Blueprint $table) {

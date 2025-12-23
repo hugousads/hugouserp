@@ -12,17 +12,17 @@ class ProductMassAssignmentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_branch_id_is_guarded(): void
+    public function test_branch_id_is_fillable(): void
     {
         $product = new Product([
             'name' => 'Test Product',
             'sku' => 'TEST-SKU-001',
             'default_price' => 100,
-            'branch_id' => 999,  // This should be ignored
+            'branch_id' => 999,
         ]);
 
-        // branch_id should NOT be set via mass assignment
-        $this->assertNull($product->branch_id);
+        // branch_id should be assignable during creation to ensure branch scoping is set
+        $this->assertSame(999, $product->branch_id);
     }
 
     public function test_created_by_is_guarded(): void
