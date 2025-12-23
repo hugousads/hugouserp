@@ -13,6 +13,7 @@ use App\Models\Tax;
 use App\Models\User;
 use App\Rules\ValidPriceOverride;
 use App\Services\Contracts\POSServiceInterface;
+use App\Services\StockService;
 use App\Traits\HandlesServiceErrors;
 use Illuminate\Support\Facades\DB;
 

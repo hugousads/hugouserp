@@ -42,6 +42,7 @@ class SetBranchContext
 
         // set into request + container
         $request->attributes->set('branch', $branch);
+        $request->attributes->set('branch_id', (int) $branch->getKey());
         app()->instance('req.branch_id', (int) $branch->getKey());
 
         return $next($request);
