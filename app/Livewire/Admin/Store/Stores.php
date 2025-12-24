@@ -132,6 +132,7 @@ class Stores extends Component
             $this->is_active = $store->is_active;
             $this->settings = $store->settings ?? [];
             $this->sync_settings = array_merge($this->sync_settings, $store->settings['sync'] ?? []);
+            $this->sanitizeSyncSettings();
 
             if ($store->integration) {
                 $this->api_key = $store->integration->api_key ?? '';
@@ -179,6 +180,7 @@ class Stores extends Component
     public function save(): void
     {
         $this->validate();
+        $this->sanitizeSyncSettings();
 
         DB::beginTransaction();
 
@@ -263,6 +265,21 @@ class Stores extends Component
         $this->showSyncModal = false;
         $this->syncingStoreId = null;
         $this->syncLogs = [];
+    }
+
+    protected function sanitizeSyncSettings(): void
+    {
+        $this->sync_settings['sync_modules'] = collect($this->sync_settings['sync_modules'] ?? [])
+            ->filter(fn ($id) => $id !== null && $id !== '')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $this->sync_settings['sync_categories'] = collect($this->sync_settings['sync_categories'] ?? [])
+            ->filter(fn ($category) => $category !== null && $category !== '')
+            ->values()
+            ->all();
     }
 
     protected function loadSyncLogs(): void

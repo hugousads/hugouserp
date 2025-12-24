@@ -125,10 +125,17 @@ class ModuleService implements ModuleServiceInterface
     public function getBranchModulesConfig(Branch $branch): array
     {
         return $branch->branchModules()
+            ->with('module')
             ->get()
             ->mapWithKeys(function (BranchModule $bm) {
+                $moduleKey = $bm->module_key ?: $bm->module?->key;
+
+                if (! $moduleKey) {
+                    return [];
+                }
+
                 return [
-                    $bm->module_key => [
+                    $moduleKey => [
                         'enabled' => $bm->enabled,
                         'settings' => $bm->settings ?? [],
                     ],
@@ -150,7 +157,11 @@ class ModuleService implements ModuleServiceInterface
 
             $enabledKeys = BranchModule::where('branch_id', $branchId)
                 ->where('enabled', true)
-                ->pluck('module_key')
+                ->with('module')
+                ->get()
+                ->map(fn (BranchModule $bm) => $bm->module_key ?: $bm->module?->key)
+                ->filter()
+                ->values()
                 ->toArray();
 
             return $modules->filter(fn ($m) => in_array($m->key, $enabledKeys))

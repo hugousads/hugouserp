@@ -143,10 +143,16 @@ class ProductFields extends Component
 
     public function openModal(?int $fieldId = null): void
     {
+        if (! $this->moduleId) {
+            $this->addError('moduleId', __('Please select a module before managing fields.'));
+
+            return;
+        }
+
         $this->resetForm();
 
         if ($fieldId) {
-            $field = ModuleProductField::findOrFail($fieldId);
+            $field = ModuleProductField::where('module_id', $this->moduleId)->findOrFail($fieldId);
             $this->editingId = $fieldId;
             $this->field_key = $field->field_key;
             $this->field_label = $field->field_label;
@@ -211,6 +217,7 @@ class ProductFields extends Component
             : 'required|string|max:100|unique:module_product_fields,field_key,NULL,id,module_id,'.$this->moduleId;
 
         return [
+            'moduleId' => 'required|integer|exists:modules,id',
             'field_key' => $keyRule,
             'field_label' => 'required|string|max:255',
             'field_label_ar' => 'nullable|string|max:255',
@@ -234,6 +241,12 @@ class ProductFields extends Component
     public function save(): void
     {
         $this->validate();
+
+        if (! $this->moduleId) {
+            $this->addError('moduleId', __('Please select a module before saving a field.'));
+
+            return;
+        }
 
         $options = array_filter(array_map('trim', explode("\n", $this->optionsText)));
 
@@ -273,8 +286,8 @@ class ProductFields extends Component
     public function toggleActive(int $fieldId): void
     {
         $this->authorize('modules.manage');
-        
-        $field = ModuleProductField::findOrFail($fieldId);
+
+        $field = ModuleProductField::where('module_id', $this->moduleId)->findOrFail($fieldId);
         $field->update(['is_active' => ! $field->is_active]);
         $this->loadFields();
     }
@@ -282,17 +295,23 @@ class ProductFields extends Component
     public function delete(int $fieldId): void
     {
         $this->authorize('modules.manage');
-        
-        ModuleProductField::destroy($fieldId);
+
+        ModuleProductField::where('module_id', $this->moduleId)->findOrFail($fieldId)->delete();
         session()->flash('success', __('Field deleted successfully'));
         $this->loadFields();
     }
 
     public function reorder(array $orderedIds): void
     {
+        if (! $this->moduleId) {
+            return;
+        }
+
         DB::transaction(function () use ($orderedIds) {
             foreach ($orderedIds as $index => $id) {
-                ModuleProductField::where('id', $id)->update(['sort_order' => ($index + 1) * 10]);
+                ModuleProductField::where('id', $id)
+                    ->where('module_id', $this->moduleId)
+                    ->update(['sort_order' => ($index + 1) * 10]);
             }
         });
         $this->loadFields();
