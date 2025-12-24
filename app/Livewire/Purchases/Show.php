@@ -16,15 +16,29 @@ class Show extends Component
 
     public function mount(Purchase $purchase): void
     {
-        $user = auth()->user();
-        throw_if(!$user?->can('purchases.view'), new HttpException(403));
+        $user = auth()->user()?->fresh();
+        if (! $user?->can('purchases.view')) {
+            throw new HttpException(403);
+        }
 
         $branchId = $user?->branch_id;
-        $isSuperAdmin = (bool) $user?->hasRole('super-admin');
-        $branchIdInt = $branchId !== null ? (int) $branchId : null;
 
-        throw_if(!$isSuperAdmin && $branchIdInt === null, new HttpException(403, __('You must be assigned to a branch to view purchases.')));
-        throw_if(!$isSuperAdmin && $branchIdInt !== (int) $purchase->branch_id, new HttpException(403));
+        if ($branchId === null) {
+            if (app()->runningUnitTests()) {
+                \Log::debug('purchase-branch-missing', ['user_id' => $user?->id]);
+            }
+            throw new HttpException(403, __('You must be assigned to a branch to view purchases.'));
+        }
+
+        if ((int) $branchId !== (int) $purchase->branch_id) {
+            if (app()->runningUnitTests()) {
+                \Log::debug('purchase-branch-mismatch', [
+                    'user_branch' => $branchId,
+                    'purchase_branch' => $purchase->branch_id,
+                ]);
+            }
+            throw new HttpException(403);
+        }
 
         $this->purchase = $purchase->load(['items.product', 'supplier', 'branch']);
     }

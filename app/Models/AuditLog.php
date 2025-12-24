@@ -19,8 +19,10 @@ class AuditLog extends Model
         'branch_id',
         'module_key',
         'action',
-        'subject_type',
-        'subject_id',
+         'subject_type',
+         'subject_id',
+         'auditable_type',
+         'auditable_id',
         'ip',
         'user_agent',
         'old_values',
@@ -33,6 +35,27 @@ class AuditLog extends Model
         'new_values' => 'array',
         'meta' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (AuditLog $log): void {
+            if ($log->subject_type && ! $log->auditable_type) {
+                $log->auditable_type = $log->subject_type;
+            } elseif ($log->auditable_type && ! $log->subject_type) {
+                $log->subject_type = $log->auditable_type;
+            }
+
+            if ($log->subject_id && ! $log->auditable_id) {
+                $log->auditable_id = $log->subject_id;
+            } elseif ($log->auditable_id && ! $log->subject_id) {
+                $log->subject_id = $log->auditable_id;
+            }
+
+            if (! $log->action) {
+                $log->action = 'unknown';
+            }
+        });
+    }
 
     public function user(): BelongsTo
     {
@@ -66,7 +89,13 @@ class AuditLog extends Model
 
     public function scopeForSubject($query, string $type, int $id)
     {
-        return $query->where('subject_type', $type)->where('subject_id', $id);
+        return $query->where(function ($q) use ($type) {
+            $q->where('subject_type', $type)
+                ->orWhere('auditable_type', $type);
+        })->where(function ($q) use ($id) {
+            $q->where('subject_id', $id)
+                ->orWhere('auditable_id', $id);
+        });
     }
 
     public function scopeAction($query, string $action)

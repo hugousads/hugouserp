@@ -157,10 +157,8 @@ class ProjectExpense extends Model
     // Helper method for backwards compatibility
     public function getExpenseDateAttribute($value)
     {
-        // If expense_date has a value, return it; otherwise fall back to date
-        if ($value !== null) {
-            return $value;
-        }
-        return $this->getRawOriginal('date');
+        $raw = $value ?? $this->getRawOriginal('date');
+
+        return $raw === null ? null : $this->asDateTime($raw);
     }
 }

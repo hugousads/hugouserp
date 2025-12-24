@@ -9,6 +9,8 @@ use App\Models\Customer;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -38,19 +40,26 @@ class Form extends Component
     public function mount(?int $id = null): void
     {
         $user = auth()->user();
+        $allowedBranches = $this->getUserBranchIds();
 
         if ($id) {
             $this->authorize('projects.edit');
             $this->project = Project::query()
-                ->forUserBranches($user)
+                ->whereIn('branch_id', $allowedBranches)
                 ->find($id);
 
-            abort_unless($this->project, 403);
+            if (! $this->project) {
+                throw new HttpException(403);
+            }
+
+            if (! in_array($this->project->branch_id, $allowedBranches, true)) {
+                throw new HttpException(403);
+            }
 
             $this->projectId = $id;
             $this->fill($this->project->only([
                 'branch_id', 'name', 'code', 'description', 'client_id', 'project_manager_id',
-                'start_date', 'end_date', 'status', 'budget_amount', 'notes', 'currency'
+                'start_date', 'end_date', 'status', 'budget_amount', 'notes', 'currency',
             ]));
         } else {
             $this->authorize('projects.create');
@@ -123,6 +132,8 @@ class Form extends Component
 
     public function save(): void
     {
+        $this->start_date = $this->coerceDateInput($this->start_date);
+        $this->end_date = $this->coerceDateInput($this->end_date);
         $this->validate();
 
         // Server-side enforcement: ensure branch_id is within user's branches
@@ -132,23 +143,49 @@ class Form extends Component
         }
 
         if ($this->project) {
-            $this->project->update($this->only([
-                'branch_id', 'name', 'code', 'description', 'client_id', 'project_manager_id',
-                'start_date', 'end_date', 'status', 'budget_amount', 'notes', 'currency'
-            ]));
+            $this->project->update($this->payloadWithNormalizedDates());
             session()->flash('success', __('Project updated successfully'));
         } else {
             Project::create(array_merge(
-                $this->only([
-                    'branch_id', 'name', 'code', 'description', 'client_id', 'project_manager_id',
-                    'start_date', 'end_date', 'status', 'budget_amount', 'notes', 'currency'
-                ]),
+                $this->payloadWithNormalizedDates(),
                 ['created_by' => auth()->id()]
             ));
             session()->flash('success', __('Project created successfully'));
         }
 
         $this->redirect(route('app.projects.index'));
+    }
+
+    protected function payloadWithNormalizedDates(): array
+    {
+        return array_merge(
+            $this->only([
+                'branch_id', 'name', 'code', 'description', 'client_id', 'project_manager_id',
+                'status', 'budget_amount', 'notes', 'currency'
+            ]),
+            [
+                'start_date' => $this->normalizeDate($this->start_date, 'start_date'),
+                'end_date' => $this->normalizeDate($this->end_date, 'end_date'),
+            ]
+        );
+    }
+
+    protected function normalizeDate(?string $value, string $field): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (string) $value;
+    }
+
+    protected function coerceDateInput($value): ?string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        return is_string($value) ? $value : null;
     }
 
     public function render()

@@ -122,8 +122,8 @@
                             @foreach($items as $index => $item)
                                 <tr>
                                     <td class="text-center">{{ $index + 1 }}</td>
-                                    <td class="font-medium">{{ $item['product_name'] }}</td>
-                                    <td class="text-slate-500">{{ $item['sku'] }}</td>
+                                    <td class="font-medium">{{ $item['product_name'] ?? '' }}</td>
+                                    <td class="text-slate-500">{{ $item['sku'] ?? '' }}</td>
                                     <td>
                                         <input type="number" wire:model="items.{{ $index }}.qty" step="0.01" min="0.0001" class="erp-input w-full text-center">
                                     </td>
@@ -138,8 +138,13 @@
                                     </td>
                                     <td class="text-right font-medium">
                                         @php
-                                            $lineTotal = ($item['qty'] * $item['unit_cost']) - ($item['discount'] ?? 0);
-                                            $lineTotal += $lineTotal * (($item['tax_rate'] ?? 0) / 100);
+                                            $qty = $item['qty'] ?? 0;
+                                            $unitCost = $item['unit_cost'] ?? 0;
+                                            $discount = $item['discount'] ?? 0;
+                                            $taxRate = $item['tax_rate'] ?? 0;
+
+                                            $lineTotal = ($qty * $unitCost) - $discount;
+                                            $lineTotal += $lineTotal * ($taxRate / 100);
                                         @endphp
                                         {{ number_format($lineTotal, 2) }}
                                     </td>

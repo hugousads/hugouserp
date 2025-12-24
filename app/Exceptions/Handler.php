@@ -6,6 +6,7 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -14,6 +15,15 @@ class Handler extends ExceptionHandler
         'password',
         'password_confirmation',
     ];
+
+    public function render($request, Throwable $e)
+    {
+        if (app()->environment('testing')) {
+            throw $e;
+        }
+
+        return parent::render($request, $e);
+    }
 
     public function register(): void
     {

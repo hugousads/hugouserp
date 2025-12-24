@@ -100,6 +100,11 @@ class StockMovement extends BaseModel
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function scopeIn($q)
     {
         return $q->where('direction', 'in');

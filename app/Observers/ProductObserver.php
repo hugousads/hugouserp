@@ -69,6 +69,8 @@ class ProductObserver
                 'action' => "Product:{$action}",
                 'subject_type' => Product::class,
                 'subject_id' => $product->getKey(),
+                'auditable_type' => Product::class,
+                'auditable_id' => $product->getKey(),
                 'ip' => $req?->ip(),
                 'user_agent' => (string) $req?->userAgent(),
                 'old_values' => [],

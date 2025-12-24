@@ -51,6 +51,8 @@ trait AuditsChanges
                 'action' => sprintf('%s:%s', class_basename(static::class), $action),
                 'subject_type' => static::class,
                 'subject_id' => $this->getKey(),
+                'auditable_type' => static::class,
+                'auditable_id' => $this->getKey(),
                 'ip' => $req->ip(),
                 'user_agent' => (string) $req->userAgent(),
                 'old_values' => $old,

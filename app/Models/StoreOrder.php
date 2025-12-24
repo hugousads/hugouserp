@@ -33,6 +33,19 @@ class StoreOrder extends Model
         'payload' => 'array',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (StoreOrder $order): void {
+            if (! $order->external_order_id) {
+                $order->external_order_id = 'LOCAL-' . uniqid();
+            }
+
+            if ($order->payload === null) {
+                $order->payload = [];
+            }
+        });
+    }
+
     public function sale()
     {
         return $this->hasOne(Sale::class);
