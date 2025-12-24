@@ -749,6 +749,14 @@ Route::get('/app/media/{media}/download', \App\Http\Controllers\Admin\MediaDownl
         Route::get('/categories', \App\Livewire\Expenses\Categories\Index::class)
             ->name('categories.index')
             ->middleware('can:expenses.manage');
+
+        Route::get('/categories/create', \App\Livewire\Expenses\Categories\Form::class)
+            ->name('categories.create')
+            ->middleware('can:expenses.manage');
+
+        Route::get('/categories/{category}/edit', \App\Livewire\Expenses\Categories\Form::class)
+            ->name('categories.edit')
+            ->middleware('can:expenses.manage');
     });
 
     Route::prefix('app/income')->name('app.income.')->group(function () {
@@ -766,6 +774,14 @@ Route::get('/app/media/{media}/download', \App\Http\Controllers\Admin\MediaDownl
 
         Route::get('/categories', \App\Livewire\Income\Categories\Index::class)
             ->name('categories.index')
+            ->middleware('can:income.manage');
+
+        Route::get('/categories/create', \App\Livewire\Income\Categories\Form::class)
+            ->name('categories.create')
+            ->middleware('can:income.manage');
+
+        Route::get('/categories/{category}/edit', \App\Livewire\Income\Categories\Form::class)
+            ->name('categories.edit')
             ->middleware('can:income.manage');
     });
 

@@ -126,6 +126,7 @@ if (!$module) {
                 <x-sidebar.item route="app.income.index" label="All Income" />
                 @can('income.manage')
                     <x-sidebar.item route="app.income.create" label="New Income" />
+                    <x-sidebar.item route="app.income.categories.index" label="Categories" />
                 @endcan
             @endif
         </ul>

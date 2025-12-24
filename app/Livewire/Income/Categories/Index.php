@@ -6,7 +6,6 @@ namespace App\Livewire\Income\Categories;
 
 use App\Models\IncomeCategory;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -17,18 +16,6 @@ class Index extends Component
     use WithPagination;
 
     public string $search = '';
-
-    public bool $showModal = false;
-
-    public ?int $editingId = null;
-
-    public string $name = '';
-
-    public string $nameAr = '';
-
-    public string $description = '';
-
-    public bool $isActive = true;
 
     protected $queryString = ['search'];
 
@@ -57,85 +44,6 @@ class Index extends Component
         return view('livewire.income.categories.index', [
             'categories' => $categories,
         ]);
-    }
-
-    public function openModal(): void
-    {
-        $this->resetForm();
-        $this->showModal = true;
-    }
-
-    public function closeModal(): void
-    {
-        $this->showModal = false;
-        $this->resetForm();
-    }
-
-    public function resetForm(): void
-    {
-        $this->editingId = null;
-        $this->name = '';
-        $this->nameAr = '';
-        $this->description = '';
-        $this->isActive = true;
-        $this->resetValidation();
-    }
-
-    public function edit(int $id): void
-    {
-        $category = IncomeCategory::find($id);
-        if ($category) {
-            $this->editingId = $id;
-            $this->name = $category->name;
-            $this->nameAr = $category->name_ar ?? '';
-            $this->description = $category->description ?? '';
-            $this->isActive = $category->is_active;
-            $this->showModal = true;
-        }
-    }
-
-    public function save(): void
-    {
-        $rules = [
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                $this->editingId 
-                    ? Rule::unique('income_categories', 'name')->ignore($this->editingId) 
-                    : Rule::unique('income_categories', 'name'),
-            ],
-            'nameAr' => 'nullable|string|max:255',
-            'description' => 'nullable|string|max:1000',
-        ];
-
-        $this->validate($rules);
-
-        $user = Auth::user();
-
-        $data = [
-            'name' => $this->name,
-            'name_ar' => $this->nameAr ?: null,
-            'description' => $this->description ?: null,
-            'is_active' => $this->isActive,
-        ];
-
-        try {
-            if ($this->editingId) {
-                $category = IncomeCategory::findOrFail($this->editingId);
-                $category->update($data);
-                session()->flash('success', __('Category updated successfully'));
-            } else {
-                $data['branch_id'] = $user?->branch_id;
-                IncomeCategory::create($data);
-                session()->flash('success', __('Category created successfully'));
-            }
-
-            $this->closeModal();
-            $this->resetPage();
-        } catch (\Exception $e) {
-            $this->addError('name', __('Failed to save category. Please try again.'));
-        }
     }
 
     public function delete(int $id): void
