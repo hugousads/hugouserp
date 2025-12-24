@@ -9,12 +9,12 @@
             </h1>
             <p class="text-sm text-slate-500">{{ __('Manage measurement units for products') }}</p>
         </div>
-        <button wire:click="openModal" class="erp-btn-primary">
+        <a href="{{ route('app.inventory.units.create') }}" class="erp-btn-primary">
             <svg class="w-5 h-5 ltr:mr-1 rtl:ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             {{ __('Add Unit') }}
-        </button>
+        </a>
     </div>
 
     @if(session('success'))
@@ -95,13 +95,13 @@
                         </td>
                         <td class="text-center">
                             <div class="flex items-center justify-center gap-1">
-                                <button wire:click="edit({{ $unit->id }})" 
+                                <a href="{{ route('app.inventory.units.edit', $unit->id) }}" 
                                         class="erp-btn-icon" 
                                         title="{{ __('Edit') }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
-                                </button>
+                                </a>
                                 <button wire:click="delete({{ $unit->id }})" 
                                         wire:confirm="{{ __('Are you sure you want to delete this unit?') }}"
                                         class="erp-btn-icon text-red-500 hover:text-red-700 hover:bg-red-50"
@@ -130,103 +130,4 @@
     <div class="mt-4">
         {{ $units->links() }}
     </div>
-
-    @if($showModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" wire:click.self="closeModal">
-            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
-                <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-                    <h3 class="text-lg font-semibold flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                        </svg>
-                        {{ $editingId ? __('Edit Unit') : __('Add Unit') }}
-                    </h3>
-                </div>
-                <form wire:submit.prevent="save" class="p-6 space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="erp-label">{{ __('Name') }} <span class="text-red-500">*</span></label>
-                            <input type="text" wire:model="name" class="erp-input mt-1" placeholder="{{ __('e.g., Kilogram') }}">
-                            @error('name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="erp-label">{{ __('Arabic Name') }}</label>
-                            <input type="text" wire:model="nameAr" class="erp-input mt-1" dir="rtl" placeholder="{{ __('مثال: كيلوجرام') }}">
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="erp-label">{{ __('Symbol') }} <span class="text-red-500">*</span></label>
-                            <input type="text" wire:model="symbol" class="erp-input mt-1" placeholder="{{ __('e.g., kg') }}">
-                            @error('symbol') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="erp-label">{{ __('Type') }}</label>
-                            <select wire:model="type" class="erp-input mt-1">
-                                @foreach($unitTypes as $key => $label)
-                                    <option value="{{ $key }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
-                        <label class="inline-flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" wire:model.live="isBaseUnit" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
-                            <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('This is a base unit') }}</span>
-                        </label>
-                    </div>
-                    
-                    @if(!$isBaseUnit)
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="erp-label">{{ __('Base Unit') }}</label>
-                                <select wire:model="baseUnitId" class="erp-input mt-1">
-                                    <option value="">{{ __('Select base unit') }}</option>
-                                    @foreach($baseUnits as $baseUnit)
-                                        @if($baseUnit->id !== $editingId)
-                                            <option value="{{ $baseUnit->id }}">{{ $baseUnit->name }} ({{ $baseUnit->symbol }})</option>
-                                        @endif
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label class="erp-label">{{ __('Conversion Factor') }}</label>
-                                <input type="number" wire:model="conversionFactor" step="0.000001" min="0.000001" class="erp-input mt-1">
-                                <p class="text-xs text-slate-500 mt-1">{{ __('How many base units equal 1 of this unit') }}</p>
-                            </div>
-                        </div>
-                    @endif
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="erp-label">{{ __('Decimal Places') }}</label>
-                            <input type="number" wire:model="decimalPlaces" min="0" max="6" class="erp-input mt-1">
-                        </div>
-                        <div>
-                            <label class="erp-label">{{ __('Sort Order') }}</label>
-                            <input type="number" wire:model="sortOrder" min="0" class="erp-input mt-1">
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center">
-                        <label class="inline-flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" wire:model="isActive" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
-                            <span class="text-sm text-slate-700">{{ __('Active') }}</span>
-                        </label>
-                    </div>
-                    
-                    <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                        <button type="button" wire:click="closeModal" class="erp-btn-secondary">
-                            {{ __('Cancel') }}
-                        </button>
-                        <button type="submit" class="erp-btn-primary">
-                            {{ $editingId ? __('Save Changes') : __('Create Unit') }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    @endif
 </div>

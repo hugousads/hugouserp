@@ -366,6 +366,14 @@ Route::middleware('auth')->group(function () {
             ->name('units.index')
             ->middleware('can:inventory.units.view');
 
+        Route::get('/units/create', \App\Livewire\Admin\UnitsOfMeasure\Form::class)
+            ->name('units.create')
+            ->middleware('can:inventory.units.manage');
+
+        Route::get('/units/{unit}/edit', \App\Livewire\Admin\UnitsOfMeasure\Form::class)
+            ->name('units.edit')
+            ->middleware('can:inventory.units.manage');
+
         // Stock Alerts
         Route::get('/stock-alerts', \App\Livewire\Inventory\StockAlerts::class)
             ->name('stock-alerts')
