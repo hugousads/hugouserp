@@ -68,7 +68,7 @@
                 <svg class="w-4 h-4 ltr:mr-2 rtl:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                 {{ __('Add Reverse Rate') }}
             </button>
-            <a href="{{ route('app.admin.currency-rates.index') }}"
+            <a href="{{ route('admin.currency-rates.index') }}"
                class="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800">
                 {{ __('Cancel') }}
             </a>

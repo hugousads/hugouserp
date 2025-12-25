@@ -66,7 +66,7 @@
         </div>
 
         <div class="flex justify-end gap-3">
-            <a href="{{ route('app.admin.categories.index') }}"
+            <a href="{{ route('app.inventory.categories.index') }}"
                class="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800">
                 {{ __('Cancel') }}
             </a>

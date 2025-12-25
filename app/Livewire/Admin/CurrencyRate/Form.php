@@ -88,7 +88,7 @@ class Form extends Component
             ? __('Currency rate updated successfully')
             : __('Currency rate added successfully'));
 
-        $this->redirectRoute('app.admin.currency-rates.index', navigate: true);
+        $this->redirectRoute('admin.currency-rates.index', navigate: true);
     }
 
     public function addReverseRate(): void

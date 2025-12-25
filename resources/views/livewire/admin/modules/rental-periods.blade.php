@@ -8,7 +8,7 @@
             <a href="{{ route('admin.modules.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">
                 {{ __('Back to Modules') }}
             </a>
-            <a href="{{ route('app.admin.modules.rental-periods.create', ['module' => $module->id]) }}" class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition flex items-center gap-2">
+            <a href="{{ route('admin.modules.rental-periods.create', ['module' => $module->id]) }}" class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -88,7 +88,7 @@
                                 </button>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <a href="{{ route('app.admin.modules.rental-periods.edit', ['module' => $module->id, 'period' => $period->id]) }}" class="text-blue-600 hover:text-blue-900 me-3">
+                                <a href="{{ route('admin.modules.rental-periods.edit', ['module' => $module->id, 'period' => $period->id]) }}" class="text-blue-600 hover:text-blue-900 me-3">
                                     {{ __('Edit') }}
                                 </a>
                                 <button wire:click="delete({{ $period->id }})" wire:confirm="{{ __('Are you sure?') }}" class="text-red-600 hover:text-red-900">

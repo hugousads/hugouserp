@@ -183,7 +183,7 @@ class Form extends Component
 
             session()->flash('success', $this->storeId ? __('Store updated successfully') : __('Store created successfully'));
 
-            $this->redirectRoute('app.admin.stores.index', navigate: true);
+            $this->redirectRoute('admin.stores.index', navigate: true);
 
         } catch (\Exception $e) {
             DB::rollBack();

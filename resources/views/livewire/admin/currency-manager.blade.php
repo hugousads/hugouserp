@@ -4,7 +4,7 @@
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ __('Currency Management') }}</h2>
             <p class="text-gray-500 dark:text-gray-400 text-sm">{{ __('Manage supported currencies and their settings') }}</p>
         </div>
-        <a href="{{ route('app.admin.currencies.create') }}" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2">
+        <a href="{{ route('admin.currencies.create') }}" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2">
             <x-icon name="plus" class="w-5 h-5" />
             {{ __('Add Currency') }}
         </a>
@@ -71,7 +71,7 @@
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('app.admin.currencies.edit', $currency->id) }}" class="text-gray-400 hover:text-blue-500">
+                                    <a href="{{ route('admin.currencies.edit', $currency->id) }}" class="text-gray-400 hover:text-blue-500">
                                         <x-icon name="pencil" class="w-4 h-4" />
                                     </a>
                                     @if(!$currency->is_base)

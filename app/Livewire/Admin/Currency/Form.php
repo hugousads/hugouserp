@@ -122,7 +122,7 @@ class Form extends Component
         }
 
         $this->currencyService->clearCurrencyCache();
-        $this->redirectRoute('app.admin.currencies.index', navigate: true);
+        $this->redirectRoute('admin.currencies.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

@@ -9,7 +9,7 @@
             </h1>
             <p class="text-sm text-slate-500">{{ __('Manage product categories for organizing inventory') }}</p>
         </div>
-        <a href="{{ route('app.admin.categories.create') }}" class="erp-btn-primary">
+        <a href="{{ route('app.inventory.categories.create') }}" class="erp-btn-primary">
             <svg class="w-5 h-5 ltr:mr-1 rtl:ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
@@ -83,7 +83,7 @@
                         </td>
                         <td class="text-center">
                             <div class="flex items-center justify-center gap-1">
-                                <a href="{{ route('app.admin.categories.edit', $category->id) }}" 
+                                <a href="{{ route('app.inventory.categories.edit', $category->id) }}" 
                                         class="erp-btn-icon" 
                                         title="{{ __('Edit') }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

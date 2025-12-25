@@ -39,7 +39,7 @@
                 </select>
             </div>
             @if ($moduleId)
-                <a href="{{ route('app.admin.modules.product-fields.create', ['moduleId' => $moduleId]) }}" class="erp-btn-primary mt-6">
+                <a href="{{ route('admin.modules.product-fields.create', ['moduleId' => $moduleId]) }}" class="erp-btn-primary mt-6">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -133,7 +133,7 @@
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="flex items-center justify-center gap-2">
-                                            <a href="{{ route('app.admin.modules.product-fields.edit', ['moduleId' => $moduleId, 'field' => $field['id']]) }}" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="{{ __('Edit') }}">
+                                            <a href="{{ route('admin.modules.product-fields.edit', ['moduleId' => $moduleId, 'field' => $field['id']]) }}" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="{{ __('Edit') }}">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>

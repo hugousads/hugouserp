@@ -140,7 +140,7 @@
         </div>
 
         <div class="flex justify-end gap-3">
-            <a href="{{ route('app.admin.modules.product-fields', ['moduleId' => $moduleId]) }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">
+            <a href="{{ route('admin.modules.product-fields', ['moduleId' => $moduleId]) }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">
                 {{ __('Cancel') }}
             </a>
             <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition">

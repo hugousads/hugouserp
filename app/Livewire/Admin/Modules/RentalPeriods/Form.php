@@ -109,7 +109,7 @@ class Form extends Component
             session()->flash('success', __('Rental period created successfully'));
         }
 
-        $this->redirectRoute('app.admin.modules.rental-periods', ['module' => $this->module->id], navigate: true);
+        $this->redirectRoute('admin.modules.rental-periods', ['module' => $this->module->id], navigate: true);
     }
 
     #[Layout('layouts.app')]
