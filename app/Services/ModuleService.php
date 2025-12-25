@@ -195,7 +195,7 @@ class ModuleService implements ModuleServiceInterface
                 ->where('enabled', true)
                 ->with('module')
                 ->get()
-                ->pluck('module.id')
+                ->pluck('module_id')
                 ->filter()
                 ->toArray();
         } else {
