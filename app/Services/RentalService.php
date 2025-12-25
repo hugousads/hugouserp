@@ -85,7 +85,7 @@ class RentalService implements RentalServiceInterface
                     $query->where('branch_id', $branchId);
                 }
                 $t = $query->findOrFail($tenantId);
-                $t->is_archived = true;
+                $t->is_active = false;
                 $t->save();
 
                 return $t;
@@ -362,7 +362,7 @@ class RentalService implements RentalServiceInterface
             COUNT(CASE WHEN status = ? THEN 1 END) as occupied_units,
             COUNT(CASE WHEN status = ? THEN 1 END) as vacant_units,
             COUNT(CASE WHEN status = ? THEN 1 END) as maintenance_units
-        ', ['occupied', 'vacant', 'maintenance'])
+        ', ['occupied', 'available', 'maintenance'])
             ->first();
 
         $totalUnits = $stats->total_units ?? 0;

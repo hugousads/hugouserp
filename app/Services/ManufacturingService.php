@@ -159,7 +159,7 @@ class ManufacturingService
     {
         // Check material availability
         foreach ($order->items as $item) {
-            $available = $this->inventoryService->getAvailableStock(
+            $available = $this->inventoryService->getStockLevel(
                 $item->product_id,
                 $order->warehouse_id
             );
