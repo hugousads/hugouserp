@@ -1,18 +1,18 @@
 <div class="space-y-6">
     @include('components.erp.breadcrumb', [
         'items' => [
-            ['label' => 'HRM'],
-            ['label' => 'Reports'],
+            ['label' => __('HRM')],
+            ['label' => __('Reports')],
         ],
     ])
 
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-50">
-                HRM Reports
+                {{ __('HRM Reports') }}
             </h1>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Attendance overview and payroll summary.
+                {{ __('Attendance overview and payroll summary.') }}
             </p>
         </div>
         <div class="flex items-center space-x-3">
@@ -31,13 +31,13 @@
     <div class="grid gap-4 md:grid-cols-3">
         <div class="erp-card p-4 rounded-2xl">
             <h3 class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Attendance (last {{ $filters['attendance_days'] }} days)
+                {{ __('Attendance (last :days days)', ['days' => $filters['attendance_days']]) }}
             </h3>
             <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-50">
                 {{ $attendanceSummary['total'] ?? 0 }}
             </p>
             <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Today:
+                {{ __('Today') }}:
                 <span class="font-semibold text-emerald-600 dark:text-emerald-400">
                     {{ $attendanceSummary['today'] ?? 0 }}
                 </span>
@@ -46,13 +46,13 @@
 
         <div class="erp-card p-4 rounded-2xl">
             <h3 class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Payroll records
+                {{ __('Payroll records') }}
             </h3>
             <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-50">
                 {{ $payrollSummary['total_records'] ?? 0 }}
             </p>
             <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Total net:
+                {{ __('Total net') }}:
                 <span class="font-semibold text-emerald-600 dark:text-emerald-400">
                     {{ number_format($payrollSummary['total_net'] ?? 0, 2) }}
                 </span>
@@ -61,27 +61,27 @@
 
         <div class="erp-card p-4 rounded-2xl">
             <h3 class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Filters
+                {{ __('Filters') }}
             </h3>
             <div class="mt-3 space-y-3">
                 <div>
                     <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        Attendance window (days)
+                        {{ __('Attendance window (days)') }}
                     </label>
                     <select wire:model="filters.attendance_days" class="erp-input">
-                        <option value="7">Last 7 days</option>
-                        <option value="14">Last 14 days</option>
-                        <option value="30">Last 30 days</option>
-                        <option value="90">Last 90 days</option>
+                        <option value="7">{{ __('Last 7 days') }}</option>
+                        <option value="14">{{ __('Last 14 days') }}</option>
+                        <option value="30">{{ __('Last 30 days') }}</option>
+                        <option value="90">{{ __('Last 90 days') }}</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        Payroll period
+                        {{ __('Payroll period') }}
                     </label>
                     <input type="text" wire:model.live.debounce.500ms="filters.payroll_period"
                            class="erp-input"
-                           placeholder="e.g. 2025-01" />
+                           placeholder="{{ __('e.g. 2025-01') }}" />
                 </div>
             </div>
         </div>
@@ -91,7 +91,7 @@
         <div class="erp-card p-4 rounded-2xl">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                    Attendance trend
+                    {{ __('Attendance trend') }}
                 </h2>
             </div>
             <div wire:ignore>
@@ -102,7 +102,7 @@
         <div class="erp-card p-4 rounded-2xl">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                    Payroll by period
+                    {{ __('Payroll by period') }}
                 </h2>
             </div>
             <div wire:ignore>

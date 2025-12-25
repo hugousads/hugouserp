@@ -1,18 +1,18 @@
 <div class="space-y-6">
     @include('components.erp.breadcrumb', [
         'items' => [
-            ['label' => 'Rental'],
-            ['label' => 'Reports'],
+            ['label' => __('Rental')],
+            ['label' => __('Reports')],
         ],
     ])
 
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-50">
-                Rental Reports
+                {{ __('Rental Reports') }}
             </h1>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Units occupancy and expiring contracts overview.
+                {{ __('Units occupancy and expiring contracts overview.') }}
             </p>
         </div>
         <div class="flex items-center space-x-3">
@@ -31,23 +31,23 @@
     <div class="grid gap-4 md:grid-cols-3">
         <div class="erp-card p-4 rounded-2xl">
             <h3 class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Units summary
+                {{ __('Units summary') }}
             </h3>
             <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-50">
-                {{ $unitsSummary['total'] ?? 0 }} units
+                {{ $unitsSummary['total'] ?? 0 }} {{ __('units') }}
             </p>
             <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Occupied:
+                {{ __('Occupied') }}:
                 <span class="font-semibold text-emerald-600 dark:text-emerald-400">
                     {{ $unitsSummary['occupied'] ?? 0 }}
                 </span>
-                · Vacant:
+                · {{ __('Vacant') }}:
                 <span class="font-semibold text-slate-700 dark:text-slate-200">
                     {{ $unitsSummary['vacant'] ?? 0 }}
                 </span>
             </p>
             <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Occupancy rate:
+                {{ __('Occupancy rate') }}:
                 <span class="font-semibold text-emerald-600 dark:text-emerald-400">
                     {{ $unitsSummary['occupancy_rate'] ?? 0 }}%
                 </span>
@@ -56,15 +56,15 @@
 
         <div class="erp-card p-4 rounded-2xl">
             <h3 class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Active contracts
+                {{ __('Active contracts') }}
             </h3>
             <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-50">
                 {{ $contractsSummary['active'] ?? 0 }}
             </p>
             <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Expiring in next
+                {{ __('Expiring in next') }}
                 <span class="font-semibold text-emerald-600 dark:text-emerald-400">
-                    {{ $contractsSummary['window_days'] ?? 30 }} days
+                    {{ $contractsSummary['window_days'] ?? 30 }} {{ __('days') }}
                 </span>:
                 <span class="font-semibold">
                     {{ $contractsSummary['expiring_soon'] ?? 0 }}
@@ -74,18 +74,18 @@
 
         <div class="erp-card p-4 rounded-2xl">
             <h3 class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Filters
+                {{ __('Filters') }}
             </h3>
             <div class="mt-3 space-y-3">
                 <div>
                     <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        Expiring contracts window (days)
+                        {{ __('Expiring contracts window (days)') }}
                     </label>
                     <select wire:model="filters.expiring_in_days" class="erp-input">
-                        <option value="7">7 days</option>
-                        <option value="15">15 days</option>
-                        <option value="30">30 days</option>
-                        <option value="60">60 days</option>
+                        <option value="7">{{ __('7 days') }}</option>
+                        <option value="15">{{ __('15 days') }}</option>
+                        <option value="30">{{ __('30 days') }}</option>
+                        <option value="60">{{ __('60 days') }}</option>
                     </select>
                 </div>
             </div>
@@ -96,7 +96,7 @@
         <div class="erp-card p-4 rounded-2xl">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                    Units by status
+                    {{ __('Units by status') }}
                 </h2>
             </div>
             <div wire:ignore>
@@ -107,7 +107,7 @@
         <div class="erp-card p-4 rounded-2xl">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                    Active contracts by end date
+                    {{ __('Active contracts by end date') }}
                 </h2>
             </div>
             <div wire:ignore>
