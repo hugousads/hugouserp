@@ -1,5 +1,5 @@
 {{-- resources/views/livewire/income/categories/form.blade.php --}}
-<div class="space-y-6">
+<div class="space-y-6 max-w-3xl mx-auto">
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-xl font-semibold text-slate-800 dark:text-white flex items-center gap-2">

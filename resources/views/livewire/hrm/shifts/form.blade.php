@@ -1,5 +1,5 @@
 {{-- resources/views/livewire/hrm/shifts/form.blade.php --}}
-<div class="space-y-4">
+<div class="space-y-6 max-w-3xl mx-auto">
     <div class="flex items-center justify-between gap-2">
         <div>
             <h1 class="text-lg font-semibold text-slate-800 dark:text-slate-100">
@@ -9,6 +9,10 @@
                 {{ __('Configure work shift settings for employees.') }}
             </p>
         </div>
+
+        <a href="{{ route('app.hrm.shifts.index') }}" class="erp-btn-secondary text-sm">
+            {{ __('Back to Shifts') }}
+        </a>
     </div>
 
     @if(session()->has('success'))
