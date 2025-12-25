@@ -14,7 +14,7 @@
     <form wire:submit.prevent="save" class="space-y-4">
         <div class="grid gap-4 lg:grid-cols-3">
             <div class="lg:col-span-2">
-                @livewire('shared.dynamic-form', ['schema' => $schema, 'data' => $form], key('branch-form-dynamic'))
+                @livewire('shared.dynamic-form', ['schema' => $schema, 'data' => $form], key('branch-form-' . ($branchId ?? 'new')))
             </div>
 
             <div class="space-y-3">
