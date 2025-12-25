@@ -1127,6 +1127,11 @@ Route::get('/app/media/{media}/download', \App\Http\Controllers\Admin\MediaDownl
             ->name('export.customize')
             ->middleware('can:reports.export');
 
+        // Bulk Import
+        Route::get('/bulk-import', \App\Livewire\Admin\BulkImport::class)
+            ->name('bulk-import')
+            ->middleware('can:settings.view');
+
         // Media Library
         Route::get('/media', \App\Livewire\Admin\MediaLibrary::class)
             ->name('media.index')

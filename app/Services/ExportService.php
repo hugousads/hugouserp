@@ -182,9 +182,7 @@ class ExportService
                     throw new \InvalidArgumentException('At least one column must be specified for export');
                 }
 
-                if ($data->isEmpty()) {
-                    throw new \InvalidArgumentException('No data available to export');
-                }
+                // Allow empty data exports - will create file with headers only
 
                 $availableColumns = $options['available_columns'] ?? [];
                 $dateFormat = $options['date_format'] ?? 'Y-m-d';

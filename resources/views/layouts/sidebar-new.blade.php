@@ -380,6 +380,12 @@
                     ],
                 ],
                 [
+                    'route' => 'admin.bulk-import',
+                    'label' => __('Bulk Import'),
+                    'permission' => 'settings.view',
+                    'icon' => 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12',
+                ],
+                [
                     'route' => 'admin.media.index',
                     'label' => __('Media Library'),
                     'permission' => 'media.view',
@@ -437,22 +443,76 @@
         searchResults: [],
         showSearchResults: false,
         allMenuItems: @js(collect($filteredSections)->flatMap(function($section) use ($safeRoute) {
-            return collect($section['items'])->flatMap(function($item) use ($section, $safeRoute) {
+            // Define keyword mappings for bilingual search (English -> Arabic and vice versa)
+            $keywordMappings = [
+                'dashboard' => ['لوحة التحكم', 'لوحة', 'home', 'الرئيسية'],
+                'sales' => ['المبيعات', 'مبيعات', 'بيع'],
+                'purchases' => ['المشتريات', 'مشتريات', 'شراء'],
+                'customers' => ['العملاء', 'عملاء', 'زبائن'],
+                'suppliers' => ['الموردين', 'موردين', 'مورد'],
+                'products' => ['المنتجات', 'منتجات', 'بضاعة', 'سلع'],
+                'inventory' => ['المخزون', 'مخزون', 'جرد'],
+                'warehouse' => ['المستودع', 'مستودع', 'مخزن'],
+                'expenses' => ['المصروفات', 'مصروفات', 'نفقات'],
+                'income' => ['الدخل', 'دخل', 'إيرادات'],
+                'accounting' => ['المحاسبة', 'محاسبة', 'حسابات'],
+                'banking' => ['البنوك', 'بنك', 'مصرفي'],
+                'reports' => ['التقارير', 'تقارير', 'تقرير'],
+                'settings' => ['الإعدادات', 'إعدادات', 'ضبط'],
+                'users' => ['المستخدمين', 'مستخدمين', 'مستخدم'],
+                'roles' => ['الأدوار', 'أدوار', 'صلاحيات'],
+                'branches' => ['الفروع', 'فروع', 'فرع'],
+                'employees' => ['الموظفين', 'موظفين', 'موظف'],
+                'attendance' => ['الحضور', 'حضور', 'دوام'],
+                'payroll' => ['الرواتب', 'رواتب', 'راتب'],
+                'rental' => ['الإيجار', 'إيجار', 'تأجير'],
+                'contracts' => ['العقود', 'عقود', 'عقد'],
+                'pos' => ['نقطة البيع', 'كاشير', 'terminal'],
+                'manufacturing' => ['التصنيع', 'تصنيع', 'إنتاج'],
+                'projects' => ['المشاريع', 'مشاريع', 'مشروع'],
+                'helpdesk' => ['الدعم', 'دعم', 'تذاكر', 'tickets'],
+                'modules' => ['الوحدات', 'وحدات', 'موديول'],
+                'translations' => ['الترجمات', 'ترجمة', 'لغات'],
+                'currencies' => ['العملات', 'عملات', 'عملة'],
+                'assets' => ['الأصول', 'أصول', 'أصل'],
+                'documents' => ['المستندات', 'مستندات', 'وثائق'],
+                'audit' => ['السجلات', 'سجل', 'تدقيق', 'logs'],
+                'media' => ['الوسائط', 'وسائط', 'صور', 'ملفات'],
+                'analytics' => ['التحليلات', 'تحليل', 'إحصائيات'],
+                'returns' => ['المرتجعات', 'مرتجع', 'إرجاع'],
+                'quotations' => ['عروض الأسعار', 'عرض سعر', 'تسعير'],
+                'tenants' => ['المستأجرين', 'مستأجر'],
+                'properties' => ['العقارات', 'عقار'],
+                'locations' => ['المواقع', 'موقع'],
+                'transfers' => ['التحويلات', 'تحويل', 'نقل'],
+                'adjustments' => ['التسويات', 'تسوية', 'تعديل'],
+            ];
+            
+            return collect($section['items'])->flatMap(function($item) use ($section, $safeRoute, $keywordMappings) {
+                // Get keywords for this item
+                $routeKey = strtolower(last(explode('.', $item['route'])));
+                $keywords = $keywordMappings[$routeKey] ?? [];
+                
                 $items = [[
                     'label' => $item['label'],
                     'route' => $item['route'],
                     'url' => Route::has($item['route']) ? route($item['route']) : '#',
                     'section' => $section['title'],
-                    'icon' => $item['icon']
+                    'icon' => $item['icon'],
+                    'keywords' => implode(' ', $keywords)
                 ]];
                 foreach ($item['children'] ?? [] as $child) {
+                    $childRouteKey = strtolower(last(explode('.', $child['route'])));
+                    $childKeywords = $keywordMappings[$childRouteKey] ?? [];
+                    
                     $items[] = [
                         'label' => $child['label'],
                         'route' => $child['route'],
                         'url' => Route::has($child['route']) ? route($child['route']) : '#',
                         'section' => $section['title'],
                         'parent' => $item['label'],
-                        'icon' => $item['icon']
+                        'icon' => $item['icon'],
+                        'keywords' => implode(' ', array_merge($keywords, $childKeywords))
                     ];
                 }
                 return $items;
@@ -491,7 +551,7 @@
             return this.expandedSections[key] ?? false;
         },
         performSearch() {
-            if (this.searchQuery.length < 2) {
+            if (this.searchQuery.length < 1) {
                 this.searchResults = [];
                 this.showSearchResults = false;
                 return;
@@ -500,8 +560,9 @@
             this.searchResults = this.allMenuItems.filter(item => 
                 item.label.toLowerCase().includes(query) ||
                 item.section.toLowerCase().includes(query) ||
-                (item.parent && item.parent.toLowerCase().includes(query))
-            ).slice(0, 8);
+                (item.parent && item.parent.toLowerCase().includes(query)) ||
+                (item.keywords && item.keywords.toLowerCase().includes(query))
+            ).slice(0, 10);
             this.showSearchResults = true;
         },
         navigateTo(url) {
