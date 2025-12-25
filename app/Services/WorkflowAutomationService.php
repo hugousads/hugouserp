@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\RentalContract;
-use App\Models\Customer;
 use App\Models\Supplier;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Log;
 
 class WorkflowAutomationService
@@ -19,8 +18,8 @@ class WorkflowAutomationService
     public function checkLowStockProducts(int $limit = 100): array
     {
         $lowStockProducts = Product::query()
-            ->whereRaw('current_stock <= COALESCE(reorder_point, min_stock, 0)')
-            ->with(['category', 'supplier'])
+            ->whereRaw('stock_quantity <= COALESCE(reorder_point, min_stock, 0)')
+            ->with(['category'])
             ->limit($limit)
             ->get();
 
@@ -29,7 +28,7 @@ class WorkflowAutomationService
             $alerts[] = [
                 'product_id' => $product->id,
                 'product_name' => $product->name,
-                'current_stock' => $product->current_stock ?? 0,
+                'current_stock' => $product->stock_quantity ?? 0,
                 'reorder_point' => $product->reorder_point ?? $product->min_stock,
                 'severity' => $this->calculateStockSeverity($product),
             ];
@@ -43,7 +42,7 @@ class WorkflowAutomationService
      */
     protected function calculateStockSeverity(Product $product): string
     {
-        $currentStock = $product->current_stock ?? 0;
+        $currentStock = $product->stock_quantity ?? 0;
         $minStock = $product->min_stock ?? 0;
         $reorderPoint = $product->reorder_point ?? $minStock;
 
@@ -67,18 +66,18 @@ class WorkflowAutomationService
             ->where('status', 'active')
             ->whereDate('end_date', '<=', now()->addDays($daysAhead))
             ->whereDate('end_date', '>=', now())
-            ->with(['unit', 'tenant', 'property'])
+            ->with(['unit.property', 'tenant'])
             ->limit($limit)
             ->get();
 
         $alerts = [];
         foreach ($expiringContracts as $contract) {
             $daysRemaining = now()->diffInDays($contract->end_date, false);
-            
+
             $alerts[] = [
                 'contract_id' => $contract->id,
                 'tenant_name' => $contract->tenant?->name,
-                'property_name' => $contract->property?->name,
+                'property_name' => $contract->unit?->property?->name,
                 'unit_code' => $contract->unit?->code,
                 'end_date' => $contract->end_date,
                 'days_remaining' => (int) $daysRemaining,
@@ -97,8 +96,8 @@ class WorkflowAutomationService
     public function analyzeCustomerPaymentPatterns(int $customerId): array
     {
         $customer = Customer::find($customerId);
-        
-        if (!$customer) {
+
+        if (! $customer) {
             return [];
         }
 
@@ -122,8 +121,8 @@ class WorkflowAutomationService
     public function evaluateSupplierPerformance(int $supplierId): array
     {
         $supplier = Supplier::find($supplierId);
-        
-        if (!$supplier) {
+
+        if (! $supplier) {
             return [];
         }
 
@@ -131,7 +130,7 @@ class WorkflowAutomationService
             'supplier_id' => $supplier->id,
             'supplier_name' => $supplier->name,
             'current_rating' => $supplier->supplier_rating ?? 'unrated',
-            'lead_time_days' => $supplier->lead_time_days ?? 0,
+            'lead_time_days' => $supplier->average_lead_time_days ?? 0,
             'on_time_delivery_rate' => 100, // Would be calculated from purchases
             'quality_rejection_rate' => 0, // Would be calculated from returns
             'price_competitiveness' => 'good', // Would be calculated from market data
@@ -145,28 +144,27 @@ class WorkflowAutomationService
     public function generateReorderSuggestions(int $limit = 50): array
     {
         $products = Product::query()
-            ->whereRaw('current_stock <= COALESCE(reorder_point, min_stock, 0)')
-            ->with(['supplier', 'category'])
-            ->orderByRaw('(COALESCE(reorder_point, min_stock, 0) - current_stock) DESC')
+            ->whereRaw('stock_quantity <= COALESCE(reorder_point, min_stock, 0)')
+            ->with(['category'])
+            ->orderByRaw('(COALESCE(reorder_point, min_stock, 0) - stock_quantity) DESC')
             ->limit($limit)
             ->get();
 
         $suggestions = [];
         foreach ($products as $product) {
             $reorderQuantity = $this->calculateReorderQuantity($product);
-            
+
             $suggestions[] = [
                 'product_id' => $product->id,
                 'product_name' => $product->name,
                 'sku' => $product->sku,
-                'current_stock' => $product->current_stock ?? 0,
+                'current_stock' => $product->stock_quantity ?? 0,
                 'min_stock' => $product->min_stock ?? 0,
                 'max_stock' => $product->max_stock ?? 0,
                 'reorder_point' => $product->reorder_point ?? 0,
                 'suggested_order_quantity' => $reorderQuantity,
-                'supplier_name' => $product->supplier?->name,
                 'estimated_cost' => ($product->cost ?? 0) * $reorderQuantity,
-                'lead_time_days' => $product->lead_time_days ?? $product->supplier?->lead_time_days ?? 7,
+                'lead_time_days' => $product->lead_time_days ?? 7,
                 'urgency' => $this->calculateUrgency($product),
             ];
         }
@@ -174,6 +172,7 @@ class WorkflowAutomationService
         // Sort by urgency
         usort($suggestions, function ($a, $b) {
             $urgencyOrder = ['critical' => 0, 'high' => 1, 'medium' => 2, 'low' => 3];
+
             return ($urgencyOrder[$a['urgency']] ?? 99) <=> ($urgencyOrder[$b['urgency']] ?? 99);
         });
 
@@ -185,23 +184,13 @@ class WorkflowAutomationService
      */
     protected function calculateReorderQuantity(Product $product): float
     {
-        $currentStock = $product->current_stock ?? 0;
+        $currentStock = $product->stock_quantity ?? 0;
         $maxStock = $product->max_stock ?? ($product->min_stock * 3);
         $minStock = $product->min_stock ?? 0;
         $unitCost = $product->cost ?? 0;
 
         // Simple reorder formula: order to max stock level
         $reorderQty = max($maxStock - $currentStock, 0);
-
-        // Ensure minimum order if supplier has one
-        $minOrderValue = $product->supplier?->minimum_order_value ?? 0;
-        if ($minOrderValue > 0 && $unitCost > 0) {
-            $totalCost = $reorderQty * $unitCost;
-
-            if ($totalCost < $minOrderValue) {
-                $reorderQty = (int) ceil($minOrderValue / $unitCost);
-            }
-        }
 
         return max($reorderQty, $minStock);
     }
@@ -211,9 +200,8 @@ class WorkflowAutomationService
      */
     protected function calculateUrgency(Product $product): string
     {
-        $currentStock = $product->current_stock ?? 0;
+        $currentStock = $product->stock_quantity ?? 0;
         $minStock = $product->min_stock ?? 0;
-        $leadTimeDays = $product->lead_time_days ?? 7;
 
         // Calculate days of stock remaining based on average sales
         // For now, simplified urgency calculation

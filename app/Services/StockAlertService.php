@@ -17,13 +17,13 @@ class StockAlertService
     {
         return $this->handleServiceOperation(
             callback: function () use ($product, $warehouseId) {
-                if (! $product->track_stock_alerts || $product->min_stock_level <= 0) {
+                if (! $product->track_stock_alerts || $product->min_stock <= 0) {
                     return null;
                 }
 
                 $currentQty = $this->getCurrentStock($product, $warehouseId);
 
-                if ($currentQty >= $product->min_stock_level) {
+                if ($currentQty >= $product->min_stock) {
                     $this->resolveExistingAlerts($product, $warehouseId);
 
                     return null;
@@ -45,7 +45,7 @@ class StockAlertService
                     'branch_id' => $product->branch_id,
                     'warehouse_id' => $warehouseId,
                     'current_qty' => $currentQty,
-                    'min_qty' => $product->min_stock_level,
+                    'min_qty' => $product->min_stock,
                     'status' => 'active',
                 ]);
             },
@@ -62,7 +62,7 @@ class StockAlertService
                 $alerts = [];
 
                 $query = Product::where('track_stock_alerts', true)
-                    ->where('min_stock_level', '>', 0);
+                    ->where('min_stock', '>', 0);
 
                 if ($branchId) {
                     $query->where('branch_id', $branchId);

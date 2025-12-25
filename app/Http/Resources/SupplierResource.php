@@ -17,7 +17,7 @@ class SupplierResource extends JsonResource
     {
         return $value ? (float) $value : null;
     }
-    
+
     public function toArray(Request $request): array
     {
         return [
@@ -25,11 +25,10 @@ class SupplierResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
-            'company_name' => $this->company_name,
             'contact_person' => $this->contact_person,
+            'contact_person_phone' => $this->contact_person_phone,
+            'contact_person_email' => $this->contact_person_email,
             'address' => $this->address,
-            'city' => $this->city,
-            'country' => $this->country,
             'tax_number' => $this->tax_number,
             'payment_terms' => $this->payment_terms,
             'payment_due_days' => (int) ($this->payment_due_days ?? 30),
@@ -43,6 +42,7 @@ class SupplierResource extends JsonResource
             'service_rating' => $this->formatRating($this->service_rating),
             'last_purchase_date' => $this->last_purchase_date?->toIso8601String(),
             'is_active' => (bool) $this->is_active,
+            'is_approved' => (bool) $this->is_approved,
             'branch_id' => $this->branch_id,
             'branch' => $this->whenLoaded('branch', fn () => new BranchResource($this->branch)),
             'purchases_count' => $this->when(

@@ -13,14 +13,15 @@ class CustomerResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'uuid' => $this->uuid,
+            'code' => $this->code,
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
-            'phone2' => $this->phone2,
             'company' => $this->company,
-            'company_name' => $this->company_name,
-            'customer_type' => $this->customer_type,
             'address' => $this->address,
+            'billing_address' => $this->billing_address,
+            'shipping_address' => $this->shipping_address,
             'city' => $this->city,
             'country' => $this->country,
             'tax_number' => $this->tax_number,
@@ -36,13 +37,16 @@ class CustomerResource extends JsonResource
             'payment_terms_days' => (int) ($this->payment_terms_days ?? 30),
             'payment_due_days' => (int) ($this->payment_due_days ?? 30),
             'customer_group' => $this->customer_group,
+            'customer_tier' => $this->customer_tier,
             'preferred_payment_method' => $this->preferred_payment_method,
+            'preferred_currency' => $this->preferred_currency,
             'last_order_date' => $this->last_order_date?->toIso8601String(),
-            'current_balance' => $this->when(
+            'balance' => $this->when(
                 $request->user()?->can('customers.view-financial'),
-                (float) ($this->current_balance ?? 0.0)
+                (float) ($this->balance ?? 0.0)
             ),
-            'is_active' => (bool) $this->is_active,
+            'status' => $this->status,
+            'loyalty_points' => $this->loyalty_points,
             'branch_id' => $this->branch_id,
             'branch' => $this->whenLoaded('branch', fn () => new BranchResource($this->branch)),
             'sales_count' => $this->when(
@@ -50,8 +54,8 @@ class CustomerResource extends JsonResource
                 $this->whenCounted('sales')
             ),
             'total_purchases' => $this->when(
-                $request->user()?->can('customers.view-financial') && $this->relationLoaded('sales'),
-                fn () => (float) $this->sales->sum('grand_total')
+                $request->user()?->can('customers.view-financial'),
+                (float) ($this->total_purchases ?? 0.0)
             ),
             'notes' => $this->notes,
             'created_at' => $this->created_at?->toIso8601String(),
