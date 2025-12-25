@@ -38,17 +38,18 @@ class Form extends Component
      */
     public array $schema = [];
 
-    public function mount(?Branch $branch = null): void
+    public function mount(?int $branch = null): void
     {
         $user = Auth::user();
 
         // Check appropriate permission based on create/edit mode
-        $requiredPermission = $branch?->id ? 'branches.edit' : 'branches.create';
+        $requiredPermission = $branch ? 'branches.edit' : 'branches.create';
         if (! $user || ! $user->can($requiredPermission)) {
             abort(403, __('Unauthorized access'));
         }
 
-        $this->branchId = $branch?->id;
+        $this->branchId = $branch;
+        $branchModel = $branch ? Branch::query()->findOrFail($branch) : null;
 
         // Get available timezones and currencies for dropdowns
         $timezones = \DateTimeZone::listIdentifiers();
@@ -63,15 +64,15 @@ class Form extends Component
             ['name' => 'currency',  'label' => __('Currency'),  'type' => 'select', 'options' => $currencies],
         ];
 
-        if ($branch) {
-            $this->form['name'] = $branch->name;
-            $this->form['code'] = $branch->code ?? '';
-            $this->form['address'] = $branch->address ?? '';
-            $this->form['phone'] = $branch->phone ?? '';
-            $this->form['timezone'] = $branch->timezone ?? config('app.timezone');
-            $this->form['currency'] = $branch->currency ?? 'EGP';
-            $this->form['is_active'] = (bool) $branch->is_active;
-            $this->form['is_main'] = (bool) $branch->is_main;
+        if ($branchModel) {
+            $this->form['name'] = $branchModel->name;
+            $this->form['code'] = $branchModel->code ?? '';
+            $this->form['address'] = $branchModel->address ?? '';
+            $this->form['phone'] = $branchModel->phone ?? '';
+            $this->form['timezone'] = $branchModel->timezone ?? config('app.timezone');
+            $this->form['currency'] = $branchModel->currency ?? 'EGP';
+            $this->form['is_active'] = (bool) $branchModel->is_active;
+            $this->form['is_main'] = (bool) $branchModel->is_main;
         } else {
             $this->form['timezone'] = config('app.timezone');
         }
