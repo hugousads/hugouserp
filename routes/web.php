@@ -1150,6 +1150,11 @@ Route::get('/app/media/{media}/download', \App\Http\Controllers\Admin\MediaDownl
             ->name('activity-log')
             ->middleware('can:logs.audit.view');
 
+        Route::get('/activity-log/{id}', \App\Livewire\Admin\ActivityLogShow::class)
+            ->name('activity-log.show')
+            ->middleware('can:logs.audit.view')
+            ->whereNumber('id');
+
         /*
         |--------------------------------------------------------------------------
         | Admin Reports

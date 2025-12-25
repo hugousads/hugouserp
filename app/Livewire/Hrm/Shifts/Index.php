@@ -20,6 +20,16 @@ class Index extends Component
     public ?string $status = null;
     public ?int $branchId = null;
 
+    protected array $daysOfWeek = [
+        'sunday' => 'Sunday',
+        'monday' => 'Monday',
+        'tuesday' => 'Tuesday',
+        'wednesday' => 'Wednesday',
+        'thursday' => 'Thursday',
+        'friday' => 'Friday',
+        'saturday' => 'Saturday',
+    ];
+
     public function mount(): void
     {
         $user = Auth::user();

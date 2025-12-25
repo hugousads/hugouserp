@@ -1,7 +1,7 @@
 <div>
     @section('page-header')
         <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100">{{ __('Bulk Import') }}</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ __('Import data from Excel or CSV files') }}</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ __('Import data from Excel, CSV files, or Google Sheets') }}</p>
     @endsection
 
     <div class="max-w-4xl mx-auto">
@@ -11,7 +11,7 @@
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     {{ __('Select Data Type to Import') }}
                 </label>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     @foreach($this->entities as $key => $entity)
                         <button
                             wire:click="$set('entityType', '{{ $key }}')"
@@ -54,7 +54,7 @@
             {{-- Step 1: Upload --}}
             <div class="p-6 space-y-6">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ __('Upload File') }}</h3>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ __('Import Source') }}</h3>
                     <button wire:click="downloadTemplate" class="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -63,6 +63,30 @@
                     </button>
                 </div>
 
+                {{-- Import Source Selection --}}
+                <div class="flex gap-4 p-1 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                    <button 
+                        wire:click="$set('importSource', 'file')"
+                        class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition {{ $importSource === 'file' ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}"
+                    >
+                        <svg class="w-5 h-5 inline-block me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        {{ __('Upload File') }}
+                    </button>
+                    <button 
+                        wire:click="$set('importSource', 'google_sheet')"
+                        class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition {{ $importSource === 'google_sheet' ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}"
+                    >
+                        <svg class="w-5 h-5 inline-block me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        {{ __('Google Sheets') }}
+                    </button>
+                </div>
+
+                @if($importSource === 'file')
+                {{-- File Upload --}}
                 <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center">
                     <input type="file" wire:model="importFile" accept=".csv,.xlsx,.xls" class="hidden" id="import-file-input">
                     <label for="import-file-input" class="cursor-pointer">
@@ -86,6 +110,47 @@
                     <span class="text-sm text-emerald-700 dark:text-emerald-300">{{ $importFile->getClientOriginalName() }}</span>
                 </div>
                 @endif
+                @else
+                {{-- Google Sheets URL Input --}}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Google Sheets URL') }}</label>
+                        <div class="flex gap-2">
+                            <input 
+                                type="url" 
+                                wire:model="googleSheetUrl" 
+                                placeholder="https://docs.google.com/spreadsheets/d/..."
+                                class="flex-1 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                            <button 
+                                wire:click="loadGoogleSheet" 
+                                wire:loading.attr="disabled"
+                                class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2"
+                            >
+                                <svg wire:loading wire:target="loadGoogleSheet" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                {{ __('Load Sheet') }}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <p class="text-sm text-blue-800 dark:text-blue-200">
+                            <strong>{{ __('Note:') }}</strong> {{ __('The Google Sheet must be shared with "Anyone with the link" to allow import.') }}
+                        </p>
+                    </div>
+                </div>
+
+                @if(!empty($previewData))
+                <div class="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="text-sm text-emerald-700 dark:text-emerald-300">{{ __('Google Sheet loaded successfully') }}</span>
+                </div>
+                @endif
+                @endif
 
                 <div class="space-y-3">
                     <label class="flex items-center gap-2 cursor-pointer">
@@ -94,7 +159,7 @@
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" wire:model="updateExisting" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
-                        <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('Update existing records') }}</span>
+                        <span class="text-sm text-slate-700 dark:text-slate-300">{{ __('Update existing records (match by unique fields)') }}</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" wire:model="skipDuplicates" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
@@ -109,6 +174,10 @@
                 <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                     <p class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">{{ __('Required columns:') }}</p>
                     <p class="text-sm text-blue-700 dark:text-blue-300">{{ implode(', ', $entityConfig['required_columns']) }}</p>
+                    @if(!empty($entityConfig['optional_columns']))
+                    <p class="text-sm font-medium text-blue-800 dark:text-blue-200 mt-3 mb-2">{{ __('Optional columns:') }}</p>
+                    <p class="text-sm text-blue-700 dark:text-blue-300">{{ implode(', ', $entityConfig['optional_columns']) }}</p>
+                    @endif
                 </div>
                 @endif
             </div>
