@@ -1,23 +1,23 @@
 <div class="space-y-6">
     @include('components.erp.breadcrumb', [
         'items' => [
-            ['label' => 'Notifications'],
-            ['label' => 'Center'],
+            ['label' => __('Notifications')],
+            ['label' => __('Center')],
         ],
     ])
 
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-50">
-                Notifications Center
+                {{ __('Notifications Center') }}
             </h1>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                All system notifications in one place (POS, Rental, HRM, ...).
+                {{ __('All system notifications in one place (POS, Rental, HRM, ...).') }}
             </p>
         </div>
         <div class="flex items-center space-x-3">
             <button wire:click="markAllAsRead" type="button" class="erp-btn-primary">
-                Mark all as read
+                {{ __('Mark all as read') }}
             </button>
         </div>
     </div>
@@ -32,7 +32,7 @@
                             @else
                                 bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700
                             @endif">
-                    All
+                    {{ __('All') }}
                 </button>
                 <button wire:click="$set('type','pos')"
                         class="px-3 py-1 rounded-full border text-xs
@@ -41,7 +41,7 @@
                             @else
                                 bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700
                             @endif">
-                    POS
+                    {{ __('POS') }}
                 </button>
                 <button wire:click="$set('type','rental')"
                         class="px-3 py-1 rounded-full border text-xs
@@ -50,7 +50,7 @@
                             @else
                                 bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700
                             @endif">
-                    Rental
+                    {{ __('Rental') }}
                 </button>
                 <button wire:click="$set('type','hr')"
                         class="px-3 py-1 rounded-full border text-xs
@@ -59,7 +59,7 @@
                             @else
                                 bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700
                             @endif">
-                    HRM
+                    {{ __('HRM') }}
                 </button>
             </div>
         </div>
@@ -92,7 +92,7 @@
                             @endif
                         </div>
                         <p class="mt-1 text-sm text-slate-900 dark:text-slate-50">
-                            {{ $data['message'] ?? 'Notification' }}
+                            {{ $data['message'] ?? __('Notification') }}
                         </p>
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
                             {{ $notification->created_at }}
@@ -103,9 +103,9 @@
                             <button wire:click="markAsRead('{{ $notification->id }}')"
                                     type="button"
                                     class="text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300">
-                                Mark read
+                                {{ __('Mark read') }}
                             </button>
-                        @endif>
+                        @endif
                     </div>
                 </div>
             @empty
