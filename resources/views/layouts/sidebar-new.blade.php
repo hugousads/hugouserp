@@ -426,7 +426,6 @@
                         ['route' => 'admin.logs.audit', 'label' => __('All Audit Logs'), 'permission' => 'logs.audit.view'],
                         ['route' => 'admin.activity-log', 'label' => __('Audit Activities'), 'permission' => 'logs.audit.view'],
                         ['route' => 'admin.login-activity', 'label' => __('Login Activity'), 'permission' => 'logs.login.view'],
-                        ['route' => 'admin.activity-log', 'label' => __('Activity Log'), 'permission' => 'logs.audit.view'],
                     ],
                 ],
             ],
