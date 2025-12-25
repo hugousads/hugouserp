@@ -256,13 +256,66 @@
                 </div>
 
             @elseif($activeTab === 'translations')
-                <div>
-                    <p class="text-gray-600 dark:text-gray-400 mb-4">{{ __('Translation management') }}</p>
-                    @if(class_exists('\App\Livewire\Admin\Settings\TranslationManager'))
-                        <livewire:admin.settings.translation-manager />
-                    @else
-                        <p class="text-red-600">{{ __('Translation manager component not available') }}</p>
-                    @endif
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ __('Translation Manager') }}</h3>
+                            <p class="text-gray-600 dark:text-gray-400">{{ __('Manage translations for Arabic and English languages') }}</p>
+                        </div>
+                        <a href="{{ route('admin.translations.index') }}" 
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                            </svg>
+                            {{ __('Open Translation Manager') }}
+                        </a>
+                    </div>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <a href="{{ route('admin.translations.index') }}" class="block p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-500 hover:shadow-md transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 dark:text-white">{{ __('View Translations') }}</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Browse all translations') }}</p>
+                                    </div>
+                                </div>
+                            </a>
+                            
+                            <a href="{{ route('admin.translations.create') }}" class="block p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-green-500 hover:shadow-md transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 dark:text-white">{{ __('Add Translation') }}</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Add new translation key') }}</p>
+                                    </div>
+                                </div>
+                            </a>
+                            
+                            <div class="block p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                                        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 dark:text-white">{{ __('Supported Languages') }}</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Arabic & English') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             @elseif($activeTab === 'security')
