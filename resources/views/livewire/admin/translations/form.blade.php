@@ -30,9 +30,11 @@
                             @if($isEdit) disabled @endif
                             class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white @if($isEdit) bg-gray-100 dark:bg-gray-600 cursor-not-allowed @endif">
                         @foreach($groups as $g)
-                            <option value="{{ $g }}">{{ ucfirst($g) }}</option>
+                            <option value="{{ $g }}">{{ ucfirst($g) }}{{ $g === 'app' ? ' (' . __('Default') . ')' : '' }}</option>
                         @endforeach
-                        <option value="app">App ({{ __('Default') }})</option>
+                        @if(!in_array('app', $groups))
+                            <option value="app">App ({{ __('Default') }})</option>
+                        @endif
                     </select>
                     @if(!$isEdit)
                         <input type="text" wire:model="group" 

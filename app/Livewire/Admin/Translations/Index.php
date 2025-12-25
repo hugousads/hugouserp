@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin\Translations;
 
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Livewire\Attributes\Layout;
@@ -160,6 +159,20 @@ class Index extends Component
     
     public function deleteTranslation($key, $group)
     {
+        // Security: Validate inputs
+        if (!is_string($key) || !is_string($group)) {
+            return;
+        }
+        
+        // Security: Validate group format to prevent path traversal
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $group)) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => __('Invalid group name.'),
+            ]);
+            return;
+        }
+        
         // Extract just the key without group prefix
         $keyParts = explode('.', $key);
         array_shift($keyParts); // Remove group prefix
@@ -177,7 +190,19 @@ class Index extends Component
     
     protected function removeFromFile($locale, $group, $key)
     {
+        // Security: Validate locale and group to prevent path traversal
+        if (!preg_match('/^[a-z]{2}$/', $locale) || !preg_match('/^[a-zA-Z0-9_-]+$/', $group)) {
+            return;
+        }
+        
         $filePath = lang_path("{$locale}/{$group}.php");
+        
+        // Security: Verify the file is within the lang directory
+        $realPath = realpath($filePath);
+        $langBasePath = realpath(lang_path());
+        if (!$realPath || !$langBasePath || !str_starts_with($realPath, $langBasePath)) {
+            return;
+        }
         
         if (!File::exists($filePath)) {
             return;

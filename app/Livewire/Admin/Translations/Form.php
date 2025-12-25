@@ -17,31 +17,25 @@ class Form extends Component
     public $isEdit = false;
     public $originalKey = '';
     
-    protected $queryString = ['key' => ['as' => 'translationKey'], 'group'];
-    
-    public function mount($key = null, $group = null)
+    public function mount()
     {
-        if ($key && $group) {
-            $this->isEdit = true;
-            $this->originalKey = $key;
-            $this->group = $group;
-            
-            // Load existing translation values
-            $this->loadTranslation($key, $group);
-        }
-        
         // Handle query string parameters for editing
         if (request()->has('key') && request()->has('group')) {
             $this->isEdit = true;
-            $this->originalKey = request()->get('key');
+            // URL decode the key since it's passed via URL
+            $this->originalKey = urldecode(request()->get('key'));
             $this->group = request()->get('group');
-            $this->translationKey = $this->originalKey;
             $this->loadTranslation($this->originalKey, $this->group);
         }
     }
     
     protected function loadTranslation($key, $group)
     {
+        // Security: Validate group to prevent path traversal
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $group)) {
+            return;
+        }
+        
         // Extract just the key without group prefix
         $keyWithoutGroup = $key;
         if (str_starts_with($key, $group . '.')) {
@@ -53,15 +47,25 @@ class Form extends Component
         // Load English value
         $enPath = lang_path("en/{$group}.php");
         if (File::exists($enPath)) {
-            $translations = include $enPath;
-            $this->valueEn = $this->getNestedValue($translations, $keyWithoutGroup) ?? '';
+            // Security: Verify the file is within the lang directory
+            $realPath = realpath($enPath);
+            $langBasePath = realpath(lang_path());
+            if ($realPath && $langBasePath && str_starts_with($realPath, $langBasePath)) {
+                $translations = include $enPath;
+                $this->valueEn = $this->getNestedValue($translations, $keyWithoutGroup) ?? '';
+            }
         }
         
         // Load Arabic value
         $arPath = lang_path("ar/{$group}.php");
         if (File::exists($arPath)) {
-            $translations = include $arPath;
-            $this->valueAr = $this->getNestedValue($translations, $keyWithoutGroup) ?? '';
+            // Security: Verify the file is within the lang directory
+            $realPath = realpath($arPath);
+            $langBasePath = realpath(lang_path());
+            if ($realPath && $langBasePath && str_starts_with($realPath, $langBasePath)) {
+                $translations = include $arPath;
+                $this->valueAr = $this->getNestedValue($translations, $keyWithoutGroup) ?? '';
+            }
         }
     }
     
@@ -139,9 +143,21 @@ class Form extends Component
     
     protected function translationExists($group, $key)
     {
+        // Security: Validate group to prevent path traversal
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $group)) {
+            return false;
+        }
+        
         $filePath = lang_path("en/{$group}.php");
         
         if (!File::exists($filePath)) {
+            return false;
+        }
+        
+        // Security: Verify the file is within the lang directory
+        $realPath = realpath($filePath);
+        $langBasePath = realpath(lang_path());
+        if (!$realPath || !$langBasePath || !str_starts_with($realPath, $langBasePath)) {
             return false;
         }
         
@@ -151,12 +167,22 @@ class Form extends Component
     
     protected function saveToFile($locale, $group, $key, $value)
     {
+        // Security: Validate locale and group to prevent path traversal
+        if (!preg_match('/^[a-z]{2}$/', $locale) || !preg_match('/^[a-zA-Z0-9_-]+$/', $group)) {
+            return;
+        }
+        
         $filePath = lang_path("{$locale}/{$group}.php");
         
         // Load existing translations or create empty array
         $translations = [];
         if (File::exists($filePath)) {
-            $translations = include $filePath;
+            // Security: Verify the file is within the lang directory before including
+            $realPath = realpath($filePath);
+            $langBasePath = realpath(lang_path());
+            if ($realPath && $langBasePath && str_starts_with($realPath, $langBasePath)) {
+                $translations = include $filePath;
+            }
         }
         
         // Sanitize the value to prevent code injection
