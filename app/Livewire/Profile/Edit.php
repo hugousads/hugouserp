@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -77,6 +78,35 @@ class Edit extends Component
         $this->reset(['current_password', 'password', 'password_confirmation']);
 
         session()->flash('success', __('Password updated successfully'));
+    }
+
+    #[On('file-uploaded')]
+    public function handleFileUploaded(string $fieldId, string $path, array $fileInfo): void
+    {
+        if ($fieldId === 'profile-avatar') {
+            $user = Auth::user();
+            
+            // Delete old avatar if exists
+            if ($this->currentAvatar) {
+                Storage::disk('public')->delete($this->currentAvatar);
+            }
+            
+            // Update user with new avatar path
+            $user->update([
+                'avatar' => $path,
+            ]);
+            
+            $this->currentAvatar = $path;
+            session()->flash('success', __('Avatar updated successfully'));
+        }
+    }
+
+    #[On('file-cleared')]
+    public function handleFileCleared(string $fieldId): void
+    {
+        if ($fieldId === 'profile-avatar') {
+            $this->removeAvatar();
+        }
     }
 
     public function updateAvatar(): void

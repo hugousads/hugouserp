@@ -53,7 +53,17 @@
 
             <div>
                 <label class="erp-label">{{ __('Attachment') }}</label>
-                <input type="file" wire:model="attachment" class="erp-input">
+                <livewire:components.media-picker 
+                    :file-path="$attachment"
+                    accept-mode="mixed"
+                    storage-scope="direct"
+                    storage-path="incomes"
+                    storage-disk="local"
+                    :max-size="5120"
+                    field-id="income-attachment"
+                    wire:key="income-attachment-{{ $attachment ?: 'empty' }}"
+                />
+                @error('attachment') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
             <div class="md:col-span-2">

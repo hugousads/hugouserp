@@ -198,7 +198,7 @@
                                 <p class="text-xs text-gray-500 mb-3">{{ __('Select your company logo from the Media Library. Recommended: max 400px width.') }}</p>
                                 <livewire:components.media-picker 
                                     :value="$branding_logo_id"
-                                    :accept-types="['image']"
+                                    accept-mode="image"
                                     :max-size="2048"
                                     field-id="branding-logo"
                                     wire:key="logo-picker-{{ $branding_logo_id ?: 'empty' }}"
@@ -210,7 +210,7 @@
                                 <p class="text-xs text-gray-500 mb-3">{{ __('Select your favicon from the Media Library. Recommended: 32x32 or 64x64 pixels.') }}</p>
                                 <livewire:components.media-picker 
                                     :value="$branding_favicon_id"
-                                    :accept-types="['image']"
+                                    accept-mode="image"
                                     :max-size="1024"
                                     field-id="branding-favicon"
                                     wire:key="favicon-picker-{{ $branding_favicon_id ?: 'empty' }}"

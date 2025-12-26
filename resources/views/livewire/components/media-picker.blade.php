@@ -32,10 +32,30 @@
                 </div>
             </div>
         @elseif($selectedMedia)
-            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                <svg class="h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                </svg>
+            {{-- File (non-image) preview --}}
+            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 max-w-xs">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded-lg">
+                    @php
+                        $ext = strtolower($selectedMedia['extension'] ?? pathinfo($previewName ?? '', PATHINFO_EXTENSION));
+                    @endphp
+                    @if(in_array($ext, ['pdf']))
+                        <svg class="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M9.5,16V18H8V16H9.5M11,18V16H11.5A1.5,1.5 0 0,0 13,14.5V14.5A1.5,1.5 0 0,0 11.5,13H10V18H11M15,18V13H16V18H15M11.5,14H11V15.5H11.5A0.5,0.5 0 0,0 12,15V14.5A0.5,0.5 0 0,0 11.5,14M13,9V3.5L18.5,9H13Z"/>
+                        </svg>
+                    @elseif(in_array($ext, ['doc', 'docx']))
+                        <svg class="h-6 w-6 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M15.2,20H13.8L12,13.2L10.2,20H8.8L6.6,11H8.1L9.5,17.8L11.3,11H12.6L14.4,17.8L15.8,11H17.3L15.2,20M13,9V3.5L18.5,9H13Z"/>
+                        </svg>
+                    @elseif(in_array($ext, ['xls', 'xlsx', 'csv']))
+                        <svg class="h-6 w-6 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M10,19H8V14H10V19M14,19H12V14H14V19M16,11H8V9H16V11M13,9V3.5L18.5,9H13Z"/>
+                        </svg>
+                    @else
+                        <svg class="h-6 w-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    @endif
+                </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ $previewName }}</p>
                     <p class="text-xs text-gray-500">{{ $selectedMedia['human_size'] ?? '' }}</p>
@@ -69,10 +89,22 @@
                 wire:click="openModal"
                 class="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
             >
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <span class="text-sm text-gray-600 dark:text-gray-400">{{ __('Select from Media Library') }}</span>
+                @if($acceptMode === 'image')
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ __('Select Image') }}</span>
+                @elseif($acceptMode === 'file')
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ __('Select File') }}</span>
+                @else
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ __('Select from Media Library') }}</span>
+                @endif
             </button>
         @endif
     </div>
@@ -96,7 +128,15 @@
             <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ __('Media Library') }}</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Select or upload a file') }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        @if($acceptMode === 'image')
+                            {{ __('Select or upload an image') }}
+                        @elseif($acceptMode === 'file')
+                            {{ __('Select or upload a document') }}
+                        @else
+                            {{ __('Select or upload a file') }}
+                        @endif
+                    </p>
                 </div>
                 <button 
                     type="button" 
@@ -122,7 +162,7 @@
             @endif
 
             {{-- Upload Section --}}
-            @can('media.upload')
+            @if($isDirectMode || auth()->user()?->can('media.upload'))
             <div class="px-6 pt-4">
                 <div 
                     class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-emerald-500 transition-colors cursor-pointer"
@@ -137,7 +177,7 @@
                         wire:model="uploadFile" 
                         class="hidden" 
                         id="media-upload-{{ $fieldId }}"
-                        accept="{{ implode(',', array_map(fn($ext) => '.' . $ext, $allowedExtensions)) }}"
+                        accept="{{ $acceptAttribute }}"
                     >
                     <label for="media-upload-{{ $fieldId }}" class="cursor-pointer block">
                         <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,7 +186,9 @@
                         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
                             {{ __('Click to upload or drag and drop') }}
                         </p>
-                        <p class="text-xs text-gray-500">{{ __('Max') }}: {{ round($maxSize / 1024, 1) }} MB</p>
+                        <p class="text-xs text-gray-500">
+                            {{ $allowedTypesDescription }} · {{ __('Max') }}: {{ round($maxSize / 1024, 1) }} MB
+                        </p>
                     </label>
                 </div>
                 <div wire:loading wire:target="uploadFile" class="mt-2 text-center">
@@ -159,7 +201,7 @@
                     </div>
                 </div>
             </div>
-            @endcan
+            @endif
 
             {{-- Search & Filter --}}
             <div class="px-6 py-3 flex gap-3">
@@ -167,11 +209,11 @@
                     <input 
                         type="text" 
                         wire:model.live.debounce.300ms="search" 
-                        placeholder="{{ __('Search...') }}"
+                        placeholder="{{ __('Search files...') }}"
                         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     >
                 </div>
-                @if(in_array('all', $acceptTypes) || (in_array('image', $acceptTypes) && in_array('document', $acceptTypes)))
+                @if($canSwitchFilter)
                 <select 
                     wire:model.live="filterType" 
                     class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
@@ -180,50 +222,101 @@
                     <option value="images">{{ __('Images') }}</option>
                     <option value="documents">{{ __('Documents') }}</option>
                 </select>
+                @else
+                {{-- Show disabled filter indicator for type-locked modes --}}
+                <div class="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 text-gray-500">
+                    @if($acceptMode === 'image')
+                        {{ __('Images Only') }}
+                    @elseif($acceptMode === 'file')
+                        {{ __('Documents Only') }}
+                    @endif
+                </div>
                 @endif
             </div>
 
             {{-- Media Grid --}}
             <div class="flex-1 overflow-y-auto px-6 pb-4">
-                <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                {{-- Loading skeleton --}}
+                <div wire:loading.delay wire:target="loadMedia, loadMore, loadExistingFiles" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                    @for($i = 0; $i < 10; $i++)
+                    <div class="aspect-square rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+                    @endfor
+                </div>
+
+                <div wire:loading.remove wire:target="loadMedia, loadMore, loadExistingFiles" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                     @forelse($media as $item)
                         <button
                             type="button"
-                            wire:click="selectMedia({{ $item->id }})"
+                            @if($isDirectMode && isset($item['path']))
+                                wire:click="selectFile('{{ $item['path'] }}')"
+                            @else
+                                wire:click="selectMedia({{ $item['id'] }})"
+                            @endif
                             class="group relative aspect-square rounded-lg overflow-hidden border-2 transition-all
-                                {{ $selectedMediaId === $item->id 
+                                {{ ($isDirectMode ? $selectedFilePath === ($item['path'] ?? '') : $selectedMediaId === $item['id'])
                                     ? 'border-emerald-500 ring-2 ring-emerald-500/30' 
                                     : 'border-gray-200 dark:border-gray-600 hover:border-emerald-400' }}"
                         >
-                            @if($item->isImage() && $item->thumbnail_path)
+                            @if($item['is_image'] && ($item['thumbnail_url'] ?? $item['url']))
                                 <img 
-                                    src="{{ $item->thumbnail_url }}" 
-                                    alt="{{ $item->name }}" 
+                                    src="{{ $item['thumbnail_url'] ?? $item['url'] }}" 
+                                    alt="{{ $item['name'] }}" 
                                     class="w-full h-full object-cover"
+                                    loading="lazy"
                                 >
-                            @elseif($item->isImage())
+                            @elseif($item['is_image'])
                                 <img 
-                                    src="{{ $item->url }}" 
-                                    alt="{{ $item->name }}" 
+                                    src="{{ $item['url'] }}" 
+                                    alt="{{ $item['name'] }}" 
                                     class="w-full h-full object-cover"
+                                    loading="lazy"
                                 >
                             @else
-                                <div class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-700">
-                                    <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                    </svg>
+                                {{-- File card view for non-images --}}
+                                <div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-700 p-2">
+                                    @php
+                                        $ext = strtolower($item['extension'] ?? '');
+                                    @endphp
+                                    @if(in_array($ext, ['pdf']))
+                                        <svg class="h-10 w-10 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M9.5,16V18H8V16H9.5M11,18V16H11.5A1.5,1.5 0 0,0 13,14.5V14.5A1.5,1.5 0 0,0 11.5,13H10V18H11M15,18V13H16V18H15M11.5,14H11V15.5H11.5A0.5,0.5 0 0,0 12,15V14.5A0.5,0.5 0 0,0 11.5,14M13,9V3.5L18.5,9H13Z"/>
+                                        </svg>
+                                    @elseif(in_array($ext, ['doc', 'docx']))
+                                        <svg class="h-10 w-10 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M15.2,20H13.8L12,13.2L10.2,20H8.8L6.6,11H8.1L9.5,17.8L11.3,11H12.6L14.4,17.8L15.8,11H17.3L15.2,20M13,9V3.5L18.5,9H13Z"/>
+                                        </svg>
+                                    @elseif(in_array($ext, ['xls', 'xlsx', 'csv']))
+                                        <svg class="h-10 w-10 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M10,19H8V14H10V19M14,19H12V14H14V19M16,11H8V9H16V11M13,9V3.5L18.5,9H13Z"/>
+                                        </svg>
+                                    @elseif(in_array($ext, ['ppt', 'pptx']))
+                                        <svg class="h-10 w-10 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M9.5,11.5C9.5,10.12 10.62,9 12,9C13.38,9 14.5,10.12 14.5,11.5C14.5,12.88 13.38,14 12,14H10V18H8V9H10V11.5H11C11,10.95 11.45,10.5 12,10.5C12.55,10.5 13,10.95 13,11.5C13,12.05 12.55,12.5 12,12.5H10V11.5H9.5M13,9V3.5L18.5,9H13Z"/>
+                                        </svg>
+                                    @else
+                                        <svg class="h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                        </svg>
+                                    @endif
+                                    <span class="text-xs text-gray-500 mt-1 uppercase">{{ $ext }}</span>
                                 </div>
                             @endif
                             
                             {{-- Overlay with info --}}
                             <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                                <p class="text-xs text-white truncate font-medium">{{ $item->original_name }}</p>
-                                <p class="text-xs text-gray-300">{{ $item->human_size }}</p>
+                                <p class="text-xs text-white truncate font-medium">{{ $item['original_name'] }}</p>
+                                <div class="flex items-center gap-2 text-xs text-gray-300">
+                                    <span>{{ $item['human_size'] }}</span>
+                                    @if($item['created_at'] ?? null)
+                                        <span>·</span>
+                                        <span>{{ $item['created_at'] }}</span>
+                                    @endif
+                                </div>
                             </div>
 
                             {{-- Selected checkmark --}}
-                            @if($selectedMediaId === $item->id)
-                                <div class="absolute top-2 right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                            @if(($isDirectMode ? $selectedFilePath === ($item['path'] ?? '') : $selectedMediaId === $item['id']))
+                                <div class="absolute top-2 right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg">
                                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                     </svg>
@@ -232,18 +325,46 @@
                         </button>
                     @empty
                         <div class="col-span-full text-center py-12">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            <p class="mt-2 text-sm text-gray-500">{{ __('No media files found') }}</p>
+                            @if($acceptMode === 'image')
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-500">{{ __('No images found') }}</p>
+                            @elseif($acceptMode === 'file')
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-500">{{ __('No documents found') }}</p>
+                            @else
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-500">{{ __('No media files found') }}</p>
+                            @endif
+                            <p class="mt-1 text-xs text-gray-400">{{ __('Upload a file to get started') }}</p>
                         </div>
                     @endforelse
                 </div>
 
-                {{-- Pagination --}}
-                @if($media instanceof \Illuminate\Pagination\LengthAwarePaginator && $media->hasPages())
-                    <div class="mt-4">
-                        {{ $media->links() }}
+                {{-- Load More Button (only for media mode) --}}
+                @if(!$isDirectMode && $hasMorePages)
+                    <div class="mt-6 text-center">
+                        <button 
+                            type="button"
+                            wire:click="loadMore"
+                            wire:loading.attr="disabled"
+                            wire:loading.class="opacity-50 cursor-wait"
+                            class="inline-flex items-center gap-2 px-6 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg transition"
+                        >
+                            <span wire:loading.remove wire:target="loadMore">{{ __('Load More') }}</span>
+                            <span wire:loading wire:target="loadMore" class="flex items-center gap-2">
+                                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                {{ __('Loading...') }}
+                            </span>
+                        </button>
                     </div>
                 @endif
             </div>

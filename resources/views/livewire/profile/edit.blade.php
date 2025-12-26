@@ -43,19 +43,16 @@
                     </div>
                     <div class="flex-1">
                         <label class="block text-sm font-medium text-slate-700 mb-2">{{ __('Profile Photo') }}</label>
-                        <div class="flex items-center gap-3">
-                            <input type="file" wire:model="avatar" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
-                            @if ($avatar)
-                                <button type="button" wire:click="updateAvatar" class="erp-btn-primary text-sm py-2">
-                                    {{ __('Upload') }}
-                                </button>
-                            @endif
-                            @if ($currentAvatar)
-                                <button type="button" wire:click="removeAvatar" class="text-red-600 text-sm hover:underline">
-                                    {{ __('Remove') }}
-                                </button>
-                            @endif
-                        </div>
+                        <livewire:components.media-picker 
+                            :file-path="$currentAvatar"
+                            accept-mode="image"
+                            storage-scope="direct"
+                            storage-path="avatars"
+                            storage-disk="public"
+                            :max-size="2048"
+                            field-id="profile-avatar"
+                            wire:key="profile-avatar-{{ $currentAvatar ?: 'empty' }}"
+                        />
                         @error('avatar') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>

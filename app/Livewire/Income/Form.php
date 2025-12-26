@@ -8,6 +8,7 @@ use App\Livewire\Concerns\HandlesErrors;
 use App\Models\Income;
 use App\Models\IncomeCategory;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -33,7 +34,8 @@ class Form extends Component
 
     public string $description = '';
 
-    public $attachment;
+    // Changed from direct file upload to path-based selection
+    public ?string $attachment = null;
 
     protected function rules(): array
     {
@@ -44,7 +46,7 @@ class Form extends Component
             'amount' => 'required|numeric|min:0',
             'payment_method' => 'nullable|string|max:50',
             'description' => 'nullable|string',
-            'attachment' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,csv,txt|mimetypes:image/jpeg,image/png,image/gif,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/csv,text/plain',
+            'attachment' => 'nullable|string|max:500',
         ];
     }
 
@@ -69,6 +71,23 @@ class Form extends Component
             $this->amount = (float) $income->amount;
             $this->payment_method = $income->payment_method ?? 'cash';
             $this->description = $income->description ?? '';
+            $this->attachment = $income->attachment ?? null;
+        }
+    }
+    
+    #[On('file-uploaded')]
+    public function handleFileUploaded(string $fieldId, string $path, array $fileInfo): void
+    {
+        if ($fieldId === 'income-attachment') {
+            $this->attachment = $path;
+        }
+    }
+    
+    #[On('file-cleared')]
+    public function handleFileCleared(string $fieldId): void
+    {
+        if ($fieldId === 'income-attachment') {
+            $this->attachment = null;
         }
     }
 
@@ -89,10 +108,6 @@ class Form extends Component
 
         $validated['branch_id'] = $this->income?->branch_id ?? $branchId;
         $validated['created_by'] = auth()->id();
-
-        if ($this->attachment) {
-            $validated['attachment'] = $this->attachment->store('incomes', 'local');
-        }
 
         $this->handleOperation(
             operation: function () use ($validated) {

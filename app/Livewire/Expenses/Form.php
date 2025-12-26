@@ -8,6 +8,7 @@ use App\Livewire\Concerns\HandlesErrors;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -33,7 +34,8 @@ class Form extends Component
 
     public string $description = '';
 
-    public $attachment;
+    // Changed from direct file upload to path-based selection
+    public ?string $attachment = null;
 
     public bool $is_recurring = false;
 
@@ -48,7 +50,7 @@ class Form extends Component
             'amount' => 'required|numeric|min:0',
             'payment_method' => 'nullable|string|max:50',
             'description' => 'nullable|string',
-            'attachment' => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,csv,ppt,pptx|mimetypes:application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/csv',
+            'attachment' => 'nullable|string|max:500',
             'is_recurring' => 'boolean',
             'recurrence_interval' => 'nullable|string|max:50',
         ];
@@ -78,6 +80,23 @@ class Form extends Component
             $this->payment_method = $expense->payment_method ?? '';
             $this->description = $expense->description ?? '';
             $this->recurrence_interval = $expense->recurrence_interval ?? '';
+            $this->attachment = $expense->attachment ?? null;
+        }
+    }
+    
+    #[On('file-uploaded')]
+    public function handleFileUploaded(string $fieldId, string $path, array $fileInfo): void
+    {
+        if ($fieldId === 'expense-attachment') {
+            $this->attachment = $path;
+        }
+    }
+    
+    #[On('file-cleared')]
+    public function handleFileCleared(string $fieldId): void
+    {
+        if ($fieldId === 'expense-attachment') {
+            $this->attachment = null;
         }
     }
 
@@ -99,10 +118,6 @@ class Form extends Component
         $validated['branch_id'] = $branchId;
         $validated['reference_number'] = $validated['reference_number'] ?? 'EXP-'.now()->format('YmdHis').'-'.uniqid();
         $validated['created_by'] = auth()->id();
-
-        if ($this->attachment) {
-            $validated['attachment'] = $this->attachment->store('expenses', 'local');
-        }
 
         $this->handleOperation(
             operation: function () use ($validated) {
