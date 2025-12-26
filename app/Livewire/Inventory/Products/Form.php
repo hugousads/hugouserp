@@ -32,6 +32,9 @@ class Form extends Component
     public ?int $selectedModuleId = null;
 
     public $thumbnailFile;
+    
+    // Media Library integration for product image
+    public ?int $thumbnail_media_id = null;
 
     public array $form = [
         'name' => '',
@@ -270,6 +273,25 @@ class Form extends Component
     public function handleDynamicFormUpdated(array $data): void
     {
         $this->dynamicData = $data;
+    }
+    
+    #[On('media-selected')]
+    public function handleMediaSelected(string $fieldId, int $mediaId, array $media): void
+    {
+        if ($fieldId === 'product-thumbnail') {
+            $this->thumbnail_media_id = $mediaId;
+            // Store the URL in form['thumbnail'] for backward compatibility
+            $this->form['thumbnail'] = $media['url'] ?? '';
+        }
+    }
+
+    #[On('media-cleared')]
+    public function handleMediaCleared(string $fieldId): void
+    {
+        if ($fieldId === 'product-thumbnail') {
+            $this->thumbnail_media_id = null;
+            $this->form['thumbnail'] = '';
+        }
     }
 
     public function save(): void
