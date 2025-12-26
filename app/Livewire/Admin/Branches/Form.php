@@ -60,23 +60,11 @@ class Form extends Component
             
             // Fallback to common currencies if database is empty
             if (empty($currencies)) {
-                $currencies = [
-                    'EGP' => 'EGP',
-                    'USD' => 'USD',
-                    'EUR' => 'EUR',
-                    'GBP' => 'GBP',
-                    'SAR' => 'SAR',
-                ];
+                $currencies = $this->getDefaultCurrencies();
             }
-        } catch (\Exception $e) {
-            // Fallback if currencies table doesn't exist or has errors
-            $currencies = [
-                'EGP' => 'EGP',
-                'USD' => 'USD',
-                'EUR' => 'EUR',
-                'GBP' => 'GBP',
-                'SAR' => 'SAR',
-            ];
+        } catch (\Illuminate\Database\QueryException | \PDOException $e) {
+            // Fallback if currencies table doesn't exist or has database errors
+            $currencies = $this->getDefaultCurrencies();
         }
 
         $this->schema = [
@@ -161,6 +149,22 @@ class Form extends Component
                 : __('Branch created successfully.'),
             redirectRoute: 'admin.branches.index'
         );
+    }
+
+    /**
+     * Get default currencies as fallback when database is empty or unavailable
+     *
+     * @return array<string, string>
+     */
+    private function getDefaultCurrencies(): array
+    {
+        return [
+            'EGP' => 'EGP',
+            'USD' => 'USD',
+            'EUR' => 'EUR',
+            'GBP' => 'GBP',
+            'SAR' => 'SAR',
+        ];
     }
 
     public function render()

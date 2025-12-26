@@ -481,6 +481,8 @@
         searchQuery: '',
         searchResults: [],
         showSearchResults: false,
+        // Configuration constants
+        AUTO_SCROLL_DELAY_MS: 150,  // Delay to ensure DOM is fully rendered before auto-scrolling
         allMenuItems: @js(collect($filteredSections)->flatMap(function($section) use ($currentRoute) {
             // Define keyword mappings for bilingual search (English -> Arabic and vice versa)
             $keywordMappings = [
@@ -603,7 +605,7 @@
                             });
                         }
                     }
-                }, 150); // Increased delay to ensure DOM is fully rendered
+                }, this.AUTO_SCROLL_DELAY_MS); // Use configured delay constant
             });
         },
         toggle(key) {
