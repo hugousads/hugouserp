@@ -18,12 +18,8 @@ class CustomerResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
-            'company' => $this->company,
-            'address' => $this->address,
             'billing_address' => $this->billing_address,
             'shipping_address' => $this->shipping_address,
-            'city' => $this->city,
-            'country' => $this->country,
             'tax_number' => $this->tax_number,
             'credit_limit' => $this->when(
                 $request->user()?->can('customers.view-financial'),
@@ -34,13 +30,9 @@ class CustomerResource extends JsonResource
                 (float) ($this->discount_percentage ?? 0.0)
             ),
             'payment_terms' => $this->payment_terms,
-            'payment_terms_days' => (int) ($this->payment_terms_days ?? 30),
             'payment_due_days' => (int) ($this->payment_due_days ?? 30),
-            'customer_group' => $this->customer_group,
             'customer_tier' => $this->customer_tier,
-            'preferred_payment_method' => $this->preferred_payment_method,
             'preferred_currency' => $this->preferred_currency,
-            'last_order_date' => $this->last_order_date?->toIso8601String(),
             'balance' => $this->when(
                 $request->user()?->can('customers.view-financial'),
                 (float) ($this->balance ?? 0.0)

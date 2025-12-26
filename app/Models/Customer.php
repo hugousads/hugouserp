@@ -18,12 +18,9 @@ class Customer extends BaseModel
     protected $fillable = [
         'uuid', 'code', 'name', 'email', 'phone', 'tax_number',
         'billing_address', 'shipping_address', 'price_group_id',
-        'address', 'city', 'country', 'company', 'external_id',
         'status', 'notes', 'loyalty_points', 'customer_tier', 'tier_updated_at',
         'balance', 'credit_limit', 'total_purchases', 'discount_percentage',
-        'payment_terms', 'payment_due_days', 'payment_terms_days', 'preferred_currency',
-        'customer_group', 'preferred_payment_method', 'last_order_date',
-        'last_interaction_date', 'customer_source', 'lifetime_revenue',
+        'payment_terms', 'payment_due_days', 'preferred_currency',
         'website', 'fax', 'credit_hold', 'credit_hold_reason',
         'extra_attributes', 'branch_id', 'created_by', 'updated_by',
     ];
@@ -37,12 +34,8 @@ class Customer extends BaseModel
         'balance' => 'decimal:4',
         'credit_limit' => 'decimal:4',
         'total_purchases' => 'decimal:4',
-        'lifetime_revenue' => 'decimal:4',
         'discount_percentage' => 'decimal:4',
         'payment_due_days' => 'integer',
-        'payment_terms_days' => 'integer',
-        'last_order_date' => 'datetime',
-        'last_interaction_date' => 'datetime',
         'credit_hold' => 'boolean',
     ];
 

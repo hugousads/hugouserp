@@ -26,19 +26,7 @@ class Form extends Component
 
     public string $phone = '';
 
-    public string $phone2 = '';
-
-    public string $address = '';
-
-    public string $city = '';
-
-    public string $country = '';
-
     public string $tax_number = '';
-
-    public string $company_name = '';
-
-    public string $customer_type = 'individual';
 
     public float $credit_limit = 0;
 
@@ -48,13 +36,15 @@ class Form extends Component
 
     public string $payment_terms = '';
 
-    public int $payment_terms_days = 30;
+    public int $payment_due_days = 0;
 
-    public string $customer_group = '';
+    public string $preferred_currency = '';
 
-    public string $preferred_payment_method = '';
+    public string $billing_address = '';
 
-    public bool $is_active = true;
+    public string $shipping_address = '';
+
+    public string $status = 'active';
 
     private static array $customerColumns = [];
 
@@ -64,21 +54,16 @@ class Form extends Component
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
-            'phone2' => 'nullable|string|max:50',
-            'address' => 'nullable|string|max:500',
-            'city' => 'nullable|string|max:100',
-            'country' => 'nullable|string|max:100',
             'tax_number' => 'nullable|string|max:50',
-            'company_name' => 'nullable|string|max:255',
-            'customer_type' => 'required|in:individual,company',
             'credit_limit' => 'nullable|numeric|min:0',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'payment_terms' => 'nullable|in:immediate,net15,net30,net60,net90',
-            'payment_terms_days' => 'nullable|integer|min:0',
-            'customer_group' => 'nullable|string|max:191',
-            'preferred_payment_method' => 'nullable|string|max:191',
+            'payment_due_days' => 'nullable|integer|min:0',
+            'preferred_currency' => 'nullable|string|size:3',
+            'billing_address' => 'nullable|string|max:500',
+            'shipping_address' => 'nullable|string|max:500',
+            'status' => 'required|in:active,inactive',
             'notes' => 'nullable|string',
-            'is_active' => 'boolean',
         ];
     }
 
@@ -98,21 +83,16 @@ class Form extends Component
             $this->name = $customer->name ?? '';
             $this->email = $customer->email ?? '';
             $this->phone = $customer->phone ?? '';
-            $this->phone2 = $customer->phone2 ?? '';
-            $this->address = $customer->address ?? '';
-            $this->city = $customer->city ?? '';
-            $this->country = $customer->country ?? '';
             $this->tax_number = $customer->tax_number ?? '';
-            $this->company_name = $customer->company_name ?? '';
-            $this->customer_type = $customer->customer_type ?? 'individual';
             $this->credit_limit = (float) ($customer->credit_limit ?? 0);
             $this->discount_percentage = (float) ($customer->discount_percentage ?? 0);
             $this->payment_terms = $customer->payment_terms ?? '';
-            $this->payment_terms_days = (int) ($customer->payment_terms_days ?? 30);
-            $this->customer_group = $customer->customer_group ?? '';
-            $this->preferred_payment_method = $customer->preferred_payment_method ?? '';
+            $this->payment_due_days = (int) ($customer->payment_due_days ?? 0);
+            $this->preferred_currency = $customer->preferred_currency ?? '';
+            $this->billing_address = $customer->billing_address ?? '';
+            $this->shipping_address = $customer->shipping_address ?? '';
+            $this->status = $customer->status ?? 'active';
             $this->notes = $customer->notes ?? '';
-            $this->is_active = (bool) ($customer->is_active ?? true);
         } else {
             $this->authorize('customers.manage');
         }
@@ -129,9 +109,12 @@ class Form extends Component
         if (! $branchId && ! $this->isSuperAdmin($user)) {
             abort(403);
         }
-        
+
         $validated['branch_id'] = $branchId;
-        
+
+        // Ensure status aligns with the database column
+        $validated['status'] = $validated['status'] ?? 'active';
+
         // Only set created_by for new records
         if (!$this->editMode) {
             $validated['created_by'] = auth()->id();

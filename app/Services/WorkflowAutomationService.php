@@ -106,7 +106,7 @@ class WorkflowAutomationService
         return [
             'customer_id' => $customer->id,
             'customer_name' => $customer->name,
-            'payment_terms_days' => $customer->payment_terms_days ?? 30,
+            'payment_due_days' => $customer->payment_due_days ?? 30,
             'credit_limit' => $customer->credit_limit ?? 0,
             'avg_payment_delay' => 0, // Would be calculated from actual payments
             'total_outstanding' => 0, // Would be calculated from unpaid invoices

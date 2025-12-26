@@ -35,7 +35,6 @@ class CustomerUpdateRequest extends FormRequest
             'notes' => ['sometimes', 'nullable', 'string'],
         ],
         $this->paymentTermsRules(false),
-        $this->paymentTermsDaysRules(false),
         $this->paymentDueDaysRules(false)
         );
     }

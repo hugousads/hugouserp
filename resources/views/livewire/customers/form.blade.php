@@ -19,14 +19,6 @@
             </div>
 
             <div>
-                <label class="erp-label">{{ __('Customer Type') }}</label>
-                <select wire:model="customer_type" class="erp-input">
-                    <option value="individual">{{ __('Individual') }}</option>
-                    <option value="company">{{ __('Company') }}</option>
-                </select>
-            </div>
-
-            <div>
                 <label class="erp-label">{{ __('Email') }}</label>
                 <input type="email" wire:model="email" class="erp-input @error('email') border-red-500 @enderror">
                 @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
@@ -38,18 +30,18 @@
             </div>
 
             <div>
-                <label class="erp-label">{{ __('Phone 2') }}</label>
-                <input type="text" wire:model="phone2" dir="ltr" class="erp-input">
-            </div>
-
-            <div>
-                <label class="erp-label">{{ __('Company Name') }}</label>
-                <input type="text" wire:model="company_name" class="erp-input">
-            </div>
-
-            <div>
                 <label class="erp-label">{{ __('Tax Number') }}</label>
                 <input type="text" wire:model="tax_number" class="erp-input">
+            </div>
+
+            <div>
+                <label class="erp-label">{{ __('Billing Address') }}</label>
+                <textarea wire:model="billing_address" rows="2" class="erp-input"></textarea>
+            </div>
+
+            <div>
+                <label class="erp-label">{{ __('Shipping Address') }}</label>
+                <textarea wire:model="shipping_address" rows="2" class="erp-input"></textarea>
             </div>
 
             <div>
@@ -58,28 +50,43 @@
             </div>
 
             <div>
-                <label class="erp-label">{{ __('City') }}</label>
-                <input type="text" wire:model="city" class="erp-input">
+                <label class="erp-label">{{ __('Discount Percentage') }}</label>
+                <input type="number" wire:model="discount_percentage" step="0.01" min="0" max="100" class="erp-input">
             </div>
 
             <div>
-                <label class="erp-label">{{ __('Country') }}</label>
-                <input type="text" wire:model="country" class="erp-input">
+                <label class="erp-label">{{ __('Payment Terms') }}</label>
+                <select wire:model="payment_terms" class="erp-input">
+                    <option value="">{{ __('Select terms') }}</option>
+                    <option value="immediate">{{ __('Immediate') }}</option>
+                    <option value="net15">{{ __('Net 15') }}</option>
+                    <option value="net30">{{ __('Net 30') }}</option>
+                    <option value="net60">{{ __('Net 60') }}</option>
+                    <option value="net90">{{ __('Net 90') }}</option>
+                </select>
             </div>
 
-            <div class="md:col-span-2">
-                <label class="erp-label">{{ __('Address') }}</label>
-                <textarea wire:model="address" rows="2" class="erp-input"></textarea>
+            <div>
+                <label class="erp-label">{{ __('Payment Due Days') }}</label>
+                <input type="number" wire:model="payment_due_days" min="0" class="erp-input">
+            </div>
+
+            <div>
+                <label class="erp-label">{{ __('Preferred Currency') }}</label>
+                <input type="text" wire:model="preferred_currency" maxlength="3" class="erp-input">
+            </div>
+
+            <div>
+                <label class="erp-label">{{ __('Status') }}</label>
+                <select wire:model="status" class="erp-input">
+                    <option value="active">{{ __('Active') }}</option>
+                    <option value="inactive">{{ __('Inactive') }}</option>
+                </select>
             </div>
 
             <div class="md:col-span-2">
                 <label class="erp-label">{{ __('Notes') }}</label>
                 <textarea wire:model="notes" rows="3" class="erp-input"></textarea>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <input type="checkbox" wire:model="is_active" id="is_active" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
-                <label for="is_active" class="text-sm text-slate-700">{{ __('Active') }}</label>
             </div>
         </div>
 

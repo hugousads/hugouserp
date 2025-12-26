@@ -33,7 +33,6 @@ class CustomerStoreRequest extends FormRequest
             'notes' => ['nullable', 'string'],
         ],
         $this->paymentTermsRules(),
-        $this->paymentTermsDaysRules(),
         $this->paymentDueDaysRules()
         );
     }
