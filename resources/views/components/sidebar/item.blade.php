@@ -1,7 +1,9 @@
 @props(['route', 'icon' => null, 'label', 'badge' => null])
 
 @php
-$isActive = request()->routeIs($route) || request()->routeIs($route.'.*');
+// More precise route matching - only match exact route or direct children
+$currentRoute = request()->route()?->getName() ?? '';
+$isActive = $currentRoute === $route || str_starts_with($currentRoute, $route . '.');
 @endphp
 
 <li>

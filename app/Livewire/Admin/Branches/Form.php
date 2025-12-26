@@ -53,7 +53,31 @@ class Form extends Component
 
         // Get available timezones and currencies for dropdowns
         $timezones = \DateTimeZone::listIdentifiers();
-        $currencies = \App\Models\Currency::active()->ordered()->pluck('code', 'code')->toArray();
+        
+        // Get currencies with fallback if table is empty
+        try {
+            $currencies = \App\Models\Currency::active()->ordered()->pluck('code', 'code')->toArray();
+            
+            // Fallback to common currencies if database is empty
+            if (empty($currencies)) {
+                $currencies = [
+                    'EGP' => 'EGP',
+                    'USD' => 'USD',
+                    'EUR' => 'EUR',
+                    'GBP' => 'GBP',
+                    'SAR' => 'SAR',
+                ];
+            }
+        } catch (\Exception $e) {
+            // Fallback if currencies table doesn't exist or has errors
+            $currencies = [
+                'EGP' => 'EGP',
+                'USD' => 'USD',
+                'EUR' => 'EUR',
+                'GBP' => 'GBP',
+                'SAR' => 'SAR',
+            ];
+        }
 
         $this->schema = [
             ['name' => 'name',      'label' => __('Name'),      'type' => 'text'],

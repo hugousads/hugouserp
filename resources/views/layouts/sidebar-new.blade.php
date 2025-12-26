@@ -19,6 +19,7 @@
     $user = auth()->user();
 
     // Helper to check if route is active
+    // More precise matching to prevent multiple sections being active
     $isActive = function ($routes) use ($currentRoute) {
         $routes = (array) $routes;
         foreach ($routes as $route) {
@@ -26,12 +27,14 @@
                 continue;
             }
 
-            if (str_starts_with($currentRoute, $route)) {
+            // Exact match (highest priority)
+            if ($currentRoute === $route) {
                 return true;
             }
 
-            $baseRoute = Str::beforeLast($route, '.');
-            if ($baseRoute && str_starts_with($currentRoute, $baseRoute)) {
+            // Check if current route starts with this route (for children)
+            // But only if it's a proper child (has a dot after the route name)
+            if (str_starts_with($currentRoute, $route . '.')) {
                 return true;
             }
         }
@@ -577,17 +580,30 @@
             // Auto-scroll to active item after DOM is ready
             this.$nextTick(() => {
                 setTimeout(() => {
+                    // Find the active item (either parent or child)
                     const activeItem = this.$el.querySelector('.erp-sidebar-item.active, .erp-sidebar-subitem.active');
                     if (activeItem) {
                         const nav = this.$el.querySelector('.erp-sidebar-nav');
                         if (nav) {
+                            // Get the bounding rectangles
                             const navRect = nav.getBoundingClientRect();
                             const itemRect = activeItem.getBoundingClientRect();
+                            
+                            // Calculate the scroll position to center the active item
                             const scrollTop = nav.scrollTop + (itemRect.top - navRect.top) - (navRect.height / 2) + (itemRect.height / 2);
-                            nav.scrollTo({ top: scrollTop, behavior: 'smooth' });
+                            
+                            // Ensure the scroll position is within valid bounds
+                            const maxScroll = nav.scrollHeight - nav.clientHeight;
+                            const finalScrollTop = Math.max(0, Math.min(scrollTop, maxScroll));
+                            
+                            // Smooth scroll to the active item
+                            nav.scrollTo({ 
+                                top: finalScrollTop, 
+                                behavior: 'smooth' 
+                            });
                         }
                     }
-                }, 100);
+                }, 150); // Increased delay to ensure DOM is fully rendered
             });
         },
         toggle(key) {
@@ -810,8 +826,13 @@
                         @php
                             $itemKey = $section['key'] . '_' . $itemIndex;
                             $hasChildren = !empty($item['children']);
-                            $itemIsActive = $isActive($item['route']);
+                            
+                            // Check if any child is active (for parent highlighting)
                             $hasActiveChild = collect($item['children'] ?? [])->contains(fn($c) => $isActive($c['route']));
+                            
+                            // For items with children, only mark as active if a child is active
+                            // For items without children, mark as active if the route matches
+                            $itemIsActive = $hasChildren ? false : $isActive($item['route']);
                         @endphp
 
                         @if($hasChildren)
@@ -820,7 +841,7 @@
                                 <button 
                                     type="button"
                                     @click="toggle('{{ $itemKey }}')"
-                                    class="erp-sidebar-item w-full {{ $itemIsActive || $hasActiveChild ? 'active' : '' }}"
+                                    class="erp-sidebar-item w-full {{ $hasActiveChild ? 'active' : '' }}"
                                     :aria-expanded="isExpanded('{{ $itemKey }}')"
                                 >
                                     <span class="erp-sidebar-item-icon">
