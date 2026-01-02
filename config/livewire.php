@@ -10,7 +10,7 @@ return [
 
     'render_on_redirect' => false,
 
-    'inject_assets' => true,
+    'inject_assets' => false,
 
     'navigate' => [
         'show_progress_bar' => true,
