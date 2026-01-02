@@ -223,6 +223,186 @@ class TranslationCompletenessTest extends TestCase
     }
 
     /**
+     * Test that critical UI elements mentioned in issue have translations.
+     * These are specific strings that were reported as showing in wrong language.
+     */
+    public function test_critical_ui_elements_are_translated(): void
+    {
+        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
+        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+
+        // Critical strings mentioned in the issue that must be translated
+        $criticalStrings = [
+            'Position / title',
+            'Linked user (optional)',
+            'Not linked',
+            'Multi-Level BOM',
+            'POS Daily Report',
+            'New Return',
+            'Manage product returns and refunds',
+            'Business Modules',
+            'Contacts',
+            'Operations',
+            'Administration',
+            'Select...',
+            'No data found',
+            'No results found',
+        ];
+
+        $missing = [];
+        $untranslated = [];
+
+        foreach ($criticalStrings as $string) {
+            if (!isset($enJson[$string])) {
+                $missing[] = "$string (missing in EN)";
+            }
+            if (!isset($arJson[$string])) {
+                $missing[] = "$string (missing in AR)";
+            }
+            // Check if Arabic translation is different from English (i.e., actually translated)
+            if (isset($enJson[$string]) && isset($arJson[$string]) && $arJson[$string] === $enJson[$string]) {
+                $untranslated[] = $string;
+            }
+        }
+
+        $this->assertEmpty(
+            $missing,
+            'Critical UI strings missing: ' . implode(', ', $missing)
+        );
+
+        $this->assertEmpty(
+            $untranslated,
+            'Critical UI strings not translated to Arabic: ' . implode(', ', $untranslated)
+        );
+    }
+
+    /**
+     * Test that dropdown/select related strings are translated.
+     * Dropdowns are a common source of mixed-language UI.
+     */
+    public function test_dropdown_strings_are_translated(): void
+    {
+        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
+        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+
+        // Common dropdown-related strings
+        $dropdownStrings = [
+            'Select...',
+            'Please select',
+            'Select Option',
+            'Select All',
+            'Select One',
+            'None',
+            'All',
+            'Optional',
+            'Choose',
+        ];
+
+        foreach ($dropdownStrings as $string) {
+            if (isset($enJson[$string]) && isset($arJson[$string])) {
+                $this->assertNotEquals(
+                    $enJson[$string],
+                    $arJson[$string],
+                    "Dropdown string '$string' should be translated to Arabic"
+                );
+            }
+        }
+    }
+
+    /**
+     * Test that form-related strings are translated.
+     */
+    public function test_form_strings_are_translated(): void
+    {
+        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
+        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+
+        // Common form-related strings
+        $formStrings = [
+            'Save',
+            'Cancel',
+            'Submit',
+            'Reset',
+            'Required',
+            'Optional',
+            'Name',
+            'Email',
+            'Phone',
+            'Address',
+            'Description',
+            'Notes',
+        ];
+
+        $untranslated = [];
+
+        foreach ($formStrings as $string) {
+            if (isset($enJson[$string]) && isset($arJson[$string])) {
+                if ($arJson[$string] === $enJson[$string]) {
+                    $untranslated[] = $string;
+                }
+            }
+        }
+
+        $this->assertEmpty(
+            $untranslated,
+            'Form strings not translated to Arabic: ' . implode(', ', $untranslated)
+        );
+    }
+
+    /**
+     * Test that button/action strings are translated.
+     */
+    public function test_button_strings_are_translated(): void
+    {
+        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
+        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+
+        // Common button/action strings
+        $buttonStrings = [
+            'Add',
+            'Edit',
+            'Delete',
+            'Create',
+            'Update',
+            'Save',
+            'Cancel',
+            'Close',
+            'Confirm',
+            'Apply',
+            'Clear',
+            'Search',
+            'Filter',
+            'Export',
+            'Import',
+            'Print',
+            'Download',
+            'Upload',
+            'Refresh',
+            'Back',
+            'Next',
+            'Previous',
+            'Submit',
+            'View',
+            'New',
+        ];
+
+        $untranslated = [];
+
+        foreach ($buttonStrings as $string) {
+            if (isset($enJson[$string]) && isset($arJson[$string])) {
+                if ($arJson[$string] === $enJson[$string]) {
+                    $untranslated[] = $string;
+                }
+            }
+        }
+
+        $this->assertEmpty(
+            $untranslated,
+            'Button strings not translated to Arabic: ' . implode(', ', $untranslated)
+        );
+    }
+
+    /**
      * Check if a key represents a technical term that can be untranslated.
      */
     private function isTechnicalTerm(string $key): bool
