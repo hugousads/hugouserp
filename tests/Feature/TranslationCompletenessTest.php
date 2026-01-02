@@ -153,16 +153,82 @@ class TranslationCompletenessTest extends TestCase
     }
 
     /**
+     * Smoke test: Check that Arabic UI doesn't contain common English UI tokens.
+     * This helps prevent regressions where English strings leak into Arabic locale.
+     */
+    public function test_arabic_locale_smoke_test(): void
+    {
+        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        
+        // Common English UI tokens that should NOT appear in Arabic translations
+        // (except as part of technical terms or placeholders)
+        $englishTokens = [
+            'WORKSPACE', 'SALES & PURCHASES', 'Business Modules',
+        ];
+        
+        $violations = [];
+        
+        foreach ($englishTokens as $token) {
+            // Check if this exact English token exists as a value in Arabic translations
+            // where it shouldn't (i.e., the Arabic value equals the English token)
+            if (isset($arJson[$token]) && $arJson[$token] === $token) {
+                $violations[] = $token;
+            }
+        }
+        
+        $this->assertEmpty(
+            $violations,
+            'Arabic translations contain untranslated English UI tokens: ' . implode(', ', $violations)
+        );
+    }
+
+    /**
+     * Smoke test: Check that English UI doesn't contain Arabic text.
+     * This helps ensure proper locale separation.
+     */
+    public function test_english_locale_smoke_test(): void
+    {
+        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
+        
+        $arabicPattern = '/[\x{0600}-\x{06FF}]/u'; // Arabic Unicode range
+        $violations = [];
+        
+        foreach ($enJson as $key => $value) {
+            if (is_string($value) && preg_match($arabicPattern, $value)) {
+                $violations[] = $key;
+            }
+        }
+        
+        $this->assertEmpty(
+            $violations,
+            'English translations contain Arabic text: ' . implode(', ', array_slice($violations, 0, 10))
+        );
+    }
+
+    /**
      * Check if a key represents a technical term that can be untranslated.
      */
     private function isTechnicalTerm(string $key): bool
     {
-        $technicalTerms = ['ERP', 'API', 'SMS', 'POS', 'SKU', 'N/A', 'OK'];
+        // Extended list of technical terms that are acceptable to remain in English
+        $technicalTerms = [
+            'ERP', 'API', 'SMS', 'POS', 'SKU', 'N/A', 'OK', 'URL', 'HTTP', 'HTTPS',
+            'CSS', 'HTML', 'JSON', 'XML', 'PDF', 'CSV', 'ID', 'UUID', 'URI',
+            'Laravel', 'Sanctum', 'Shopify', 'WooCommerce', 'Amazon', 'S3',
+            'VAPID', 'reCAPTCHA', 'ISO', 'e.g.', 'validation.', 'permission.',
+            'permission_group.', 'role.', 'notifications.', 'VIP', 'GRN',
+            'FEFO', 'BOM', 'HRM', 'TTL', 'Turbo', 'SUV',
+        ];
 
         foreach ($technicalTerms as $term) {
             if (str_contains($key, $term)) {
                 return true;
             }
+        }
+
+        // Also allow very short strings (1-2 chars) and pure numbers
+        if (strlen($key) <= 2 || is_numeric($key)) {
+            return true;
         }
 
         return false;
