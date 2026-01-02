@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Expenses;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Livewire\Concerns\HandlesErrors;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
@@ -17,6 +18,7 @@ class Form extends Component
     use AuthorizesRequests;
     use HandlesErrors;
     use WithFileUploads;
+    use HasMultilingualValidation;
 
     public ?Expense $expense = null;
 

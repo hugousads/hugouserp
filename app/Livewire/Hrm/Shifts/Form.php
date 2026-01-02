@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Hrm\Shifts;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\Shift;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +14,7 @@ use Livewire\Component;
 class Form extends Component
 {
     use AuthorizesRequests;
+    use HasMultilingualValidation;
 
     public ?int $shiftId = null;
 

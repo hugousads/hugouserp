@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProjectTaskRequest extends FormRequest
 {
+    use HasMultilingualValidation;
+
     public function authorize(): bool
     {
         return $this->user()->can('projects.tasks.manage');
@@ -18,8 +21,8 @@ class ProjectTaskRequest extends FormRequest
         return [
             'project_id' => ['required', 'exists:projects,id'],
             'milestone_id' => ['nullable', 'exists:project_milestones,id'],
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'title' => $this->multilingualString(required: true, max: 255),
+            'description' => $this->unicodeText(required: false),
             'assigned_to' => ['nullable', 'exists:users,id'],
             'start_date' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],

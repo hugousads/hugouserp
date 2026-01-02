@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProjectUpdateRequest extends FormRequest
 {
+    use HasMultilingualValidation;
+
     public function authorize(): bool
     {
         return $this->user()->can('projects.edit');
@@ -19,8 +22,8 @@ class ProjectUpdateRequest extends FormRequest
 
         return [
             'code' => ['sometimes', 'required', 'string', 'max:50', 'unique:projects,code,' . $projectId],
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'name' => $this->multilingualString(required: false, max: 255), // 'sometimes' handled automatically
+            'description' => $this->unicodeText(required: false),
             'client_id' => ['nullable', 'exists:customers,id'],
             'manager_id' => ['sometimes', 'required', 'exists:users,id'],
             'start_date' => ['sometimes', 'required', 'date'],
