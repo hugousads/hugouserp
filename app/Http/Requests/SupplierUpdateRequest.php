@@ -22,10 +22,15 @@ class SupplierUpdateRequest extends FormRequest
 
         return array_merge([
             'name' => ['sometimes', 'string', 'max:255'],
+            'company_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'phone' => ['sometimes', 'string', 'max:100'],
             'email' => ['sometimes', 'nullable', 'email', 'max:190', 'unique:suppliers,email,'.$supplier?->id],
             'address' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'city' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'country' => ['sometimes', 'nullable', 'string', 'max:100'],
             'tax_number' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'contact_person' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
             // Financial fields
             'minimum_order_value' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             // Rating fields

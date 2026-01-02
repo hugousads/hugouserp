@@ -17,13 +17,13 @@ class Supplier extends BaseModel
     protected ?string $moduleKey = 'suppliers';
 
     protected $fillable = [
-        'branch_id', 'name', 'email', 'phone', 'address', 'tax_number', 'is_active',
+        'branch_id', 'name', 'company_name', 'email', 'phone', 'address', 'city', 'country', 'tax_number', 'is_active',
         'balance', 'total_purchases', 'average_lead_time_days',
         'payment_terms', 'payment_due_days', 'preferred_currency',
         'minimum_order_value', 'supplier_rating', 'last_purchase_date',
         'quality_rating', 'delivery_rating', 'service_rating', 'total_orders',
         'website', 'fax', 'contact_person', 'contact_person_phone', 'contact_person_email',
-        'is_approved', 'notes', 'extra_attributes',
+        'is_approved', 'notes', 'extra_attributes', 'created_by', 'updated_by',
     ];
 
     protected $casts = [

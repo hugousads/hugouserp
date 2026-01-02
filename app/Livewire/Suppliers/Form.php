@@ -126,7 +126,12 @@ class Form extends Component
     {
         $validated = $this->validate();
         $validated['branch_id'] = auth()->user()->branches()->first()?->id;
-        $validated['created_by'] = auth()->id();
+        
+        if ($this->editMode) {
+            $validated['updated_by'] = auth()->id();
+        } else {
+            $validated['created_by'] = auth()->id();
+        }
 
         $this->handleOperation(
             operation: function () use ($validated) {

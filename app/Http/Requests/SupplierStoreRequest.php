@@ -20,10 +20,15 @@ class SupplierStoreRequest extends FormRequest
     {
         return array_merge([
             'name' => ['required', 'string', 'max:255'],
+            'company_name' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:100'],
             'email' => ['nullable', 'email', 'max:190', 'unique:suppliers,email'],
             'address' => ['nullable', 'string', 'max:500'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'country' => ['nullable', 'string', 'max:100'],
             'tax_number' => ['nullable', 'string', 'max:100'],
+            'contact_person' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:2000'],
             // Financial fields
             'minimum_order_value' => ['nullable', 'numeric', 'min:0'],
             // Rating fields
