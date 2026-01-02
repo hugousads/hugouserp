@@ -41,7 +41,7 @@ class ExportSystemTest extends TestCase
     public function test_export_respects_locale_for_column_headers(): void
     {
         // Test that column headers are translated based on locale
-        $exportService = new ExportService();
+        $exportService = app(ExportService::class);
         
         // English locale
         app()->setLocale('en');
@@ -182,7 +182,7 @@ class ExportSystemTest extends TestCase
 
     public function test_export_service_handles_null_values(): void
     {
-        $exportService = new ExportService();
+        $exportService = app(ExportService::class);
         
         $data = collect([
             ['id' => 1, 'name' => 'Test', 'description' => null],
@@ -207,7 +207,7 @@ class ExportSystemTest extends TestCase
 
     public function test_csv_includes_utf8_bom_for_arabic(): void
     {
-        $exportService = new ExportService();
+        $exportService = app(ExportService::class);
         
         $data = collect([
             ['id' => 1, 'name' => 'منتج عربي'],

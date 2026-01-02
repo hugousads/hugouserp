@@ -352,12 +352,9 @@ class ExportService
         
         $html = '<!DOCTYPE html>';
         $html .= '<html dir="'.($isRtl ? 'rtl' : 'ltr').'" lang="'.$locale.'"><head><meta charset="UTF-8">';
+        // Note: DejaVu Sans is bundled with Dompdf and supports Unicode including Arabic
         $html .= '<style>
-            @font-face {
-                font-family: "DejaVu Sans";
-                src: url("'.resource_path('fonts/DejaVuSans.ttf').'") format("truetype");
-            }
-            * { font-family: "DejaVu Sans", "Arial Unicode MS", sans-serif; }
+            * { font-family: "DejaVu Sans", sans-serif; }
             body { 
                 font-size: 10px;
                 direction: '.($isRtl ? 'rtl' : 'ltr').';
