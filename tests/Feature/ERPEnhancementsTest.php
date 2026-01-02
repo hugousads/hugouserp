@@ -89,6 +89,20 @@ class ERPEnhancementsTest extends TestCase
     }
 
     /** @test */
+    public function quick_action_strings_are_translated_to_arabic()
+    {
+        $originalLocale = app()->getLocale();
+        app()->setLocale('ar');
+
+        $this->assertSame('بيع جديد / نقاط البيع', __('New Sale / POS'));
+        $this->assertSame('افتح نقطة البيع لعملية بيع جديدة', __('Open POS terminal for new sale'));
+        $this->assertSame('تقرير مبيعات اليوم', __("Today's Sales Report"));
+        $this->assertSame('إنشاء أمر شراء', __('Create Purchase Order'));
+
+        app()->setLocale($originalLocale);
+    }
+
+    /** @test */
     public function sale_status_enum_validates_transitions()
     {
         $draft = SaleStatus::DRAFT;
