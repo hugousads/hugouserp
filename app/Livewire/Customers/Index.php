@@ -161,6 +161,7 @@ class Index extends Component
                 'email',
                 'phone',
                 'billing_address',
+                'balance',
                 'customer_tier',
                 'created_at',
             ])

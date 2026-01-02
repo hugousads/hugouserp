@@ -62,8 +62,9 @@ class ExportService
                 'name' => __('Name'),
                 'email' => __('Email'),
                 'phone' => __('Phone'),
-                'address' => __('Address'),
+                'billing_address' => __('Address'),
                 'balance' => __('Balance'),
+                'customer_tier' => __('Customer Tier'),
                 'created_at' => __('Created At'),
             ],
             'suppliers' => [
@@ -259,7 +260,8 @@ class ExportService
                 $colIndex = 1;
                 foreach ($columns as $column) {
                     $label = $availableColumns[$column] ?? $column;
-                    $sheet->setCellValueByColumnAndRow($colIndex, $rowIndex, $label);
+                    $cellCoordinate = Coordinate::stringFromColumnIndex($colIndex).$rowIndex;
+                    $sheet->setCellValue($cellCoordinate, $label);
                     $colIndex++;
                 }
                 
@@ -278,7 +280,8 @@ class ExportService
                 $colIndex = 1;
                 foreach ($columns as $column) {
                     $value = $row[$column] ?? '';
-                    $sheet->setCellValueByColumnAndRow($colIndex, $rowIndex, $value);
+                    $cellCoordinate = Coordinate::stringFromColumnIndex($colIndex).$rowIndex;
+                    $sheet->setCellValue($cellCoordinate, $value);
                     $colIndex++;
                 }
                 $rowIndex++;
@@ -286,7 +289,8 @@ class ExportService
 
             // Auto-size columns for better readability
             foreach (range(1, count($columns)) as $col) {
-                $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
+                $colLetter = Coordinate::stringFromColumnIndex($col);
+                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
             }
 
             $filepath = storage_path("app/exports/{$filename}.xlsx");
@@ -342,19 +346,60 @@ class ExportService
 
     protected function exportToPdf(array $rows, array $columns, array $availableColumns, bool $includeHeaders, string $filename, array $options): string
     {
-        $html = '<html dir="'.(app()->getLocale() === 'ar' ? 'rtl' : 'ltr').'"><head><meta charset="UTF-8">';
+        $locale = app()->getLocale();
+        $isRtl = $locale === 'ar';
+        $textAlign = $isRtl ? 'right' : 'left';
+        
+        $html = '<!DOCTYPE html>';
+        $html .= '<html dir="'.($isRtl ? 'rtl' : 'ltr').'" lang="'.$locale.'"><head><meta charset="UTF-8">';
+        // Note: DejaVu Sans is bundled with Dompdf and supports Unicode including Arabic
         $html .= '<style>
-            body { font-family: DejaVu Sans, sans-serif; font-size: 10px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
-            th { background-color: #10b981; color: white; font-weight: bold; }
+            * { font-family: "DejaVu Sans", sans-serif; }
+            body { 
+                font-size: 10px;
+                direction: '.($isRtl ? 'rtl' : 'ltr').';
+                text-align: '.$textAlign.';
+            }
+            table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin-top: 10px; 
+                direction: '.($isRtl ? 'rtl' : 'ltr').';
+            }
+            th, td { 
+                border: 1px solid #ddd; 
+                padding: 6px 8px; 
+                text-align: '.$textAlign.'; 
+                vertical-align: middle;
+            }
+            th { 
+                background-color: #10b981; 
+                color: white; 
+                font-weight: bold; 
+            }
             tr:nth-child(even) { background-color: #f9f9f9; }
-            h1 { color: #10b981; font-size: 18px; }
+            h1 { 
+                color: #10b981; 
+                font-size: 18px;
+                text-align: '.$textAlign.';
+            }
+            .export-info {
+                font-size: 9px;
+                color: #666;
+                margin-bottom: 10px;
+                text-align: '.$textAlign.';
+            }
         </style></head><body>';
 
         if (! empty($options['title'])) {
             $html .= '<h1>'.htmlspecialchars($options['title']).'</h1>';
         }
+        
+        // Add export metadata
+        $html .= '<div class="export-info">';
+        $html .= htmlspecialchars(__('Exported on')).': '.now()->format('Y-m-d H:i:s');
+        $html .= ' | '.htmlspecialchars(__('Total records')).': '.count($rows);
+        $html .= '</div>';
 
         $html .= '<table><thead><tr>';
 
@@ -370,7 +415,12 @@ class ExportService
         foreach ($rows as $row) {
             $html .= '<tr>';
             foreach ($columns as $column) {
-                $html .= '<td>'.htmlspecialchars($row[$column] ?? '').'</td>';
+                $value = $row[$column] ?? '';
+                // Format dates nicely
+                if (preg_match('/^\d{4}-\d{2}-\d{2}/', (string) $value)) {
+                    $value = \Carbon\Carbon::parse($value)->format($options['date_format'] ?? 'Y-m-d');
+                }
+                $html .= '<td>'.htmlspecialchars((string) $value).'</td>';
             }
             $html .= '</tr>';
         }
@@ -384,7 +434,11 @@ class ExportService
         }
 
         if (class_exists(\Dompdf\Dompdf::class)) {
-            $dompdf = new \Dompdf\Dompdf;
+            $dompdf = new \Dompdf\Dompdf([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => false,
+                'defaultFont' => 'DejaVu Sans',
+            ]);
             $dompdf->loadHtml($html);
             $dompdf->setPaper('A4', 'landscape');
             $dompdf->render();

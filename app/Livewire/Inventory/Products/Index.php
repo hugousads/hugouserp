@@ -115,6 +115,7 @@ class Index extends Component
         $maxRows = is_numeric($this->exportMaxRows) ? (int) $this->exportMaxRows : 1000;
         $collection = collect();
 
+        // Use products.id to avoid ambiguous column name with joins
         $query->chunkById(500, function ($chunk) use (&$collection, $maxRows) {
             if ($collection->count() >= $maxRows) {
                 return false;
@@ -122,7 +123,7 @@ class Index extends Component
 
             $remaining = $maxRows - $collection->count();
             $collection = $collection->merge($chunk->take($remaining));
-        });
+        }, 'products.id', 'id');
 
         return $this->performExport('products', $collection, __('Products Export'));
     }

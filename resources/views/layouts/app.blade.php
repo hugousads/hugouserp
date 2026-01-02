@@ -21,18 +21,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    {{-- Turbo.js for SPA-like navigation (optional enhancement) --}}
-    <script type="module">
-        // Turbo.js loaded via CDN as optional enhancement
-        // If CDN fails, navigation falls back to standard page loads
-        try {
-            const turbo = await import('https://cdn.skypack.dev/@hotwired/turbo');
-            window.TurboLoaded = true;
-        } catch (e) {
-            console.info('Turbo.js not loaded, using standard navigation');
-            window.TurboLoaded = false;
-        }
-    </script>
+    {{-- Turbo.js is now loaded via Vite in app.js for proper SPA-like navigation --}}
 
     <style>
         * { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif !important; }

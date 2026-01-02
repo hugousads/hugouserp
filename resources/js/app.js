@@ -1,7 +1,18 @@
 import './bootstrap';
+import * as Turbo from '@hotwired/turbo';
 import { erpPosTerminal } from './pos';
 import Swal from 'sweetalert2';
 import Chart from 'chart.js/auto';
+
+// Initialize Turbo.js for SPA-like navigation
+try {
+    Turbo.start();
+    window.Turbo = Turbo;
+    window.TurboLoaded = true;
+} catch (e) {
+    console.warn('Turbo.js initialization failed:', e);
+    window.TurboLoaded = false;
+}
 
 window.erpPosTerminal = erpPosTerminal;
 window.Swal = Swal;

@@ -78,7 +78,8 @@ trait ExportsCsv
             // Set headers
             $col = 1;
             foreach ($headers as $header) {
-                $sheet->setCellValueByColumnAndRow($col, 1, $header);
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+                $sheet->setCellValue($colLetter.'1', $header);
                 $col++;
             }
 
@@ -95,7 +96,8 @@ trait ExportsCsv
                     $data = $rowMapper($row);
                     $col = 1;
                     foreach ($data as $value) {
-                        $sheet->setCellValueByColumnAndRow($col, $rowNum, is_scalar($value) ? $value : json_encode($value));
+                        $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+                        $sheet->setCellValue($colLetter.$rowNum, is_scalar($value) ? $value : json_encode($value));
                         $col++;
                     }
                     $rowNum++;
@@ -104,7 +106,8 @@ trait ExportsCsv
 
             // Auto-size columns
             foreach (range(1, count($headers)) as $col) {
-                $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
             }
 
             $writer = new Xlsx($spreadsheet);
