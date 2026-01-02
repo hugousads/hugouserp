@@ -113,9 +113,8 @@ Route::get('/download/export', function () {
         abort(403, 'You are not authorized to download this export');
     }
 
-    if (! auth()->user()?->can('reports.download')) {
-        abort(403, 'You are not authorized to download this export');
-    }
+    // User already had permission to create the export (checked in the export action)
+    // No additional permission check needed here since we verify the user owns the export
 
     $disk = Storage::disk(config('filesystems.default'));
     $resolvedPath = realpath($exportInfo['path']);

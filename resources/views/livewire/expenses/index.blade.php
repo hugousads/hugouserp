@@ -125,5 +125,10 @@
         <div class="mt-4">{{ $expenses->links() }}</div>
     </div>
 
-    <x-export-modal />
+    @if($showExportModal)
+        <x-export-modal 
+            :columns="$exportColumns" 
+            :selectedColumns="$selectedExportColumns"
+        />
+    @endif
 </div>

@@ -218,6 +218,10 @@
         <div class="mt-4">{{ $incomes->links() }}</div>
     </div>
     
-    {{-- Export Modal --}}
-    <x-export-modal />
+    @if($showExportModal)
+        <x-export-modal 
+            :columns="$exportColumns" 
+            :selectedColumns="$selectedExportColumns"
+        />
+    @endif
 </div>
