@@ -9,6 +9,11 @@ use Tests\TestCase;
 class TranslationCompletenessTest extends TestCase
 {
     /**
+     * Minimum required translation coverage percentage.
+     */
+    private const MIN_COVERAGE_PERCENT = 85.0;
+
+    /**
      * Test that all translation keys used in the app exist in both English and Arabic.
      */
     public function test_all_translation_keys_exist_in_both_languages(): void
@@ -63,13 +68,14 @@ class TranslationCompletenessTest extends TestCase
         $untranslatedCount = count($untranslated);
         $coverage = ($totalKeys - $untranslatedCount) / $totalKeys * 100;
 
-        // Require at least 85% coverage (allowing for technical strings and code snippets)
+        // Require minimum coverage (allowing for technical strings and code snippets)
         $this->assertGreaterThanOrEqual(
-            85.0,
+            self::MIN_COVERAGE_PERCENT,
             $coverage,
             sprintf(
-                'Arabic translation coverage is %.1f%% (below 85%%). Untranslated: %s',
+                'Arabic translation coverage is %.1f%% (below %.1f%%). Untranslated: %s',
                 $coverage,
+                self::MIN_COVERAGE_PERCENT,
                 implode(', ', array_slice($untranslated, 0, 10))
             )
         );
@@ -259,7 +265,8 @@ class TranslationCompletenessTest extends TestCase
         }
 
         // Allow strings that look like code examples or technical references
-        if (preg_match('/^[A-Z0-9_\-\.\/]+$/', $key)) {
+        // Note: Hyphen at end of character class to avoid range interpretation
+        if (preg_match('/^[A-Z0-9_.\/-]+$/', $key)) {
             return true;
         }
 
