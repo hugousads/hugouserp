@@ -14,12 +14,43 @@ class TranslationCompletenessTest extends TestCase
     private const MIN_COVERAGE_PERCENT = 85.0;
 
     /**
+     * Cached translation arrays.
+     */
+    private ?array $enJson = null;
+
+    private ?array $arJson = null;
+
+    /**
+     * Get English translations array.
+     */
+    private function getEnglishTranslations(): array
+    {
+        if ($this->enJson === null) {
+            $this->enJson = json_decode(file_get_contents(lang_path('en.json')), true);
+        }
+
+        return $this->enJson;
+    }
+
+    /**
+     * Get Arabic translations array.
+     */
+    private function getArabicTranslations(): array
+    {
+        if ($this->arJson === null) {
+            $this->arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        }
+
+        return $this->arJson;
+    }
+
+    /**
      * Test that all translation keys used in the app exist in both English and Arabic.
      */
     public function test_all_translation_keys_exist_in_both_languages(): void
     {
-        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
-        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        $enJson = $this->getEnglishTranslations();
+        $arJson = $this->getArabicTranslations();
 
         $this->assertIsArray($enJson, 'English JSON translations should be valid');
         $this->assertIsArray($arJson, 'Arabic JSON translations should be valid');
@@ -46,8 +77,8 @@ class TranslationCompletenessTest extends TestCase
      */
     public function test_arabic_translations_are_properly_translated(): void
     {
-        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
-        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        $enJson = $this->getEnglishTranslations();
+        $arJson = $this->getArabicTranslations();
 
         $untranslated = [];
 
@@ -94,8 +125,8 @@ class TranslationCompletenessTest extends TestCase
         // Check that all label attributes use translation
         preg_match_all('/label="([^"]+)"/', $content, $matches);
 
-        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
-        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        $enJson = $this->getEnglishTranslations();
+        $arJson = $this->getArabicTranslations();
 
         $missingLabels = [];
 
@@ -124,8 +155,8 @@ class TranslationCompletenessTest extends TestCase
         // Extract section headers
         preg_match_all("/__\('([^']+)'\)/", $content, $matches);
 
-        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
-        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        $enJson = $this->getEnglishTranslations();
+        $arJson = $this->getArabicTranslations();
 
         $missingHeaders = [];
 
@@ -152,8 +183,8 @@ class TranslationCompletenessTest extends TestCase
             'Settings', 'Reports', 'Users', 'Yes', 'No'
         ];
 
-        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
-        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        $enJson = $this->getEnglishTranslations();
+        $arJson = $this->getArabicTranslations();
 
         $missing = [];
 
@@ -175,7 +206,7 @@ class TranslationCompletenessTest extends TestCase
      */
     public function test_arabic_locale_smoke_test(): void
     {
-        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        $arJson = $this->getArabicTranslations();
         
         // Common English UI tokens that should NOT appear in Arabic translations
         // (except as part of technical terms or placeholders)
@@ -205,7 +236,7 @@ class TranslationCompletenessTest extends TestCase
      */
     public function test_english_locale_smoke_test(): void
     {
-        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
+        $enJson = $this->getEnglishTranslations();
         
         $arabicPattern = '/[\x{0600}-\x{06FF}]/u'; // Arabic Unicode range
         $violations = [];
@@ -228,8 +259,8 @@ class TranslationCompletenessTest extends TestCase
      */
     public function test_critical_ui_elements_are_translated(): void
     {
-        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
-        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        $enJson = $this->getEnglishTranslations();
+        $arJson = $this->getArabicTranslations();
 
         // Critical strings mentioned in the issue that must be translated
         $criticalStrings = [
@@ -282,8 +313,8 @@ class TranslationCompletenessTest extends TestCase
      */
     public function test_dropdown_strings_are_translated(): void
     {
-        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
-        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        $enJson = $this->getEnglishTranslations();
+        $arJson = $this->getArabicTranslations();
 
         // Common dropdown-related strings
         $dropdownStrings = [
@@ -314,8 +345,8 @@ class TranslationCompletenessTest extends TestCase
      */
     public function test_form_strings_are_translated(): void
     {
-        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
-        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        $enJson = $this->getEnglishTranslations();
+        $arJson = $this->getArabicTranslations();
 
         // Common form-related strings
         $formStrings = [
@@ -354,8 +385,8 @@ class TranslationCompletenessTest extends TestCase
      */
     public function test_button_strings_are_translated(): void
     {
-        $enJson = json_decode(file_get_contents(lang_path('en.json')), true);
-        $arJson = json_decode(file_get_contents(lang_path('ar.json')), true);
+        $enJson = $this->getEnglishTranslations();
+        $arJson = $this->getArabicTranslations();
 
         // Common button/action strings
         $buttonStrings = [

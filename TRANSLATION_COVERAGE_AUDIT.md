@@ -9,9 +9,20 @@ This document provides an audit of the translation coverage for the HugouERP sys
 | Metric | Value |
 |--------|-------|
 | **Total Translation Keys** | 4,794 |
-| **Translated Keys** | 4,406+ |
-| **Coverage Rate** | 91.91%+ |
+| **Translated Keys** | 4,788 |
+| **Coverage Rate** | 99.87% |
+| **Technical Terms (kept in English)** | 6 |
 | **Target** | 100% (no English in Arabic mode, no Arabic in English mode) |
+
+### Technical Terms Left Untranslated
+
+The following 6 strings are intentionally kept in English as they are technical terms, brand names, or internationally recognized acronyms:
+
+- `2. Laravel Sanctum` - Technical framework documentation
+- `Amazon S3` - Cloud service brand name
+- `SMS Misr` - SMS provider brand name
+- `SWIFT/BIC` - International banking code standard
+- Two truncated template strings
 
 ## Changes Made
 
