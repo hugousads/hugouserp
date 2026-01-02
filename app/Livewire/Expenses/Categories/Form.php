@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Expenses\Categories;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\ExpenseCategory;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
@@ -14,6 +15,7 @@ use Livewire\Component;
 class Form extends Component
 {
     use AuthorizesRequests;
+    use HasMultilingualValidation;
 
     public ?ExpenseCategory $category = null;
 
@@ -43,16 +45,16 @@ class Form extends Component
         $branchId = $this->category?->branch_id ?? auth()->user()?->branch_id;
 
         return [
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('expense_categories', 'name')
-                    ->where(fn ($query) => $query->where('branch_id', $branchId))
-                    ->ignore($this->category?->id),
-            ],
-            'nameAr' => 'nullable|string|max:255',
-            'description' => 'nullable|string|max:1000',
+            'name' => array_merge(
+                $this->multilingualString(required: true, max: 255),
+                [
+                    Rule::unique('expense_categories', 'name')
+                        ->where(fn ($query) => $query->where('branch_id', $branchId))
+                        ->ignore($this->category?->id),
+                ]
+            ),
+            'nameAr' => $this->multilingualString(required: false, max: 255),
+            'description' => $this->unicodeText(required: false, max: 1000),
             'isActive' => 'boolean',
         ];
     }

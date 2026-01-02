@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Manufacturing\WorkCenters;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\Branch;
 use App\Models\WorkCenter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -13,6 +14,7 @@ use Livewire\Component;
 class Form extends Component
 {
     use AuthorizesRequests;
+    use HasMultilingualValidation;
 
     public ?WorkCenter $workCenter = null;
 
@@ -40,9 +42,9 @@ class Form extends Component
 
         return [
             'code' => ['required', 'string', 'max:50', 'unique:work_centers,code,'.$workCenterId],
-            'name' => ['required', 'string', 'max:255'],
-            'name_ar' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:2000'],
+            'name' => $this->multilingualString(required: true, max: 255),
+            'name_ar' => $this->multilingualString(required: false, max: 255),
+            'description' => $this->unicodeText(required: false, max: 2000),
             'type' => ['required', 'in:manual,machine,assembly,quality_control,packaging'],
             'capacity_per_hour' => ['nullable', 'numeric', 'min:0'],
             'cost_per_hour' => ['required', 'numeric', 'min:0'],

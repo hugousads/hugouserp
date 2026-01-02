@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Helpdesk\Priorities;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\TicketPriority;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
@@ -12,6 +13,7 @@ use Livewire\Component;
 class Form extends Component
 {
     use AuthorizesRequests;
+    use HasMultilingualValidation;
 
     public ?int $priorityId = null;
 
@@ -51,8 +53,8 @@ class Form extends Component
     protected function rules(): array
     {
         return [
-            'name' => 'required|string|max:100',
-            'name_ar' => 'nullable|string|max:100',
+            'name' => $this->multilingualString(required: true, max: 100),
+            'name_ar' => $this->multilingualString(required: false, max: 100),
             'level' => 'required|integer|min:1|max:5',
             'color' => 'nullable|string|max:20',
             'response_time_minutes' => 'required|integer|min:1',

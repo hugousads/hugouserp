@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Modules\ProductFields;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\Module;
 use App\Models\ModuleProductField;
 use Livewire\Attributes\Layout;
@@ -11,6 +12,7 @@ use Livewire\Component;
 
 class Form extends Component
 {
+    use HasMultilingualValidation;
     public ?int $moduleId = null;
 
     public ?Module $module = null;
@@ -132,13 +134,13 @@ class Form extends Component
         return [
             'moduleId' => 'required|integer|exists:modules,id',
             'field_key' => $keyRule,
-            'field_label' => 'required|string|max:255',
-            'field_label_ar' => 'nullable|string|max:255',
+            'field_label' => $this->multilingualString(required: true, max: 255),
+            'field_label_ar' => $this->multilingualString(required: false, max: 255),
             'field_type' => 'required|string|in:'.implode(',', array_keys($this->fieldTypes)),
             'optionsText' => 'nullable|string',
-            'placeholder' => 'nullable|string|max:255',
-            'placeholder_ar' => 'nullable|string|max:255',
-            'default_value' => 'nullable|string|max:255',
+            'placeholder' => $this->multilingualString(required: false, max: 255),
+            'placeholder_ar' => $this->multilingualString(required: false, max: 255),
+            'default_value' => $this->unicodeText(required: false, max: 255),
             'validation_rules' => 'nullable|string|max:500',
             'is_required' => 'boolean',
             'is_searchable' => 'boolean',
@@ -147,7 +149,7 @@ class Form extends Component
             'show_in_form' => 'boolean',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
-            'field_group' => 'required|string|max:50',
+            'field_group' => $this->multilingualString(required: true, max: 50),
         ];
     }
 

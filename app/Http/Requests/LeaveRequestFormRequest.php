@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LeaveRequestFormRequest extends FormRequest
 {
+    use HasMultilingualValidation;
+
     public function authorize(): bool
     {
         return true; // Employees can create their own leave requests
@@ -20,7 +23,7 @@ class LeaveRequestFormRequest extends FormRequest
             'leave_type' => ['required', 'in:annual,sick,emergency,unpaid,maternity,paternity'],
             'start_date' => ['required', 'date', 'after_or_equal:today'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'reason' => ['required', 'string', 'min:10'],
+            'reason' => $this->unicodeText(required: true, min: 10),
             'attachment' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], // 5MB max
         ];
     }
