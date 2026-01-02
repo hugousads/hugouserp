@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Documents;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\Document;
 use App\Models\DocumentTag;
 use App\Services\DocumentService;
@@ -18,6 +19,7 @@ use Livewire\WithFileUploads;
 class Form extends Component
 {
     use AuthorizesRequests;
+    use HasMultilingualValidation;
     use WithFileUploads;
 
     public ?Document $document = null;
@@ -78,10 +80,10 @@ class Form extends Component
     {
         if ($this->isEdit) {
             $this->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'folder' => 'nullable|string|max:255',
-                'category' => 'nullable|string|max:100',
+                'title' => $this->multilingualString(required: true, max: 255),
+                'description' => $this->unicodeText(required: false),
+                'folder' => $this->multilingualString(required: false, max: 255),
+                'category' => $this->multilingualString(required: false, max: 100),
             ]);
 
             $this->document = $this->documentService->updateDocument($this->document, [
@@ -99,11 +101,11 @@ class Form extends Component
             $allowedMimeTypes = implode(',', DocumentService::ALLOWED_MIME_TYPES);
 
             $this->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
+                'title' => $this->multilingualString(required: true, max: 255),
+                'description' => $this->unicodeText(required: false),
                 'file' => "required|file|max:51200|mimes:{$allowedExtensions}|mimetypes:{$allowedMimeTypes}",
-                'folder' => 'nullable|string|max:255',
-                'category' => 'nullable|string|max:100',
+                'folder' => $this->multilingualString(required: false, max: 255),
+                'category' => $this->multilingualString(required: false, max: 100),
             ]);
 
             $this->document = $this->documentService->uploadDocument($this->file, [

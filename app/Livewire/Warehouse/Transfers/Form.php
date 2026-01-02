@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Warehouse\Transfers;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\Product;
 use App\Models\Transfer;
 use App\Models\TransferItem;
@@ -16,6 +17,7 @@ use Livewire\Component;
 class Form extends Component
 {
     use AuthorizesRequests;
+    use HasMultilingualValidation;
 
     public ?Transfer $transfer = null;
 
@@ -84,7 +86,7 @@ class Form extends Component
             'fromWarehouseId' => 'required|exists:warehouses,id',
             'toWarehouseId' => 'required|exists:warehouses,id|different:fromWarehouseId',
             'status' => 'required|in:pending,in_transit,completed,cancelled',
-            'note' => 'nullable|string',
+            'note' => $this->unicodeText(required: false),
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.qty' => 'required|numeric|min:0.01',

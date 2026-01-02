@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TicketReplyRequest extends FormRequest
 {
+    use HasMultilingualValidation;
+
     public function authorize(): bool
     {
         return $this->user()->can('helpdesk.reply');
@@ -16,7 +19,7 @@ class TicketReplyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'message' => ['required', 'string', 'min:1'],
+            'message' => $this->unicodeText(required: true, min: 1),
             'is_internal' => ['boolean'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:10240'], // 10MB max per file

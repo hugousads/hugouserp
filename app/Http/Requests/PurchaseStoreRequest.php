@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PurchaseStoreRequest extends FormRequest
 {
+    use HasMultilingualValidation;
+
     public function authorize(): bool
     {
         return $this->user()?->can('purchases.create') ?? false;
@@ -25,9 +28,9 @@ class PurchaseStoreRequest extends FormRequest
             // New tracking fields
             'expected_delivery_date' => ['nullable', 'date'],
             'actual_delivery_date' => ['nullable', 'date'],
-            'shipping_method' => ['nullable', 'string', 'max:191'],
-            'supplier_notes' => ['nullable', 'string', 'max:1000'],
-            'internal_notes' => ['nullable', 'string', 'max:1000'],
+            'shipping_method' => $this->multilingualString(required: false, max: 191),
+            'supplier_notes' => $this->unicodeText(required: false, max: 1000),
+            'internal_notes' => $this->unicodeText(required: false, max: 1000),
             // Payment fields
             'payment_status' => ['nullable', 'in:unpaid,partial,paid'],
             'payment_due_date' => ['nullable', 'date'],

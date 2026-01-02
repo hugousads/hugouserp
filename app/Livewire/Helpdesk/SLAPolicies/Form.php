@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Helpdesk\SLAPolicies;
 
+use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\TicketSLAPolicy;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
@@ -12,6 +13,7 @@ use Livewire\Component;
 class Form extends Component
 {
     use AuthorizesRequests;
+    use HasMultilingualValidation;
 
     public ?int $policyId = null;
 
@@ -63,8 +65,8 @@ class Form extends Component
     protected function rules(): array
     {
         $rules = [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'name' => $this->multilingualString(required: true, max: 255),
+            'description' => $this->unicodeText(required: false),
             'response_time_minutes' => 'required|integer|min:1',
             'resolution_time_minutes' => 'required|integer|min:1',
             'business_hours_only' => 'boolean',
