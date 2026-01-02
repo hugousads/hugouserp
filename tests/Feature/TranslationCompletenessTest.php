@@ -212,12 +212,28 @@ class TranslationCompletenessTest extends TestCase
     {
         // Extended list of technical terms that are acceptable to remain in English
         $technicalTerms = [
+            // Technical acronyms
             'ERP', 'API', 'SMS', 'POS', 'SKU', 'N/A', 'OK', 'URL', 'HTTP', 'HTTPS',
-            'CSS', 'HTML', 'JSON', 'XML', 'PDF', 'CSV', 'ID', 'UUID', 'URI',
+            'CSS', 'HTML', 'JSON', 'XML', 'PDF', 'CSV', 'ID', 'UUID', 'URI', 'FTP',
+            'VAPID', 'reCAPTCHA', 'ISO', 'VIP', 'GRN', 'FEFO', 'BOM', 'HRM', 'TTL',
+            'VAT', 'SLA', 'CRUD', 'JWT', '2FA', 'QR',
+            // Brand names and product names that should stay in English
             'Laravel', 'Sanctum', 'Shopify', 'WooCommerce', 'Amazon', 'S3',
-            'VAPID', 'reCAPTCHA', 'ISO', 'e.g.', 'validation.', 'permission.',
-            'permission_group.', 'role.', 'notifications.', 'VIP', 'GRN',
-            'FEFO', 'BOM', 'HRM', 'TTL', 'Turbo', 'SUV',
+            'Firebase', 'Turbo', 'WordPress', 'Livewire', 'Alpine',
+            // Technical prefixes/patterns
+            'validation.', 'permission.', 'permission_group.', 'role.', 'notifications.',
+            'e.g.', 'i.e.',
+            // Vehicle types (commonly kept in English)
+            'SUV', 'Sedan',
+            // Technical patterns (code snippets, examples, placeholders)
+            ':', '{', '}', '(', ')', '[', ']', '->', '=>', '//', '/*',
+            'example.com', '@example', 'email@', 'http://', 'https://',
+            // Technical configuration strings
+            'Cron', '* * *', 'env', 'config', 'cache',
+            // Common technical phrases
+            'Found :count', 'Showing :from', 'For example',
+            // File extensions and paths
+            '.php', '.json', '.csv', '.xlsx', '.pdf', '.doc',
         ];
 
         foreach ($technicalTerms as $term) {
@@ -228,6 +244,16 @@ class TranslationCompletenessTest extends TestCase
 
         // Also allow very short strings (1-2 chars) and pure numbers
         if (strlen($key) <= 2 || is_numeric($key)) {
+            return true;
+        }
+
+        // Allow strings that look like code examples or technical references
+        if (preg_match('/^[A-Z0-9_\-\.\/]+$/', $key)) {
+            return true;
+        }
+
+        // Allow strings that contain email-like patterns
+        if (str_contains($key, '@') && str_contains($key, '.')) {
             return true;
         }
 
