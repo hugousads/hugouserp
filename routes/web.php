@@ -103,36 +103,74 @@ Route::get('/csrf-token', function () {
 
 // Export download endpoint - handles file downloads from exports
 Route::get('/download/export', function () {
-    $exportInfo = session()->pull('export_file');
+    try {
+        logger()->info('Export download requested', [
+            'user_id' => auth()->id(),
+            'session_has_export' => session()->has('export_file'),
+        ]);
 
-    if (! $exportInfo || ! isset($exportInfo['path'], $exportInfo['name'], $exportInfo['user_id'])) {
-        abort(404, 'Export file not found or expired');
-    }
+        $exportInfo = session()->pull('export_file');
 
-    if ((int) $exportInfo['user_id'] !== auth()->id()) {
-        abort(403, 'You are not authorized to download this export');
-    }
-
-    // User already had permission to create the export (checked in the export action)
-    // No additional permission check needed here since we verify the user owns the export
-
-    $disk = Storage::disk(config('filesystems.default'));
-    $resolvedPath = realpath($exportInfo['path']);
-    $allowedBase = realpath($disk->path('exports')) ?: $disk->path('exports');
-
-    if (! $resolvedPath || ! Str::startsWith($resolvedPath, $allowedBase) || ! file_exists($resolvedPath)) {
-        abort(403, 'Invalid export path');
-    }
-
-    // Check if file is too old (older than 5 minutes)
-    if (isset($exportInfo['time']) && (now()->timestamp - $exportInfo['time']) > 300) {
-        if (file_exists($resolvedPath)) {
-            unlink($resolvedPath);
+        if (! $exportInfo || ! isset($exportInfo['path'], $exportInfo['name'], $exportInfo['user_id'])) {
+            logger()->warning('Export file not found in session', [
+                'export_info' => $exportInfo,
+                'user_id' => auth()->id(),
+            ]);
+            abort(404, 'Export file not found or expired');
         }
-        abort(410, 'Export file has expired');
-    }
 
-    return response()->download($resolvedPath, $exportInfo['name'])->deleteFileAfterSend(true);
+        if ((int) $exportInfo['user_id'] !== auth()->id()) {
+            logger()->warning('Unauthorized export download attempt', [
+                'file_user_id' => $exportInfo['user_id'],
+                'current_user_id' => auth()->id(),
+            ]);
+            abort(403, 'You are not authorized to download this export');
+        }
+
+        // User already had permission to create the export (checked in the export action)
+        // No additional permission check needed here since we verify the user owns the export
+
+        $disk = Storage::disk(config('filesystems.default'));
+        $resolvedPath = realpath($exportInfo['path']);
+        $allowedBase = realpath($disk->path('exports')) ?: $disk->path('exports');
+
+        logger()->info('Export path validation', [
+            'resolved_path' => $resolvedPath,
+            'allowed_base' => $allowedBase,
+            'file_exists' => file_exists($exportInfo['path']),
+        ]);
+
+        if (! $resolvedPath || ! Str::startsWith($resolvedPath, $allowedBase) || ! file_exists($resolvedPath)) {
+            logger()->error('Invalid export path', [
+                'resolved_path' => $resolvedPath,
+                'original_path' => $exportInfo['path'],
+                'allowed_base' => $allowedBase,
+            ]);
+            abort(403, 'Invalid export path');
+        }
+
+        // Check if file is too old (older than 5 minutes)
+        if (isset($exportInfo['time']) && (now()->timestamp - $exportInfo['time']) > 300) {
+            logger()->info('Export file expired', ['path' => $resolvedPath]);
+            if (file_exists($resolvedPath)) {
+                unlink($resolvedPath);
+            }
+            abort(410, 'Export file has expired');
+        }
+
+        logger()->info('Starting export download', [
+            'path' => $resolvedPath,
+            'name' => $exportInfo['name'],
+        ]);
+
+        return response()->download($resolvedPath, $exportInfo['name'])->deleteFileAfterSend(true);
+    } catch (\Exception $e) {
+        logger()->error('Export download failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        throw $e;
+    }
 })->middleware(['web', 'auth'])->name('download.export');
 
 /*

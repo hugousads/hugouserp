@@ -62,58 +62,84 @@ trait HasExport
             return null;
         }
 
-        $exportService = app(ExportService::class);
+        try {
+            $exportService = app(ExportService::class);
 
-        // Apply max rows limit if not 'all'
-        $collection = collect($data);
-        if ($this->exportMaxRows !== 'all' && is_numeric($this->exportMaxRows)) {
-            $collection = $collection->take((int) $this->exportMaxRows);
-        }
-
-        $exportData = $collection->map(function ($item) {
-            if (is_object($item) && method_exists($item, 'toArray')) {
-                $array = $item->toArray();
-            } elseif (is_object($item)) {
-                $array = get_object_vars($item);
-            } else {
-                $array = $item;
+            // Apply max rows limit if not 'all'
+            $collection = collect($data);
+            if ($this->exportMaxRows !== 'all' && is_numeric($this->exportMaxRows)) {
+                $collection = $collection->take((int) $this->exportMaxRows);
             }
 
-            return collect($this->selectedExportColumns)
-                ->mapWithKeys(fn ($col) => [$col => data_get($array, $col)])
-                ->toArray();
-        });
+            $exportData = $collection->map(function ($item) {
+                if (is_object($item) && method_exists($item, 'toArray')) {
+                    $array = $item->toArray();
+                } elseif (is_object($item)) {
+                    $array = get_object_vars($item);
+                } else {
+                    $array = $item;
+                }
 
-        $filename = $entityType.'_export_'.date('Y-m-d_His');
+                return collect($this->selectedExportColumns)
+                    ->mapWithKeys(fn ($col) => [$col => data_get($array, $col)])
+                    ->toArray();
+            });
 
-        $filepath = $exportService->export(
-            $exportData,
-            $this->selectedExportColumns,
-            $this->exportFormat,
-            [
-                'available_columns' => $this->exportColumns,
-                'title' => $title,
-                'filename' => $filename,
-                'date_format' => $this->exportDateFormat,
-                'include_headers' => $this->exportIncludeHeaders,
-            ]
-        );
+            $filename = $entityType.'_export_'.date('Y-m-d_His');
 
-        $this->closeExportModal();
+            $filepath = $exportService->export(
+                $exportData,
+                $this->selectedExportColumns,
+                $this->exportFormat,
+                [
+                    'available_columns' => $this->exportColumns,
+                    'title' => $title,
+                    'filename' => $filename,
+                    'date_format' => $this->exportDateFormat,
+                    'include_headers' => $this->exportIncludeHeaders,
+                ]
+            );
 
-        $downloadName = $filename.'.'.$this->exportFormat;
+            if (!$filepath || !file_exists($filepath)) {
+                throw new \RuntimeException('Export file was not created successfully');
+            }
 
-        // Store export info in session for download
-        session()->put('export_file', [
-            'path' => $filepath,
-            'name' => $downloadName,
-            'time' => now()->timestamp,
-            'user_id' => auth()->id(),
-        ]);
+            $this->closeExportModal();
 
-        // Use JavaScript to trigger download via a dedicated route
-        $this->dispatch('trigger-download', url: route('download.export'));
+            $downloadName = $filename.'.'.$this->exportFormat;
 
-        session()->flash('success', __('Export prepared. Download starting...'));
+            // Store export info in session for download
+            session()->put('export_file', [
+                'path' => $filepath,
+                'name' => $downloadName,
+                'time' => now()->timestamp,
+                'user_id' => auth()->id(),
+            ]);
+
+            // Log export session data for debugging
+            logger()->info('Export prepared', [
+                'entity_type' => $entityType,
+                'format' => $this->exportFormat,
+                'file_path' => $filepath,
+                'download_name' => $downloadName,
+                'user_id' => auth()->id(),
+            ]);
+
+            // Use JavaScript to trigger download via a dedicated route
+            $this->dispatch('trigger-download', url: route('download.export'));
+
+            session()->flash('success', __('Export prepared. Download starting...'));
+        } catch (\Exception $e) {
+            logger()->error('Export failed', [
+                'entity_type' => $entityType,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            session()->flash('error', __('Export failed: ') . $e->getMessage());
+            $this->closeExportModal();
+
+            return null;
+        }
     }
 }

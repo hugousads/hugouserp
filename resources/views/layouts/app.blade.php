@@ -299,22 +299,43 @@
     
     // Handle export downloads - triggered from Livewire components
     document.addEventListener('livewire:initialized', () => {
-        Livewire.on('trigger-download', (event) => {
-            const url = event.url || event[0]?.url || event[0];
+        Livewire.on('trigger-download', (params) => {
+            console.log('Export download event received:', params);
+            
+            // Extract URL from various possible formats
+            // Livewire v3 sends named parameters as object properties
+            let url = null;
+            if (typeof params === 'string') {
+                url = params;
+            } else if (params && typeof params === 'object') {
+                // Try different possible formats
+                url = params.url || params[0]?.url || params[0];
+            }
+            
+            console.log('Extracted URL:', url);
+            
             if (url) {
-                // Create hidden iframe to trigger download without page navigation
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.src = url;
-                document.body.appendChild(iframe);
+                // Create a temporary anchor element to trigger download
+                // This method is more reliable than iframe for downloads
+                const link = document.createElement('a');
+                link.href = url;
+                link.style.display = 'none';
+                link.download = ''; // Hint to browser that this is a download
+                document.body.appendChild(link);
                 
-                // Remove iframe after download starts (3 seconds for larger files)
-                const IFRAME_CLEANUP_DELAY = 3000;
+                // Trigger the download
+                link.click();
+                
+                // Clean up after a short delay
                 setTimeout(() => {
-                    if (document.body.contains(iframe)) {
-                        document.body.removeChild(iframe);
+                    if (document.body.contains(link)) {
+                        document.body.removeChild(link);
                     }
-                }, IFRAME_CLEANUP_DELAY);
+                }, 100);
+                
+                console.log('Export download triggered successfully');
+            } else {
+                console.error('No URL found in export download event:', params);
             }
         });
     });
