@@ -101,7 +101,7 @@ trait HasExport
             );
 
             if (!$filepath || !file_exists($filepath)) {
-                throw new \RuntimeException('Export file was not created successfully');
+                throw new \RuntimeException("Export file was not created successfully at expected path: {$filepath}");
             }
 
             $this->closeExportModal();

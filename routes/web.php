@@ -149,8 +149,9 @@ Route::get('/download/export', function () {
             abort(403, 'Invalid export path');
         }
 
-        // Check if file is too old (older than 5 minutes)
-        if (isset($exportInfo['time']) && (now()->timestamp - $exportInfo['time']) > 300) {
+        // Check if file is too old (expired after 5 minutes)
+        $exportExpirySeconds = 300; // 5 minutes
+        if (isset($exportInfo['time']) && (now()->timestamp - $exportInfo['time']) > $exportExpirySeconds) {
             logger()->info('Export file expired', ['path' => $resolvedPath]);
             if (file_exists($resolvedPath)) {
                 unlink($resolvedPath);

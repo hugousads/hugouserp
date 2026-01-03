@@ -108,7 +108,7 @@ class ExportDownloadAuthorizationTest extends TestCase
                 'export_file' => [
                     'path' => $path,
                     'name' => 'old.csv',
-                    'time' => now()->subMinutes(10)->timestamp, // 10 minutes old (expired)
+                    'time' => now()->subMinutes(6)->timestamp, // 6 minutes old (expired after 5 minutes)
                     'user_id' => $user->id,
                 ],
             ])

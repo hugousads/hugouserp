@@ -320,7 +320,7 @@
                 const link = document.createElement('a');
                 link.href = url;
                 link.style.display = 'none';
-                link.download = ''; // Hint to browser that this is a download
+                // Browser will use the filename from the Content-Disposition header
                 document.body.appendChild(link);
                 
                 // Trigger the download
