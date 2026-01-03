@@ -224,6 +224,64 @@ if (! function_exists('sanitize_svg_icon')) {
 
 // Polyfills for Laravel helper functions (offline environment support)
 
+if (! function_exists('first_accessible_route_for_user')) {
+    /**
+     * Get the first accessible route for a user based on their permissions.
+     * This is used for post-login redirects to determine where the user should land.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user
+     * @return string The route name of the first accessible module
+     */
+    function first_accessible_route_for_user(?\Illuminate\Contracts\Auth\Authenticatable $user = null): string
+    {
+        $user = $user ?? Auth::user();
+        
+        if ($user === null) {
+            return 'login';
+        }
+
+        // Define routes and their required permissions in priority order
+        // First match wins (dashboard is highest priority)
+        $routePermissions = [
+            'dashboard' => 'dashboard.view',
+            'pos.terminal' => 'pos.use',
+            'app.sales.index' => 'sales.view',
+            'app.purchases.index' => 'purchases.view',
+            'customers.index' => 'customers.view',
+            'suppliers.index' => 'suppliers.view',
+            'app.inventory.products.index' => 'inventory.products.view',
+            'app.warehouse.index' => 'warehouse.view',
+            'app.accounting.index' => 'accounting.view',
+            'app.expenses.index' => 'expenses.view',
+            'app.income.index' => 'income.view',
+            'app.banking.accounts.index' => 'banking.view',
+            'app.hrm.index' => 'hrm.employees.view',
+            'app.rental.index' => 'rental.units.view',
+            'app.manufacturing.index' => 'manufacturing.view',
+            'app.fixed-assets.index' => 'fixed-assets.view',
+            'app.projects.index' => 'projects.view',
+            'app.documents.index' => 'documents.view',
+            'app.helpdesk.index' => 'helpdesk.view',
+            'admin.users.index' => 'users.manage',
+            'admin.roles.index' => 'roles.manage',
+            'admin.branches.index' => 'branches.view',
+            'admin.settings' => 'settings.view',
+            'admin.modules.index' => 'modules.manage',
+            'admin.reports.index' => 'reports.view',
+            'admin.logs.audit' => 'logs.audit.view',
+        ];
+
+        foreach ($routePermissions as $route => $permission) {
+            if (\Illuminate\Support\Facades\Route::has($route) && $user->can($permission)) {
+                return $route;
+            }
+        }
+
+        // Fallback to profile if no other route is accessible
+        return 'profile.edit';
+    }
+}
+
 if (! function_exists('join_paths')) {
     /**
      * Join file paths with the appropriate directory separator.

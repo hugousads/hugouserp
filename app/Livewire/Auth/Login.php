@@ -97,13 +97,7 @@ class Login extends Component
 
     protected function getDefaultRedirectDestination(): string
     {
-        $dashboardPermission = config('screen_permissions.dashboard', 'dashboard.view');
-
-        if (Auth::user()?->can($dashboardPermission)) {
-            return route('dashboard');
-        }
-
-        return route('profile.edit');
+        return route(first_accessible_route_for_user(Auth::user()));
     }
 
     public function render()

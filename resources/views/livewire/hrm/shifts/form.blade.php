@@ -29,12 +29,28 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Name') }} *</label>
-                    <input type="text" wire:model="name" class="erp-input w-full" required>
+                    <input type="text" wire:model.live="name" class="erp-input w-full" required>
                     @error('name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Code') }} *</label>
-                    <input type="text" wire:model="code" class="erp-input w-full" required>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {{ __('Code') }} 
+                        <span class="text-xs text-slate-400 font-normal">{{ __('(auto-generated)') }}</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" wire:model="code" 
+                               class="erp-input flex-1 {{ !$overrideCode && !$shiftId ? 'bg-slate-50' : '' }}" 
+                               {{ !$overrideCode && !$shiftId ? 'readonly' : '' }}>
+                        @if(!$shiftId)
+                        <button type="button" wire:click="$toggle('overrideCode')" 
+                                class="px-2 py-2 text-xs text-slate-500 hover:text-slate-700 border border-slate-300 rounded-lg"
+                                title="{{ __('Edit code manually') }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                            </svg>
+                        </button>
+                        @endif
+                    </div>
                     @error('code') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
             </div>

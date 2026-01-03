@@ -22,13 +22,29 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Name') }} *</label>
-                    <input type="text" wire:model="name" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500">
+                    <input type="text" wire:model.live="name" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500">
                     @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Code') }}</label>
-                    <input type="text" wire:model="code" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500" placeholder="e.g. WH001">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ __('Code') }}
+                        <span class="text-xs text-gray-400 font-normal">{{ __('(auto-generated)') }}</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" wire:model="code" 
+                               class="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 {{ !$overrideCode && !$warehouseId ? 'bg-gray-50' : '' }}"
+                               {{ !$overrideCode && !$warehouseId ? 'readonly' : '' }}>
+                        @if(!$warehouseId)
+                        <button type="button" wire:click="$toggle('overrideCode')" 
+                                class="px-2 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg"
+                                title="{{ __('Edit code manually') }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                            </svg>
+                        </button>
+                        @endif
+                    </div>
                     @error('code') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 

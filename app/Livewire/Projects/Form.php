@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
@@ -39,6 +40,8 @@ class Form extends Component
     public ?string $notes = null;
     public ?string $currency = null;
 
+    public bool $overrideCode = false;
+
     public function mount(?int $id = null): void
     {
         $user = auth()->user();
@@ -63,10 +66,39 @@ class Form extends Component
                 'branch_id', 'name', 'code', 'description', 'client_id', 'project_manager_id',
                 'start_date', 'end_date', 'status', 'budget_amount', 'notes', 'currency',
             ]));
+            $this->overrideCode = true; // When editing, code is already set
         } else {
             $this->authorize('projects.create');
             $this->branch_id = $user?->branch_id;
         }
+    }
+
+    public function updatedName(): void
+    {
+        // Auto-generate code from name if not overriding and creating new
+        if (! $this->overrideCode && ! $this->projectId) {
+            $this->code = $this->generateCode();
+        }
+    }
+
+    protected function generateCode(): string
+    {
+        $prefix = 'PRJ';
+        $base = strtoupper(Str::slug(Str::limit($this->name, 10, ''), ''));
+        
+        if (empty($base)) {
+            $base = sprintf('%03d', Project::count() + 1);
+        }
+        
+        $code = $prefix . '-' . $base;
+        $counter = 1;
+
+        while (Project::where('code', $code)->where('id', '!=', $this->project?->id)->exists()) {
+            $code = $prefix . '-' . $base . $counter;
+            $counter++;
+        }
+
+        return $code;
     }
 
     /**
@@ -134,6 +166,11 @@ class Form extends Component
 
     public function save(): mixed
     {
+        // Auto-generate code if empty
+        if (empty($this->code)) {
+            $this->code = $this->generateCode();
+        }
+
         $this->start_date = $this->coerceDateInput($this->start_date);
         $this->end_date = $this->coerceDateInput($this->end_date);
         $this->validate();
