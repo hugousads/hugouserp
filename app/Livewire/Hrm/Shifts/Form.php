@@ -89,11 +89,11 @@ class Form extends Component
             $base = sprintf('%03d', Shift::count() + 1);
         }
         
-        $code = $prefix . $base;
+        $code = $prefix . '-' . $base;
         $counter = 1;
 
         while (Shift::where('code', $code)->where('id', '!=', $this->shiftId)->exists()) {
-            $code = $prefix . $base . $counter;
+            $code = $prefix . '-' . $base . $counter;
             $counter++;
         }
 

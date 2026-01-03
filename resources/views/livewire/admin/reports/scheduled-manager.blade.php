@@ -46,25 +46,7 @@
                                     @endif
                                 </td>
                                 <td class="px-3 py-1.5 text-[11px] text-slate-700">
-                                    @php
-                                        // Parse cron for human-readable display
-                                        $cronParts = explode(' ', $report->cron_expression);
-                                        $minute = $cronParts[0] ?? '0';
-                                        $hour = $cronParts[1] ?? '8';
-                                        $time = sprintf('%02d:%02d', (int)$hour, (int)$minute);
-                                        $dayOfWeek = $cronParts[4] ?? '*';
-                                        $dayOfMonth = $cronParts[2] ?? '*';
-                                        
-                                        if ($dayOfWeek !== '*' && $dayOfMonth === '*') {
-                                            $days = [__('Sunday'), __('Monday'), __('Tuesday'), __('Wednesday'), __('Thursday'), __('Friday'), __('Saturday')];
-                                            $scheduleText = __('Weekly') . ' - ' . ($days[(int)$dayOfWeek] ?? '') . ' ' . $time;
-                                        } elseif ($dayOfMonth !== '*') {
-                                            $scheduleText = __('Monthly') . ' - ' . __('Day') . ' ' . $dayOfMonth . ' ' . $time;
-                                        } else {
-                                            $scheduleText = __('Daily') . ' - ' . $time;
-                                        }
-                                    @endphp
-                                    {{ $scheduleText }}
+                                    {{ \App\Livewire\Admin\Reports\ScheduledReportsManager::formatCronExpression($report->cron_expression) }}
                                 </td>
                                 <td class="px-3 py-1.5 text-[11px] text-slate-700">
                                     {{ $report->recipient_email ?? $report->user?->email }}

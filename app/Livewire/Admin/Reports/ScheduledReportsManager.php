@@ -301,4 +301,31 @@ class ScheduledReportsManager extends Component
             ->get(['id', 'name', 'description', 'route_name', 'output_type'])
             ->toArray();
     }
+
+    /**
+     * Format a cron expression to human-readable text.
+     */
+    public static function formatCronExpression(string $cronExpression): string
+    {
+        $parts = explode(' ', $cronExpression);
+        if (count($parts) < 5) {
+            return $cronExpression;
+        }
+
+        $minute = $parts[0];
+        $hour = $parts[1];
+        $dayOfMonth = $parts[2];
+        $dayOfWeek = $parts[4];
+
+        $time = sprintf('%02d:%02d', (int) $hour, (int) $minute);
+        $days = [__('Sunday'), __('Monday'), __('Tuesday'), __('Wednesday'), __('Thursday'), __('Friday'), __('Saturday')];
+
+        if ($dayOfWeek !== '*' && $dayOfMonth === '*') {
+            return __('Weekly') . ' - ' . ($days[(int) $dayOfWeek] ?? '') . ' ' . $time;
+        } elseif ($dayOfMonth !== '*') {
+            return __('Monthly') . ' - ' . __('Day') . ' ' . $dayOfMonth . ' ' . $time;
+        }
+
+        return __('Daily') . ' - ' . $time;
+    }
 }
