@@ -231,4 +231,41 @@ class ExportModalTest extends TestCase
                 return is_array($selected) && !empty($selected);
             });
     }
+
+    /**
+     * Test that the export modal view renders columns correctly (not showing "No exportable columns configured")
+     */
+    public function test_export_modal_renders_columns_in_view(): void
+    {
+        Gate::define('suppliers.view', fn () => true);
+        
+        $branch = Branch::factory()->create();
+        $user = User::factory()->create(['branch_id' => $branch->id]);
+        $user->givePermissionTo('suppliers.view');
+
+        $component = Livewire::actingAs($user)
+            ->test(SuppliersIndex::class)
+            ->call('openExportModal')
+            ->assertSet('showExportModal', true);
+        
+        // Verify columns are populated in the Livewire component
+        $exportColumns = $component->get('exportColumns');
+        $this->assertIsArray($exportColumns);
+        $this->assertNotEmpty($exportColumns, 'exportColumns should not be empty');
+        $this->assertArrayHasKey('name', $exportColumns);
+        $this->assertArrayHasKey('email', $exportColumns);
+        $this->assertArrayHasKey('company_name', $exportColumns);
+        $this->assertGreaterThan(0, count($exportColumns), 'exportColumns count should be > 0');
+        
+        // Check that selected columns are initialized
+        $selectedColumns = $component->get('selectedExportColumns');
+        $this->assertIsArray($selectedColumns);
+        $this->assertNotEmpty($selectedColumns, 'selectedExportColumns should not be empty');
+        
+        // Verify that all columns are selected by default
+        $this->assertEquals(count($exportColumns), count($selectedColumns));
+        
+        // The "No exportable columns configured" message should NOT be present in rendered HTML
+        $component->assertDontSee('No exportable columns configured');
+    }
 }

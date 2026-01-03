@@ -127,6 +127,16 @@
     </div>
 
     @if($showExportModal)
-        <x-export-modal />
+        <x-export-modal 
+            :exportColumns="$exportColumns"
+            :selectedExportColumns="$selectedExportColumns"
+            :exportFormat="$exportFormat"
+            :exportDateFormat="$exportDateFormat"
+            :exportIncludeHeaders="$exportIncludeHeaders"
+            :exportRespectFilters="$exportRespectFilters"
+            :exportIncludeTotals="$exportIncludeTotals"
+            :exportMaxRows="$exportMaxRows"
+            :exportUseBackgroundJob="$exportUseBackgroundJob"
+        />
     @endif
 </div>

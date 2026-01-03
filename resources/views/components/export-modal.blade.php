@@ -1,40 +1,29 @@
 @props([
     'formats' => ['xlsx' => 'Excel', 'csv' => 'CSV', 'pdf' => 'PDF'],
+    'exportColumns' => [],
+    'selectedExportColumns' => [],
+    'exportFormat' => 'xlsx',
+    'exportDateFormat' => 'Y-m-d',
+    'exportIncludeHeaders' => true,
+    'exportRespectFilters' => true,
+    'exportIncludeTotals' => false,
+    'exportMaxRows' => 1000,
+    'exportUseBackgroundJob' => false,
 ])
 
-{{-- Use x-teleport to render modal at body level, escaping any parent overflow/stacking context --}}
-<template x-teleport="body">
+{{-- Modal - Non-blocking popup matching Media Picker pattern --}}
+<div 
+    class="fixed inset-0 pointer-events-none flex items-center justify-center p-4"
+    style="z-index: 9000;"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="export-modal-title"
+    @keydown.escape.window="$wire.closeExportModal()"
+>
+    {{-- Modal Content - Card Style matching Media Picker exactly --}}
     <div 
-        class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="export-modal-title"
-        x-data="{ show: true }"
-        x-show="show"
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        @keydown.escape.window="$wire.closeExportModal()"
-    >
-        {{-- Backdrop --}}
-        <div 
-            class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
-            wire:click="closeExportModal"
-            aria-hidden="true"
-        ></div>
-        {{-- Modal Content - Card Style matching Media Picker --}}
-        <div 
-            class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden border-2 border-emerald-500/30"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95"
-            @click.stop>
+        class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden pointer-events-auto border-2 border-emerald-500/30"
+        style="z-index: 9001;">
         {{-- Header (Sticky) --}}
         <div class="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
             <div>
@@ -229,4 +218,3 @@
         </div>
     </div>
 </div>
-</template>
