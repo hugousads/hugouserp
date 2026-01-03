@@ -6,14 +6,13 @@
     </label>
     <div class="relative">
         <select 
-            wire:model.live="selectedBranchId"
             wire:change="switchBranch($event.target.value)"
             class="w-full text-xs rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 
                    focus:border-emerald-500 focus:ring-emerald-500 pr-8 py-1.5"
         >
-            <option value="">{{ __('All Branches (Admin View)') }}</option>
+            <option value="" {{ !$selectedBranchId ? 'selected' : '' }}>{{ __('All Branches (Admin View)') }}</option>
             @foreach($branches as $branch)
-                <option value="{{ $branch['id'] }}">
+                <option value="{{ $branch['id'] }}" {{ $selectedBranchId == $branch['id'] ? 'selected' : '' }}>
                     {{ $branch['name'] }} {{ $branch['code'] ? '(' . $branch['code'] . ')' : '' }}
                 </option>
             @endforeach
