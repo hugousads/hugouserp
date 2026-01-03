@@ -127,7 +127,7 @@ class Index extends Component
             ->select([
                 'sales.id',
                 'sales.code as reference',
-                'sales.created_at as sale_date',
+                'sales.created_at as posted_at',
                 'customers.name as customer_name',
                 'sales.grand_total',
                 'sales.paid_total as amount_paid',
