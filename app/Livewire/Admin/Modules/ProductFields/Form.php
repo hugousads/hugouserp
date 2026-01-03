@@ -7,6 +7,8 @@ namespace App\Livewire\Admin\Modules\ProductFields;
 use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\Module;
 use App\Models\ModuleProductField;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -153,7 +155,7 @@ class Form extends Component
         ];
     }
 
-    public function save(): void
+    public function save(): Redirector|RedirectResponse|null
     {
         $user = auth()->user();
         if (! $user || ! $user->can('modules.manage')) {

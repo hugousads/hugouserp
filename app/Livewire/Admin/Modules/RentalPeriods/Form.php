@@ -4,6 +4,8 @@ namespace App\Livewire\Admin\Modules\RentalPeriods;
 
 use App\Models\Module;
 use App\Models\RentalPeriod;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -76,7 +78,7 @@ class Form extends Component
         $this->sort_order = $period->sort_order;
     }
 
-    public function save(): void
+    public function save(): Redirector|RedirectResponse
     {
         $this->authorize('modules.manage');
         $this->validate();

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Profile;
 
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -47,7 +49,7 @@ class Edit extends Component
         $this->currentAvatar = $user->avatar ?? null;
     }
 
-    public function updateProfile(): void
+    public function updateProfile(): Redirector|RedirectResponse
     {
         $user = Auth::user();
 
@@ -64,7 +66,7 @@ class Edit extends Component
         return $this->redirectRoute('profile.edit', navigate: true);
     }
 
-    public function updatePassword(): void
+    public function updatePassword(): Redirector|RedirectResponse
     {
         $user = Auth::user();
 
@@ -85,7 +87,7 @@ class Edit extends Component
     }
 
     #[On('file-uploaded')]
-    public function handleFileUploaded(string $fieldId, string $path, array $fileInfo): void
+    public function handleFileUploaded(string $fieldId, string $path, array $fileInfo): Redirector|RedirectResponse|null
     {
         if ($fieldId === 'profile-avatar') {
             $user = Auth::user();
@@ -115,7 +117,7 @@ class Edit extends Component
         }
     }
 
-    public function updateAvatar(): void
+    public function updateAvatar(): Redirector|RedirectResponse
     {
         $user = Auth::user();
 
@@ -141,7 +143,7 @@ class Edit extends Component
         return $this->redirectRoute('profile.edit', navigate: true);
     }
 
-    public function removeAvatar(): void
+    public function removeAvatar(): Redirector|RedirectResponse
     {
         $user = Auth::user();
 

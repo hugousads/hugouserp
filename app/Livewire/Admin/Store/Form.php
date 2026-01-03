@@ -7,6 +7,8 @@ namespace App\Livewire\Admin\Store;
 use App\Models\Branch;
 use App\Models\Store;
 use App\Models\StoreIntegration;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -132,7 +134,7 @@ class Form extends Component
             ->all();
     }
 
-    public function save(): void
+    public function save(): Redirector|RedirectResponse|null
     {
         $this->validate();
         $this->sanitizeSyncSettings();

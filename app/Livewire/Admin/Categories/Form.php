@@ -6,6 +6,8 @@ namespace App\Livewire\Admin\Categories;
 
 use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\ProductCategory;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -81,7 +83,7 @@ class Form extends Component
         ];
     }
 
-    public function save(): void
+    public function save(): Redirector|RedirectResponse|null
     {
         $user = Auth::user();
         if (! $user || ! $user->can('inventory.categories.manage')) {

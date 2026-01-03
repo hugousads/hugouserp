@@ -6,6 +6,8 @@ namespace App\Livewire\Admin\Currency;
 
 use App\Models\Currency;
 use App\Services\CurrencyService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -78,7 +80,7 @@ class Form extends Component
         ];
     }
 
-    public function save(): void
+    public function save(): Redirector|RedirectResponse|null
     {
         $user = Auth::user();
         if (! $user || ! $user->can('settings.currency.manage')) {

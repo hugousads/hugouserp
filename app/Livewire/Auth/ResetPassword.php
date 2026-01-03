@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Auth;
 
 use App\Services\AuthService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -52,7 +54,7 @@ class ResetPassword extends Component
         $this->email = $email ?? request()->query('email', '');
     }
 
-    public function resetPassword(): void
+    public function resetPassword(): Redirector|RedirectResponse|null
     {
         $this->validate();
 
@@ -67,7 +69,7 @@ class ResetPassword extends Component
                 default => $this->addError('email', __('An error occurred. Please try again.')),
             };
 
-            return;
+            return null;
         }
 
         session()->flash('success', __('Your password has been reset. Please log in.'));

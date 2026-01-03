@@ -6,6 +6,8 @@ namespace App\Livewire\Admin\UnitsOfMeasure;
 
 use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\UnitOfMeasure;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -103,7 +105,7 @@ class Form extends Component
         ];
     }
 
-    public function save(): void
+    public function save(): Redirector|RedirectResponse|null
     {
         $user = Auth::user();
         if (! $user || ! $user->can('inventory.units.manage')) {
