@@ -132,6 +132,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'inventory.products.view',
             'inventory.products.create',
             'inventory.products.update',
+            'inventory.products.export',
+            'inventory.products.import',
             'inventory.categories.view',
             'inventory.categories.manage',
             'inventory.units.view',
@@ -139,6 +141,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'inventory.view',
             'inventory.manage',
             'inventory.view-reports',
+            'inventory.export',
+            'inventory.import',
             'pos.offline.report.view',
             'pos.view-reports',
             'logs.audit.view',
@@ -147,6 +151,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'hr.manage-employees',
             'hrm.employees.view',
             'hrm.employees.assign',
+            'hrm.employees.export',
+            'hrm.employees.import',
             'hrm.attendance.view',
             'hrm.payroll.view',
             'hrm.payroll.run',
@@ -171,8 +177,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'customers.view',
             'customers.manage',
             'customers.manage.all',
+            'customers.export',
+            'customers.import',
             'suppliers.view',
             'suppliers.manage',
+            'suppliers.export',
+            'suppliers.import',
             'sales.view',
             'sales.manage',
             'sales.return',
@@ -186,8 +196,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'purchases.import',
             'expenses.view',
             'expenses.manage',
+            'expenses.export',
+            'expenses.import',
             'income.view',
             'income.manage',
+            'income.export',
+            'income.import',
             'accounting.view',
             'accounting.manage',
             'accounting.create',
@@ -322,17 +336,24 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $hrManager = Role::findOrCreate('HR Manager', 'web');
         $hrManager->syncPermissions(Permission::where('guard_name', 'web')->whereIn('name', [
+            'dashboard.view',
             'hr.view-reports',
             'hr.manage-employees',
             'hrm.employees.view',
             'hrm.employees.assign',
+            'hrm.employees.export',
+            'hrm.employees.import',
             'hrm.attendance.view',
             'hrm.payroll.view',
             'hrm.payroll.run',
+            'hrm.view',
+            'hrm.manage',
+            'hrm.view-reports',
         ])->get());
 
         $rentalManager = Role::findOrCreate('Rental Manager', 'web');
         $rentalManager->syncPermissions(Permission::where('guard_name', 'web')->whereIn('name', [
+            'dashboard.view',
             'rental.view-reports',
             'rental.manage-units',
             'rental.manage-tenants',
@@ -341,19 +362,114 @@ class RolesAndPermissionsSeeder extends Seeder
             'rental.units.manage',
             'rental.contracts.view',
             'rental.contracts.manage',
+            'rental.view',
+            'rentals.view',
         ])->get());
 
         $inventoryManager = Role::findOrCreate('Inventory Manager', 'web');
         $inventoryManager->syncPermissions(Permission::where('guard_name', 'web')->whereIn('name', [
+            'dashboard.view',
             'inventory.products.view',
+            'inventory.products.export',
+            'inventory.products.import',
+            'inventory.view',
+            'inventory.view-reports',
+            'inventory.export',
             'pos.offline.report.view',
+            'reports.inventory.charts',
+            'reports.inventory.export',
         ])->get());
 
         $posCashier = Role::findOrCreate('POS Cashier', 'web');
         $posCashier->syncPermissions(Permission::where('guard_name', 'web')->whereIn('name', [
+            'dashboard.view',
             'pos.use',
             'pos.daily-report.view',
             'pos.session.manage',
+            'pos.view-reports',
+            'reports.pos.charts',
+            'sales.view',
+        ])->get());
+
+        // Sales Manager Role
+        $salesManager = Role::findOrCreate('Sales Manager', 'web');
+        $salesManager->syncPermissions(Permission::where('guard_name', 'web')->whereIn('name', [
+            'dashboard.view',
+            'sales.view',
+            'sales.manage',
+            'sales.return',
+            'sales.export',
+            'sales.view-reports',
+            'customers.view',
+            'customers.manage',
+            'customers.export',
+            'customers.import',
+            'reports.view',
+            'reports.export',
+            'reports.sales.view',
+        ])->get());
+
+        // Purchase Manager Role
+        $purchaseManager = Role::findOrCreate('Purchase Manager', 'web');
+        $purchaseManager->syncPermissions(Permission::where('guard_name', 'web')->whereIn('name', [
+            'dashboard.view',
+            'purchases.view',
+            'purchases.manage',
+            'purchases.return',
+            'purchases.export',
+            'purchases.import',
+            'suppliers.view',
+            'suppliers.manage',
+            'suppliers.export',
+            'suppliers.import',
+            'reports.view',
+            'reports.export',
+        ])->get());
+
+        // Accountant Role
+        $accountant = Role::findOrCreate('Accountant', 'web');
+        $accountant->syncPermissions(Permission::where('guard_name', 'web')->whereIn('name', [
+            'dashboard.view',
+            'accounting.view',
+            'accounting.manage',
+            'expenses.view',
+            'expenses.manage',
+            'expenses.export',
+            'income.view',
+            'income.manage',
+            'income.export',
+            'reports.view',
+            'reports.export',
+            'reports.aggregate',
+        ])->get());
+
+        // Manager Role - broader access
+        $manager = Role::findOrCreate('Manager', 'web');
+        $manager->syncPermissions(Permission::where('guard_name', 'web')->whereIn('name', [
+            'dashboard.view',
+            'sales.view',
+            'sales.export',
+            'sales.view-reports',
+            'purchases.view',
+            'purchases.export',
+            'customers.view',
+            'customers.export',
+            'suppliers.view',
+            'suppliers.export',
+            'expenses.view',
+            'expenses.export',
+            'income.view',
+            'income.export',
+            'inventory.view',
+            'inventory.export',
+            'inventory.products.view',
+            'inventory.products.export',
+            'inventory.view-reports',
+            'reports.view',
+            'reports.export',
+            'reports.aggregate',
+            'reports.view-reports',
+            'reports.hub.view',
         ])->get());
     }
 }
