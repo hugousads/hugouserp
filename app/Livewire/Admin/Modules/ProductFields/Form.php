@@ -167,7 +167,7 @@ class Form extends Component
         if (! $this->moduleId) {
             session()->flash('error', __('Please select a module before saving a field.'));
 
-            return;
+            return null;
         }
 
         $options = array_filter(array_map('trim', explode("\n", $this->optionsText)));

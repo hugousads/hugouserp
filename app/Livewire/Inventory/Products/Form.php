@@ -339,15 +339,15 @@ class Form extends Component
                 // Create new product - require module selection
                 if (!$this->form['module_id']) {
                     $this->addError('form.module_id', __('Please select a module for this product'));
-                    return;
+                    return null;
                 }
 
                 $module = Module::findOrFail($this->form['module_id']);
-                
+
                 // Verify module supports items
                 if (!$module->supportsItems()) {
                     $this->addError('form.module_id', __('Selected module does not support items/products'));
-                    return;
+                    return null;
                 }
 
                 $this->productService->createProductForModule(

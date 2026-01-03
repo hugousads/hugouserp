@@ -165,14 +165,14 @@ class Form extends Component
             } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
                 $this->addError('store_id', __('This product is already mapped to this store'));
 
-                return;
+                return null;
             } catch (\Illuminate\Database\QueryException $e) {
                 // Fallback for older Laravel or PDO drivers that don't throw UniqueConstraintViolationException
                 $errorCode = $e->errorInfo[1] ?? 0;
                 if ($errorCode === 1062 || $errorCode === 19 || $errorCode === 2627) {
                     $this->addError('store_id', __('This product is already mapped to this store'));
 
-                    return;
+                    return null;
                 }
                 throw $e;
             }

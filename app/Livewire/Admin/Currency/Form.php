@@ -107,7 +107,7 @@ class Form extends Component
             } elseif (! $this->isBase && $currency->is_base) {
                 session()->flash('error', __('Cannot unset base currency. Set another currency as base first.'));
 
-                return;
+                return null;
             }
 
             $currency->update($data);

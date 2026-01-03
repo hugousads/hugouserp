@@ -300,7 +300,7 @@ class Form extends Component
     {
         // BUG-010 Fix: Prevent double submission
         if ($this->isSubmitting) {
-            return;
+            return null;
         }
         $this->isSubmitting = true;
 

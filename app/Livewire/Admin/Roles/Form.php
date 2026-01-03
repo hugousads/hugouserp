@@ -59,7 +59,7 @@ class Form extends Component
         if ($editMode && $role->name === 'Super Admin') {
             session()->flash('error', __('Cannot modify Super Admin role'));
 
-            return;
+            return null;
         }
 
         return $this->handleOperation(

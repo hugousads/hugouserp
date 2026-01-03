@@ -74,7 +74,7 @@ class Form extends Component
         if ($this->fromCurrency === $this->toCurrency) {
             session()->flash('error', __('From and To currencies must be different'));
 
-            return;
+            return null;
         }
 
         $this->currencyService->setRate(

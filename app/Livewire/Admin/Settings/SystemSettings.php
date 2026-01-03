@@ -151,7 +151,7 @@ class SystemSettings extends Component
         }
 
         if ($this->getErrorBag()->isNotEmpty()) {
-            return;
+            return null;
         }
 
         // نقرأ الإعدادات القديمة عشان نقدر نسجل الـ changes في الـ audit log

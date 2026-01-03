@@ -57,7 +57,7 @@ class Run extends Component
         if (! $this->branchId) {
             session()->flash('error', __('Branch is not set for current user.'));
 
-            return;
+            return null;
         }
 
         DB::transaction(function () {
