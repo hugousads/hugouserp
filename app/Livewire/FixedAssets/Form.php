@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\FixedAssets;
 
 use App\Http\Requests\Traits\HasMultilingualValidation;
+use App\Livewire\Concerns\HandlesErrors;
 use App\Models\FixedAsset;
 use App\Models\Supplier;
 use App\Models\User;
@@ -15,6 +16,7 @@ use Livewire\Component;
 class Form extends Component
 {
     use AuthorizesRequests;
+    use HandlesErrors;
     use HasMultilingualValidation;
 
     public ?FixedAsset $asset = null;
@@ -108,17 +110,24 @@ class Form extends Component
             'status' => 'active',
         ];
 
-        if ($this->isEditing) {
-            $data['updated_by'] = auth()->id();
-            $this->asset->update($data);
-            session()->flash('success', __('Fixed asset updated successfully'));
-        } else {
-            $data['created_by'] = auth()->id();
-            FixedAsset::create($data);
-            session()->flash('success', __('Fixed asset created successfully'));
-        }
+        $isEditing = $this->isEditing;
+        $asset = $this->asset;
 
-        return $this->redirectRoute('app.fixed-assets.index', navigate: true);
+        return $this->handleOperation(
+            operation: function () use ($data, $isEditing, $asset) {
+                if ($isEditing) {
+                    $data['updated_by'] = auth()->id();
+                    $asset->update($data);
+                } else {
+                    $data['created_by'] = auth()->id();
+                    FixedAsset::create($data);
+                }
+            },
+            successMessage: $this->isEditing 
+                ? __('Fixed asset updated successfully') 
+                : __('Fixed asset created successfully'),
+            redirectRoute: 'app.fixed-assets.index'
+        );
     }
 
     #[Layout('layouts.app')]

@@ -69,18 +69,51 @@ Route::get('/', function () {
         return redirect()->route('login');
     }
 
+    $user = auth()->user();
+
     // Determine dashboard permission from config
     $dashboardPermission = config('screen_permissions.dashboard', 'dashboard.view');
 
-    // Default destination based on user permissions
-    if (auth()->user()->can($dashboardPermission)) {
-        $defaultDestination = route('dashboard');
-    } else {
-        $defaultDestination = route('profile.edit');
+    // Check if user can access dashboard first
+    if ($user->can($dashboardPermission)) {
+        return redirect()->intended(route('dashboard'));
     }
 
-    // Use intended redirect to honor any previous intended URL
-    return redirect()->intended($defaultDestination);
+    // If not, find the first accessible module
+    $moduleRoutes = [
+        ['permission' => 'pos.use', 'route' => 'pos.terminal'],
+        ['permission' => 'sales.view', 'route' => 'app.sales.index'],
+        ['permission' => 'purchases.view', 'route' => 'app.purchases.index'],
+        ['permission' => 'inventory.products.view', 'route' => 'app.inventory.products.index'],
+        ['permission' => 'warehouse.view', 'route' => 'app.warehouse.index'],
+        ['permission' => 'customers.view', 'route' => 'customers.index'],
+        ['permission' => 'suppliers.view', 'route' => 'suppliers.index'],
+        ['permission' => 'expenses.view', 'route' => 'app.expenses.index'],
+        ['permission' => 'income.view', 'route' => 'app.income.index'],
+        ['permission' => 'accounting.view', 'route' => 'app.accounting.index'],
+        ['permission' => 'hrm.employees.view', 'route' => 'app.hrm.employees.index'],
+        ['permission' => 'rental.units.view', 'route' => 'app.rental.units.index'],
+        ['permission' => 'manufacturing.view', 'route' => 'app.manufacturing.boms.index'],
+        ['permission' => 'banking.view', 'route' => 'app.banking.index'],
+        ['permission' => 'fixed-assets.view', 'route' => 'app.fixed-assets.index'],
+        ['permission' => 'projects.view', 'route' => 'app.projects.index'],
+        ['permission' => 'documents.view', 'route' => 'app.documents.index'],
+        ['permission' => 'helpdesk.view', 'route' => 'app.helpdesk.index'],
+        ['permission' => 'reports.view', 'route' => 'admin.reports.index'],
+        ['permission' => 'settings.view', 'route' => 'admin.settings'],
+        ['permission' => 'users.manage', 'route' => 'admin.users.index'],
+        ['permission' => 'roles.manage', 'route' => 'admin.roles.index'],
+        ['permission' => 'branches.view', 'route' => 'admin.branches.index'],
+    ];
+
+    foreach ($moduleRoutes as $module) {
+        if ($user->can($module['permission'])) {
+            return redirect()->intended(route($module['route']));
+        }
+    }
+
+    // Fallback to profile if user has no module permissions
+    return redirect()->intended(route('profile.edit'));
 });
 
 // Health check
