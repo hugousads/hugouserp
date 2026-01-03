@@ -7,6 +7,7 @@ namespace App\Livewire\Admin\Reports;
 use App\Models\ReportTemplate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -37,6 +38,10 @@ class ReportTemplatesManager extends Component
     public string $exportColumnsText = '';
 
     public bool $isActive = true;
+
+    public bool $showAdvanced = false;
+
+    public bool $overrideKey = false;
 
     #[Layout('layouts.app')]
     public function render()
@@ -103,6 +108,28 @@ class ReportTemplatesManager extends Component
         $this->resetPage();
     }
 
+    public function updatedName(): void
+    {
+        // Auto-generate key from name if not overriding
+        if (! $this->overrideKey && ! $this->editingId) {
+            $this->key = $this->generateKeyFromName($this->name);
+        }
+    }
+
+    protected function generateKeyFromName(string $name): string
+    {
+        $base = Str::slug($name, '_');
+        $key = $base;
+        $counter = 1;
+
+        while (ReportTemplate::where('key', $key)->where('id', '!=', $this->editingId)->exists()) {
+            $key = $base.'_'.$counter;
+            $counter++;
+        }
+
+        return $key;
+    }
+
     public function createNew(): void
     {
         $this->editingId = null;
@@ -122,6 +149,8 @@ class ReportTemplatesManager extends Component
         $this->outputType = $template->output_type ?? 'web';
         $this->exportColumnsText = is_array($template->export_columns) ? implode(',', $template->export_columns) : '';
         $this->isActive = (bool) $template->is_active;
+        $this->overrideKey = true; // When editing, key is already set
+        $this->showAdvanced = ! empty($template->default_filters) || ! empty($template->export_columns);
     }
 
     public function save(): void
@@ -190,6 +219,8 @@ class ReportTemplatesManager extends Component
         $this->outputType = 'web';
         $this->exportColumnsText = '';
         $this->isActive = true;
+        $this->showAdvanced = false;
+        $this->overrideKey = false;
     }
 
     public function getAvailableRoutesProperty(): array
@@ -199,9 +230,14 @@ class ReportTemplatesManager extends Component
                 return in_array('GET', $route->methods(), true) && $route->getName();
             })
             ->map(static function ($route): array {
+                $name = $route->getName();
+                // Generate human-readable label
+                $label = self::getRouteLabel($name);
+
                 return [
-                    'name' => $route->getName(),
+                    'name' => $name,
                     'uri' => $route->uri(),
+                    'label' => $label,
                 ];
             })
             ->filter(static function (array $route): bool {
@@ -212,10 +248,40 @@ class ReportTemplatesManager extends Component
                     || str_contains($name, 'pos')
                     || str_contains($name, 'inventory');
             })
-            ->sortBy('name')
+            ->sortBy('label')
             ->values()
             ->all();
 
         return $routes;
+    }
+
+    protected static function getRouteLabel(string $routeName): string
+    {
+        // Map common route names to human-readable labels
+        $labels = [
+            'admin.reports.index' => __('General Reports'),
+            'admin.reports.module' => __('Module Reports'),
+            'admin.reports.scheduled' => __('Scheduled Reports'),
+            'admin.reports.templates' => __('Report Templates'),
+            'admin.reports.inventory' => __('Inventory Reports'),
+            'admin.reports.pos' => __('POS Reports'),
+            'pos.daily.report' => __('Daily POS Report'),
+            'pos.terminal' => __('POS Terminal'),
+            'inventory.products.index' => __('Products List'),
+            'app.inventory.products.index' => __('Products List'),
+            'store.reports.dashboard' => __('Store Dashboard'),
+        ];
+
+        if (isset($labels[$routeName])) {
+            return $labels[$routeName];
+        }
+
+        // Generate label from route name
+        $parts = explode('.', $routeName);
+        $label = collect($parts)
+            ->map(fn ($part) => ucfirst(str_replace(['-', '_'], ' ', $part)))
+            ->join(' › ');
+
+        return $label;
     }
 }

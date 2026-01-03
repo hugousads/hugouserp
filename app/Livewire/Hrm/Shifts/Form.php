@@ -8,6 +8,7 @@ use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\Shift;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -34,6 +35,8 @@ class Form extends Component
 
     public bool $isActive = true;
 
+    public bool $overrideCode = false;
+
     protected array $daysOfWeek = [
         'sunday' => 'Sunday',
         'monday' => 'Monday',
@@ -51,6 +54,7 @@ class Form extends Component
         if ($shift) {
             $this->shiftId = $shift;
             $this->loadShift();
+            $this->overrideCode = true; // When editing, code is already set
         }
     }
 
@@ -66,6 +70,34 @@ class Form extends Component
         $this->workingDays = $shift->working_days ?? [];
         $this->description = $shift->description ?? '';
         $this->isActive = $shift->is_active ?? true;
+    }
+
+    public function updatedName(): void
+    {
+        // Auto-generate code from name if not overriding and creating new
+        if (! $this->overrideCode && ! $this->shiftId) {
+            $this->code = $this->generateCode();
+        }
+    }
+
+    protected function generateCode(): string
+    {
+        $prefix = 'SH';
+        $base = strtoupper(Str::slug(Str::limit($this->name, 10, ''), ''));
+        
+        if (empty($base)) {
+            $base = sprintf('%03d', Shift::count() + 1);
+        }
+        
+        $code = $prefix . $base;
+        $counter = 1;
+
+        while (Shift::where('code', $code)->where('id', '!=', $this->shiftId)->exists()) {
+            $code = $prefix . $base . $counter;
+            $counter++;
+        }
+
+        return $code;
     }
 
     protected function rules(): array
@@ -84,6 +116,11 @@ class Form extends Component
     public function save(): mixed
     {
         $this->authorize('hrm.manage');
+
+        // Auto-generate code if empty
+        if (empty($this->code)) {
+            $this->code = $this->generateCode();
+        }
 
         $this->validate();
 

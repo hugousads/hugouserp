@@ -33,6 +33,17 @@ class ScheduledReportsManager extends Component
 
     public string $filtersJson = '{}';
 
+    // Simplified schedule options
+    public string $frequency = 'daily';
+
+    public string $timeOfDay = '08:00';
+
+    public string $dayOfWeek = '1';
+
+    public string $dayOfMonth = '1';
+
+    public bool $showAdvanced = false;
+
     #[Layout('layouts.app')]
     public function render()
     {
@@ -64,16 +75,19 @@ class ScheduledReportsManager extends Component
         }
 
         $this->userId = $user->id;
+        $this->recipientEmail = $user->email;
         $this->cronExpression = '0 8 * * *';
         $this->filtersJson = '{}';
+        $this->frequency = 'daily';
+        $this->timeOfDay = '08:00';
     }
 
     protected function rules(): array
     {
         return [
             'userId' => ['nullable', 'integer'],
-            'templateId' => ['nullable', 'integer'],
-            'routeName' => ['required', 'string', 'max:191'],
+            'templateId' => ['required', 'integer', 'exists:report_templates,id'],
+            'routeName' => ['nullable', 'string', 'max:191'],
             'cronExpression' => ['required', 'string', 'max:191'],
             'recipientEmail' => ['nullable', 'email', 'max:191'],
             'filtersJson' => ['nullable', 'string'],
@@ -85,6 +99,77 @@ class ScheduledReportsManager extends Component
         $this->reset(['editingId', 'routeName', 'cronExpression', 'recipientEmail', 'filtersJson', 'templateId']);
         $this->cronExpression = '0 8 * * *';
         $this->filtersJson = '{}';
+        $this->frequency = 'daily';
+        $this->timeOfDay = '08:00';
+        $this->dayOfWeek = '1';
+        $this->dayOfMonth = '1';
+        $this->showAdvanced = false;
+        $this->recipientEmail = Auth::user()?->email;
+    }
+
+    public function updatedFrequency(): void
+    {
+        $this->cronExpression = $this->buildCronExpression();
+    }
+
+    public function updatedTimeOfDay(): void
+    {
+        $this->cronExpression = $this->buildCronExpression();
+    }
+
+    public function updatedDayOfWeek(): void
+    {
+        $this->cronExpression = $this->buildCronExpression();
+    }
+
+    public function updatedDayOfMonth(): void
+    {
+        $this->cronExpression = $this->buildCronExpression();
+    }
+
+    protected function buildCronExpression(): string
+    {
+        $parts = explode(':', $this->timeOfDay);
+        $hour = (int) ($parts[0] ?? 8);
+        $minute = (int) ($parts[1] ?? 0);
+
+        return match ($this->frequency) {
+            'daily' => "{$minute} {$hour} * * *",
+            'weekly' => "{$minute} {$hour} * * {$this->dayOfWeek}",
+            'monthly' => "{$minute} {$hour} {$this->dayOfMonth} * *",
+            'quarterly' => "{$minute} {$hour} {$this->dayOfMonth} */3 *",
+            default => "{$minute} {$hour} * * *",
+        };
+    }
+
+    protected function parseCronExpression(): void
+    {
+        // Parse cron expression back to frequency options
+        $parts = explode(' ', $this->cronExpression);
+        if (count($parts) < 5) {
+            return;
+        }
+
+        $minute = $parts[0];
+        $hour = $parts[1];
+        $dayOfMonth = $parts[2];
+        $month = $parts[3];
+        $dayOfWeek = $parts[4];
+
+        $this->timeOfDay = sprintf('%02d:%02d', (int) $hour, (int) $minute);
+
+        if ($dayOfWeek !== '*' && $dayOfMonth === '*') {
+            $this->frequency = 'weekly';
+            $this->dayOfWeek = $dayOfWeek;
+        } elseif ($dayOfMonth !== '*' && $month === '*/3') {
+            $this->frequency = 'quarterly';
+            $this->dayOfMonth = $dayOfMonth;
+        } elseif ($dayOfMonth !== '*') {
+            $this->frequency = 'monthly';
+            $this->dayOfMonth = $dayOfMonth;
+        } else {
+            $this->frequency = 'daily';
+        }
     }
 
     public function edit(int $id): void
@@ -98,6 +183,10 @@ class ScheduledReportsManager extends Component
         $this->recipientEmail = $report->recipient_email;
         $this->filtersJson = json_encode($report->filters ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $this->templateId = $report->report_template_id;
+        $this->showAdvanced = ! empty($report->filters);
+
+        // Parse the cron expression to set frequency fields
+        $this->parseCronExpression();
 
         if (! $this->templateId && $report->route_name) {
             foreach ($this->templates as $template) {

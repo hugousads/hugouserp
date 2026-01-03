@@ -7,6 +7,7 @@ namespace App\Livewire\Warehouse\Warehouses;
 use App\Models\Warehouse;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -28,6 +29,8 @@ class Form extends Component
 
     public string $notes = '';
 
+    public bool $overrideCode = false;
+
     public function mount(?int $warehouse = null): void
     {
         $this->authorize('warehouse.manage');
@@ -35,6 +38,7 @@ class Form extends Component
         if ($warehouse) {
             $this->warehouseId = $warehouse;
             $this->loadWarehouse();
+            $this->overrideCode = true; // When editing, code is already set
         }
     }
 
@@ -47,6 +51,34 @@ class Form extends Component
         $this->status = $warehouse->status ?? 'active';
         $this->address = $warehouse->address ?? '';
         $this->notes = $warehouse->notes ?? '';
+    }
+
+    public function updatedName(): void
+    {
+        // Auto-generate code from name if not overriding and creating new
+        if (! $this->overrideCode && ! $this->warehouseId) {
+            $this->code = $this->generateCode();
+        }
+    }
+
+    protected function generateCode(): string
+    {
+        $prefix = 'WH';
+        $base = strtoupper(Str::slug(Str::limit($this->name, 10, ''), ''));
+        
+        if (empty($base)) {
+            $base = sprintf('%03d', Warehouse::count() + 1);
+        }
+        
+        $code = $prefix . $base;
+        $counter = 1;
+
+        while (Warehouse::where('code', $code)->where('id', '!=', $this->warehouseId)->exists()) {
+            $code = $prefix . $base . $counter;
+            $counter++;
+        }
+
+        return $code;
     }
 
     protected function rules(): array
@@ -67,6 +99,11 @@ class Form extends Component
         $this->validate();
 
         $user = auth()->user();
+
+        // Auto-generate code if empty
+        if (empty($this->code)) {
+            $this->code = $this->generateCode();
+        }
 
         $data = [
             'name' => $this->name,

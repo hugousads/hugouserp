@@ -8,6 +8,7 @@ use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\Branch;
 use App\Models\WorkCenter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -36,6 +37,8 @@ class Form extends Component
 
     public string $status = 'active';
 
+    public bool $overrideCode = false;
+
     protected function rules(): array
     {
         $workCenterId = $this->workCenter?->id;
@@ -59,6 +62,7 @@ class Form extends Component
             $this->workCenter = $workCenter;
             $this->editMode = true;
             $this->fillFormFromModel();
+            $this->overrideCode = true; // When editing, code is already set
         } else {
             $this->authorize('manufacturing.create');
         }
@@ -76,8 +80,42 @@ class Form extends Component
         $this->status = $this->workCenter->status;
     }
 
+    public function updatedName(): void
+    {
+        // Auto-generate code from name if not overriding and creating new
+        if (! $this->overrideCode && ! $this->editMode) {
+            $this->code = $this->generateCode();
+        }
+    }
+
+    protected function generateCode(): string
+    {
+        $prefix = 'WC';
+        $base = strtoupper(Str::slug(Str::limit($this->name, 10, ''), ''));
+        
+        if (empty($base)) {
+            $base = sprintf('%03d', WorkCenter::count() + 1);
+        }
+        
+        $code = $prefix . '-' . $base;
+        $counter = 1;
+        $workCenterId = $this->workCenter?->id;
+
+        while (WorkCenter::where('code', $code)->where('id', '!=', $workCenterId)->exists()) {
+            $code = $prefix . '-' . $base . $counter;
+            $counter++;
+        }
+
+        return $code;
+    }
+
     public function save(): mixed
     {
+        // Auto-generate code if empty
+        if (empty($this->code)) {
+            $this->code = $this->generateCode();
+        }
+
         $this->validate();
 
         $user = auth()->user();
