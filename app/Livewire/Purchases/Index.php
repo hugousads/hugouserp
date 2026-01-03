@@ -99,7 +99,7 @@ class Index extends Component
             ->select([
                 'purchases.id',
                 'purchases.code as reference',
-                'purchases.created_at as purchase_date',
+                'purchases.created_at as posted_at',
                 'suppliers.name as supplier_name',
                 'purchases.grand_total',
                 'purchases.paid_total as amount_paid',
