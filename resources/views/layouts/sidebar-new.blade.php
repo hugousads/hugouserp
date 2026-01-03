@@ -74,6 +74,86 @@
         return $user->can($permission);
     };
 
+    // Get branch context for filtering sidebar (admin branch toggle)
+    $adminBranchContext = session('admin_branch_context');
+    $branchModuleKeys = [];
+    
+    if ($adminBranchContext) {
+        // Admin is viewing a specific branch context - filter by branch modules
+        $branch = \App\Models\Branch::find($adminBranchContext);
+        if ($branch) {
+            $branchModuleKeys = \App\Models\BranchModule::where('branch_id', $branch->id)
+                ->where('enabled', true)
+                ->pluck('module_key')
+                ->toArray();
+        }
+    } elseif (!$user?->hasRole('Super Admin') && !$user?->can('branches.view-all')) {
+        // Non-admin user - filter by their assigned branch modules
+        $userBranch = $user?->branch;
+        if ($userBranch) {
+            $branchModuleKeys = \App\Models\BranchModule::where('branch_id', $userBranch->id)
+                ->where('enabled', true)
+                ->pluck('module_key')
+                ->toArray();
+        }
+    }
+    
+    // Map permission prefixes to module keys
+    // This allows filtering sidebar items by which module they belong to
+    $permissionToModuleMap = [
+        'pos' => 'pos',
+        'sales' => 'sales',
+        'purchases' => 'purchases',
+        'customers' => 'sales',        // Customers are part of sales module
+        'suppliers' => 'purchases',    // Suppliers are part of purchases module
+        'inventory' => 'inventory',
+        'warehouse' => 'warehouse',
+        'accounting' => 'accounting',
+        'expenses' => 'accounting',
+        'income' => 'accounting',
+        'banking' => 'accounting',
+        'hrm' => 'hrm',
+        'rental' => 'rental',
+        'manufacturing' => 'manufacturing',
+        'fixed-assets' => 'fixed_assets',
+        'projects' => 'projects',
+        'documents' => 'documents',
+        'helpdesk' => 'helpdesk',
+        'spares' => 'spares',
+    ];
+    
+    // Helper to check if a menu item's module is enabled for the current branch context
+    $isModuleEnabled = function ($permission) use ($branchModuleKeys, $user, $adminBranchContext, $permissionToModuleMap) {
+        // Super Admin without branch context sees everything
+        if (!$adminBranchContext && ($user?->hasRole('Super Admin') || $user?->can('branches.view-all'))) {
+            return true;
+        }
+        
+        // If no modules are configured for the branch, show all (backwards compatibility)
+        if (empty($branchModuleKeys)) {
+            return true;
+        }
+        
+        // If no permission specified, always show (admin menus, etc.)
+        if (!$permission) {
+            return true;
+        }
+        
+        // Extract the module key from the permission
+        $permissionPrefix = is_array($permission) ? ($permission[0] ?? '') : $permission;
+        $prefix = explode('.', $permissionPrefix)[0] ?? '';
+        
+        // Look up the module key
+        $moduleKey = $permissionToModuleMap[$prefix] ?? null;
+        
+        // If no mapping found, this is likely an admin permission - show it
+        if (!$moduleKey) {
+            return true;
+        }
+        
+        return in_array($moduleKey, $branchModuleKeys);
+    };
+
     // Sidebar menu structure with icons (SVG paths)
     $menuSections = [
         [
@@ -464,13 +544,21 @@
         ],
     ];
 
-    // Filter sections based on permissions and route availability
+    // Filter sections based on permissions, route availability, AND branch modules
     // IMPORTANT: Show parent menu if user can access parent OR any of its children
-    $filteredSections = collect($menuSections)->map(function ($section) use ($canAccess, $routeExists) {
-        $items = collect($section['items'] ?? [])->map(function ($item) use ($canAccess, $routeExists) {
-            // First, filter children to only those the user can access
-            $children = collect($item['children'] ?? [])->filter(function ($child) use ($canAccess, $routeExists) {
-                return $canAccess($child['permission'] ?? null) && $routeExists($child['route'] ?? null);
+    $filteredSections = collect($menuSections)->map(function ($section) use ($canAccess, $routeExists, $isModuleEnabled) {
+        $items = collect($section['items'] ?? [])->map(function ($item) use ($canAccess, $routeExists, $isModuleEnabled) {
+            // First, check if this module is enabled for the branch context
+            if (!$isModuleEnabled($item['permission'] ?? null)) {
+                return null;
+            }
+            
+            // Filter children to only those the user can access and module is enabled
+            $children = collect($item['children'] ?? [])->filter(function ($child) use ($canAccess, $routeExists, $isModuleEnabled) {
+                $childPermission = $child['permission'] ?? null;
+                return $canAccess($childPermission) 
+                    && $routeExists($child['route'] ?? null)
+                    && $isModuleEnabled($childPermission);
             })->values()->all();
 
             // Check if user can access the parent item itself
@@ -855,6 +943,9 @@
             </button>
         </div>
     </div>
+
+    {{-- Branch Switcher (Admin only) --}}
+    @livewire('shared.branch-switcher')
 
     {{-- Search Suggestions (inline) --}}
     <div class="erp-sidebar-nav" x-show="isSearching()" x-cloak>
