@@ -51,7 +51,6 @@ use App\Livewire\Suppliers\Form as SupplierFormPage;
 use App\Livewire\Suppliers\Index as SuppliersIndexPage;
 use App\Livewire\Warehouse\Index as WarehouseIndexPage;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /*
@@ -130,21 +129,20 @@ Route::get('/download/export', function () {
         // User already had permission to create the export (checked in the export action)
         // No additional permission check needed here since we verify the user owns the export
 
-        $disk = Storage::disk(config('filesystems.default'));
         $resolvedPath = realpath($exportInfo['path']);
-        $allowedBase = realpath($disk->path('exports')) ?: $disk->path('exports');
+        $exportsBase = realpath(storage_path('app/exports')) ?: storage_path('app/exports');
 
         logger()->info('Export path validation', [
             'resolved_path' => $resolvedPath,
-            'allowed_base' => $allowedBase,
+            'allowed_base' => $exportsBase,
             'file_exists' => file_exists($exportInfo['path']),
         ]);
 
-        if (! $resolvedPath || ! Str::startsWith($resolvedPath, $allowedBase) || ! file_exists($resolvedPath)) {
+        if (! $resolvedPath || ! Str::startsWith($resolvedPath, $exportsBase) || ! file_exists($resolvedPath)) {
             logger()->error('Invalid export path', [
                 'resolved_path' => $resolvedPath,
                 'original_path' => $exportInfo['path'],
-                'allowed_base' => $allowedBase,
+                'allowed_base' => $exportsBase,
             ]);
             abort(403, 'Invalid export path');
         }
