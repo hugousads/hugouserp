@@ -85,6 +85,7 @@ Route::get('/', function () {
         ['permission' => 'sales.view', 'route' => 'app.sales.index'],
         ['permission' => 'purchases.view', 'route' => 'app.purchases.index'],
         ['permission' => 'inventory.products.view', 'route' => 'app.inventory.products.index'],
+        ['permission' => 'spares.compatibility.manage', 'route' => 'app.inventory.vehicle-models.index'],
         ['permission' => 'warehouse.view', 'route' => 'app.warehouse.index'],
         ['permission' => 'customers.view', 'route' => 'customers.index'],
         ['permission' => 'suppliers.view', 'route' => 'suppliers.index'],
@@ -104,6 +105,8 @@ Route::get('/', function () {
         ['permission' => 'users.manage', 'route' => 'admin.users.index'],
         ['permission' => 'roles.manage', 'route' => 'admin.roles.index'],
         ['permission' => 'branches.view', 'route' => 'admin.branches.index'],
+        ['permission' => 'modules.manage', 'route' => 'admin.modules.index'],
+        ['permission' => 'stores.view', 'route' => 'admin.stores.index'],
     ];
 
     foreach ($moduleRoutes as $module) {

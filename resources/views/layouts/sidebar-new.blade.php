@@ -183,7 +183,17 @@
                         ['route' => 'app.inventory.barcodes', 'label' => __('Barcodes'), 'permission' => 'inventory.products.view'],
                         ['route' => 'app.inventory.batches.index', 'label' => __('Batches'), 'permission' => 'inventory.products.view'],
                         ['route' => 'app.inventory.serials.index', 'label' => __('Serial Numbers'), 'permission' => 'inventory.products.view'],
-                        ['route' => 'app.inventory.vehicle-models', 'label' => __('Vehicle Models'), 'permission' => 'spares.compatibility.manage'],
+                        ['route' => 'app.inventory.vehicle-models.index', 'label' => __('Vehicle Models'), 'permission' => 'spares.compatibility.manage'],
+                    ],
+                ],
+                [
+                    'route' => 'app.inventory.vehicle-models.index',
+                    'label' => __('Spare Parts'),
+                    'permission' => 'spares.compatibility.manage',
+                    'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+                    'children' => [
+                        ['route' => 'app.inventory.vehicle-models.index', 'label' => __('Vehicle Models'), 'permission' => 'spares.compatibility.manage'],
+                        ['route' => 'app.inventory.vehicle-models.create', 'label' => __('Add Vehicle Model'), 'permission' => 'spares.compatibility.manage'],
                     ],
                 ],
                 [
@@ -456,17 +466,32 @@
     ];
 
     // Filter sections based on permissions and route availability
+    // IMPORTANT: Show parent menu if user can access parent OR any of its children
     $filteredSections = collect($menuSections)->map(function ($section) use ($canAccess, $routeExists) {
         $items = collect($section['items'] ?? [])->map(function ($item) use ($canAccess, $routeExists) {
-            if (!$canAccess($item['permission'] ?? null) || !$routeExists($item['route'] ?? null)) {
-                return null;
-            }
-
+            // First, filter children to only those the user can access
             $children = collect($item['children'] ?? [])->filter(function ($child) use ($canAccess, $routeExists) {
                 return $canAccess($child['permission'] ?? null) && $routeExists($child['route'] ?? null);
             })->values()->all();
 
+            // Check if user can access the parent item itself
+            $canAccessParent = $canAccess($item['permission'] ?? null) && $routeExists($item['route'] ?? null);
+            
+            // Show the parent menu if:
+            // 1. User can access the parent directly, OR
+            // 2. User can access at least one child
+            if (!$canAccessParent && empty($children)) {
+                return null;
+            }
+
             $item['children'] = $children;
+            
+            // If user cannot access parent directly but has children, 
+            // update the parent route to the first accessible child
+            if (!$canAccessParent && !empty($children)) {
+                $item['route'] = $children[0]['route'] ?? null;
+            }
+            
             return $item;
         })->filter()->values()->all();
 
