@@ -22,7 +22,7 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+        class="fixed inset-0 z-[9000] flex items-center justify-center p-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="export-modal-title"
@@ -37,7 +37,7 @@
         
         {{-- Modal Content --}}
         <div 
-            class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
+            class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100"
