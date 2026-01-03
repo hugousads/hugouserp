@@ -126,9 +126,6 @@
     </div>
 
     @if($showExportModal)
-        <x-export-modal 
-            :columns="$exportColumns" 
-            :selectedColumns="$selectedExportColumns"
-        />
+        <x-export-modal />
     @endif
 </div>

@@ -1,7 +1,5 @@
 @props([
     'formats' => ['xlsx' => 'Excel', 'csv' => 'CSV', 'pdf' => 'PDF'],
-    'columns' => [],
-    'selectedColumns' => [],
 ])
 
 {{-- Use x-teleport to render modal at body level, escaping any parent overflow/stacking context --}}
