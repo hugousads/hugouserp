@@ -64,7 +64,7 @@ class Timeline extends Component
         $start = \Carbon\Carbon::parse($this->startDate);
         
         if ($this->viewMode === 'week') {
-            $this->startDate = $start->subWeek()->toDateString();
+            $this->startDate = $start->subWeek()->startOfWeek()->toDateString();
             $this->endDate = \Carbon\Carbon::parse($this->startDate)->endOfWeek()->toDateString();
         } else {
             $this->startDate = $start->subMonth()->startOfMonth()->toDateString();
