@@ -320,3 +320,139 @@ window.addEventListener('offline', () => {
         window.erpShowNotification('You are offline. Some features may be limited.', 'warning');
     }
 });
+
+// Global Keyboard Shortcuts
+const KeyboardShortcuts = {
+    shortcuts: {},
+    enabled: true,
+    
+    init() {
+        // Default shortcuts
+        this.register('ctrl+s', (e) => {
+            e.preventDefault();
+            // Find and click the first save button
+            const saveBtn = document.querySelector('button[type="submit"], button[wire\\:click*="save"]');
+            if (saveBtn) saveBtn.click();
+        });
+        
+        this.register('ctrl+f', (e) => {
+            // Focus search input
+            const searchInput = document.querySelector('input[wire\\:model*="search"], input[type="search"], input[placeholder*="Search"], input[placeholder*="بحث"]');
+            if (searchInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
+        
+        this.register('ctrl+n', (e) => {
+            // New item - find create/add button
+            const createBtn = document.querySelector('a[href*="create"], a[href*="/new"], button[wire\\:click*="create"]');
+            if (createBtn) {
+                e.preventDefault();
+                createBtn.click();
+            }
+        });
+        
+        this.register('escape', () => {
+            // Close modals
+            if (window.Swal && Swal.isVisible()) {
+                Swal.close();
+            }
+            // Dispatch to Livewire to close modals
+            if (window.Livewire) {
+                window.Livewire.dispatch('close-modal');
+            }
+        });
+        
+        this.register('f1', (e) => {
+            e.preventDefault();
+            // Show help dialog
+            this.showHelp();
+        });
+        
+        // Listen for keydown events
+        document.addEventListener('keydown', (e) => this.handleKeydown(e));
+        
+        // Load user preferences
+        const savedPref = localStorage.getItem('erp_keyboard_shortcuts');
+        this.enabled = savedPref !== '0';
+    },
+    
+    register(shortcut, callback) {
+        this.shortcuts[shortcut.toLowerCase()] = callback;
+    },
+    
+    unregister(shortcut) {
+        delete this.shortcuts[shortcut.toLowerCase()];
+    },
+    
+    handleKeydown(e) {
+        if (!this.enabled) return;
+        
+        // Don't intercept when typing in inputs/textareas
+        const activeEl = document.activeElement;
+        const isEditing = activeEl && (
+            activeEl.tagName === 'INPUT' || 
+            activeEl.tagName === 'TEXTAREA' || 
+            activeEl.isContentEditable
+        );
+        
+        // Build shortcut string
+        let shortcut = '';
+        if (e.ctrlKey || e.metaKey) shortcut += 'ctrl+';
+        if (e.altKey) shortcut += 'alt+';
+        if (e.shiftKey) shortcut += 'shift+';
+        shortcut += e.key.toLowerCase();
+        
+        // Allow escape even when editing
+        if (shortcut === 'escape') {
+            const callback = this.shortcuts[shortcut];
+            if (callback) callback(e);
+            return;
+        }
+        
+        // Don't process other shortcuts when editing (except ctrl+s)
+        if (isEditing && shortcut !== 'ctrl+s') return;
+        
+        const callback = this.shortcuts[shortcut];
+        if (callback) {
+            callback(e);
+        }
+    },
+    
+    toggle() {
+        this.enabled = !this.enabled;
+        localStorage.setItem('erp_keyboard_shortcuts', this.enabled ? '1' : '0');
+        return this.enabled;
+    },
+    
+    showHelp() {
+        const shortcuts = [
+            { key: 'Ctrl + S', action: 'Save / حفظ' },
+            { key: 'Ctrl + F', action: 'Search / بحث' },
+            { key: 'Ctrl + N', action: 'New Item / إضافة جديد' },
+            { key: 'Escape', action: 'Close Modal / إغلاق' },
+            { key: 'F1', action: 'Help / مساعدة' }
+        ];
+        
+        let html = '<table class="w-full text-sm"><tbody>';
+        shortcuts.forEach(s => {
+            html += `<tr class="border-b border-gray-200 dark:border-gray-700">
+                <td class="py-2 px-3"><kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">${s.key}</kbd></td>
+                <td class="py-2 px-3 text-gray-600 dark:text-gray-400">${s.action}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        
+        Swal.fire({
+            title: 'Keyboard Shortcuts / اختصارات لوحة المفاتيح',
+            html: html,
+            icon: 'info',
+            confirmButtonText: 'OK',
+            width: '400px'
+        });
+    }
+};
+
+KeyboardShortcuts.init();
+window.erpKeyboardShortcuts = KeyboardShortcuts;
