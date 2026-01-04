@@ -21,14 +21,9 @@ class Dashboard extends Component
 
     public function mount(): void
     {
-
         $user = Auth::user();
         if (! $user || ! $user->can('rental.view-reports')) {
             abort(403);
-        }
-
-        if (auth()->check()) {
-            abort_unless(auth()->user()->can('rental.view-reports'), 403);
         }
 
         $this->loadData();
@@ -68,9 +63,8 @@ class Dashboard extends Component
             ->toArray();
 
         $occupied = $statusCounts['occupied'] ?? 0;
-        // Handle both 'vacant' and 'available' status names for compatibility
-        // TODO: Standardize on 'available' status once all references are updated
-        $vacant = $statusCounts['vacant'] ?? $statusCounts['available'] ?? ($total - $occupied);
+        // Status 'available' is the standard. Handle legacy 'vacant' for backwards compatibility
+        $vacant = $statusCounts['available'] ?? $statusCounts['vacant'] ?? ($total - $occupied);
 
         $occupancyRate = $total > 0 ? (float) bcdiv(bcmul((string) $occupied, '100', 4), (string) $total, 1) : 0;
 
