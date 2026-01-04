@@ -102,9 +102,11 @@ trait WithMobileOptimization
 
     /**
      * Handle swipe action (for mobile list items)
+     * @param string $direction The swipe direction ('left' or 'right')
+     * @param int|string $itemId The ID of the item being swiped
      */
     #[On('swipe-action')]
-    public function handleSwipeAction(string $direction, mixed $itemId): void
+    public function handleSwipeAction(string $direction, int|string $itemId): void
     {
         // Override in component to handle swipe actions
         // e.g., swipe left to delete, swipe right to edit

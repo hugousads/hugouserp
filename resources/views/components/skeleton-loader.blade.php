@@ -20,9 +20,10 @@ $animationDelay = function($index) {
                     <div class="w-4 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div>
                     
                     {{-- Content columns --}}
+                    @php $widths = ['w-2/4', 'w-3/4', 'w-4/5', 'w-5/6']; @endphp
                     @for($j = 0; $j < $columns; $j++)
                         <div class="flex-1 space-y-2">
-                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-{{ collect([3, 4, 5, 2])->random() }}/4"></div>
+                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded {{ $widths[$j % 4] }}"></div>
                             @if($j === 0)
                                 <div class="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/2"></div>
                             @endif
@@ -106,9 +107,10 @@ $animationDelay = function($index) {
         </div>
     @else
         {{-- Default Skeleton --}}
+        @php $defaultWidths = [85, 70, 95, 60, 80]; @endphp
         <div class="space-y-4">
             @for($i = 0; $i < $count; $i++)
-                <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded" style="width: {{ rand(60, 100) }}%; {{ $animationDelay($i) }}"></div>
+                <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded" style="width: {{ $defaultWidths[$i % 5] }}%; {{ $animationDelay($i) }}"></div>
             @endfor
         </div>
     @endif

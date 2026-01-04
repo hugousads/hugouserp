@@ -37,7 +37,7 @@ $maxWidthClass = match($maxWidth) {
         },
         
         handleTouchStart(e) {
-            if (!e.target.closest('[data-bottom-sheet-handle]')) return;
+            if (!e.target.closest('.bottom-sheet-handle')) return;
             this.isDragging = true;
             this.startY = e.touches[0].clientY;
         },
@@ -100,7 +100,7 @@ $maxWidthClass = match($maxWidth) {
             class="w-full {{ $maxWidthClass }} bg-white dark:bg-slate-800 rounded-t-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col"
         >
             {{-- Handle Bar --}}
-            <div data-bottom-sheet-handle class="flex-shrink-0 p-2 cursor-grab active:cursor-grabbing">
+            <div class="bottom-sheet-handle flex-shrink-0 p-2 cursor-grab active:cursor-grabbing">
                 <div class="w-10 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto"></div>
             </div>
 

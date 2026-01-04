@@ -53,8 +53,9 @@ trait WithLazyLoading
 
     /**
      * Execute query with caching for better performance
+     * @return \Illuminate\Support\Collection
      */
-    protected function cachedQuery(Builder $query, string $cacheKey, int $ttl = 300): mixed
+    protected function cachedQuery(Builder $query, string $cacheKey, int $ttl = 300): \Illuminate\Support\Collection
     {
         if (!config('settings.advanced.cache_ttl', 0)) {
             return $query->get();
@@ -66,17 +67,40 @@ trait WithLazyLoading
     }
 
     /**
-     * Execute paginated query with caching
+     * Execute paginated query with simple pagination (more efficient)
+     * Use this for better performance when you don't need total count
+     */
+    protected function cachedSimplePaginate(Builder $query, int $perPage, string $cacheKey): \Illuminate\Contracts\Pagination\Paginator
+    {
+        return $query->simplePaginate($perPage);
+    }
+
+    /**
+     * Execute paginated query with cached total count
+     * More efficient than standard paginate() for large datasets
      */
     protected function cachedPaginate(Builder $query, int $perPage, string $cacheKey, int $ttl = 60): LengthAwarePaginator
     {
-        // For paginated results, we typically don't cache as the page changes
-        // but we can cache the total count for faster pagination
         $totalCacheKey = $this->buildCacheKey($cacheKey . '_total');
         
-        $total = Cache::remember($totalCacheKey, $ttl, fn() => $query->count());
+        // Cache the total count for faster subsequent paginations
+        $total = Cache::remember($totalCacheKey, $ttl, fn() => (clone $query)->count());
         
-        return $query->paginate($perPage);
+        // Get the current page items
+        $page = request()->get('page', 1);
+        $items = $query->skip(($page - 1) * $perPage)->take($perPage)->get();
+        
+        // Create paginator with cached total
+        return new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]
+        );
     }
 
     /**
