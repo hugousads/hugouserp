@@ -113,6 +113,52 @@ class CustomizableDashboard extends Component
             'default_enabled' => true,
             'permission' => 'dashboard.view',
         ],
+        // Module-specific widgets
+        'motorcycle_stats' => [
+            'title' => 'Motorcycle Inventory',
+            'title_ar' => 'مخزون الدراجات',
+            'icon' => '🏍️',
+            'size' => 'medium',
+            'default_enabled' => true,
+            'permission' => 'inventory.products.view',
+            'module' => 'motorcycle',
+        ],
+        'spares_stats' => [
+            'title' => 'Spare Parts Overview',
+            'title_ar' => 'نظرة عامة على قطع الغيار',
+            'icon' => '🔧',
+            'size' => 'medium',
+            'default_enabled' => true,
+            'permission' => 'inventory.products.view',
+            'module' => 'spares',
+        ],
+        'rental_stats' => [
+            'title' => 'Rental Overview',
+            'title_ar' => 'نظرة عامة على الإيجارات',
+            'icon' => '🏠',
+            'size' => 'medium',
+            'default_enabled' => true,
+            'permission' => 'rental.contracts.view',
+            'module' => 'rental',
+        ],
+        'manufacturing_stats' => [
+            'title' => 'Manufacturing Overview',
+            'title_ar' => 'نظرة عامة على التصنيع',
+            'icon' => '🏭',
+            'size' => 'medium',
+            'default_enabled' => true,
+            'permission' => 'manufacturing.view',
+            'module' => 'manufacturing',
+        ],
+        'wood_stats' => [
+            'title' => 'Wood Inventory',
+            'title_ar' => 'مخزون الأخشاب',
+            'icon' => '🪵',
+            'size' => 'medium',
+            'default_enabled' => true,
+            'permission' => 'inventory.products.view',
+            'module' => 'wood',
+        ],
     ];
 
     public function mount(): void
@@ -138,6 +184,7 @@ class CustomizableDashboard extends Component
     {
         $user = Auth::user();
         $preferences = $user->preferences ?? [];
+        $branch = $user->currentBranch ?? null;
         
         // Get saved widget order or use defaults
         $this->widgetOrder = $preferences['dashboard_widget_order'] ?? array_keys($this->availableWidgets);
@@ -157,6 +204,13 @@ class CustomizableDashboard extends Component
                     continue; // Skip widgets user doesn't have permission for
                 }
                 
+                // Check if widget requires a specific module and if branch has it enabled
+                if (isset($widget['module']) && $branch) {
+                    if (!$branch->hasModule($widget['module'])) {
+                        continue; // Skip module-specific widgets if module is not enabled
+                    }
+                }
+                
                 $this->widgets[] = $widget;
             }
         }
@@ -166,6 +220,12 @@ class CustomizableDashboard extends Component
             if (!in_array($key, $this->widgetOrder)) {
                 if ($widget['permission'] && !Auth::user()->can($widget['permission'])) {
                     continue;
+                }
+                // Check module availability for new widgets too
+                if (isset($widget['module']) && $branch) {
+                    if (!$branch->hasModule($widget['module'])) {
+                        continue;
+                    }
                 }
                 $widget['key'] = $key;
                 $widget['visible'] = $widget['default_enabled'];
