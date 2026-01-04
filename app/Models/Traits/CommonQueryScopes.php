@@ -179,8 +179,13 @@ trait CommonQueryScopes
             return $value->format('Y-m-d H:i');
         }
         
-        if (is_numeric($value) && str_contains($attribute, ['price', 'cost', 'total', 'amount'])) {
-            return number_format((float) $value, 2);
+        if (is_numeric($value)) {
+            $moneyAttributes = ['price', 'cost', 'total', 'amount'];
+            foreach ($moneyAttributes as $moneyAttr) {
+                if (str_contains($attribute, $moneyAttr)) {
+                    return number_format((float) $value, 2);
+                }
+            }
         }
         
         return (string) $value;
