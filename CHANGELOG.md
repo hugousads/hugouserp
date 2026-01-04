@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Event Sourcing**:
+  - `RecordsModelEvents` trait - automatic audit trail for model changes
+  - `getAuditHistory()` method - retrieve model change history
+  - `getStateAt()` method - reconstruct model state at any point in time
+  - `recordCustomEvent()` method - manual event recording
+- **API Enhancements**:
+  - Enhanced `ApiController` base class with standardized responses
+  - Pagination helpers with configurable limits
+  - Sort parameter validation
+  - Response caching support
+  - Unified error handling
+- **Queue Optimization**:
+  - `SendBatchNotificationJob` - optimized batch notifications
+  - Chunked processing for large user groups
+  - Job batching support for 100+ users
+  - `notifications` queue for notification jobs
+- **Database Performance**:
+  - New performance indexes migration
+  - 20+ new indexes for common queries
+  - Optimized indexes for sales, products, stock movements, customers, purchases
+  - Notification query optimization indexes
 - **Model Enhancements**:
   - `CommonQueryScopes` trait - 15+ reusable scopes (date filters, search, status)
   - `ValidatesInput` trait - model-level validation helpers
