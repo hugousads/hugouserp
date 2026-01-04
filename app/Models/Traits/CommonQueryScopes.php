@@ -180,9 +180,11 @@ trait CommonQueryScopes
         }
         
         if (is_numeric($value)) {
-            $moneyAttributes = ['price', 'cost', 'total', 'amount'];
-            foreach ($moneyAttributes as $moneyAttr) {
-                if (str_contains($attribute, $moneyAttr)) {
+            // Common money-related suffixes/prefixes for attribute names
+            $moneySuffixes = ['_price', '_cost', '_total', '_amount', 'price', 'cost', 'total', 'amount'];
+            foreach ($moneySuffixes as $suffix) {
+                // Check if attribute ends with or equals the money suffix
+                if (str_ends_with($attribute, $suffix) || $attribute === $suffix) {
                     return number_format((float) $value, 2);
                 }
             }
