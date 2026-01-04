@@ -197,8 +197,14 @@ return new class extends Migration
             $table->index(['category_id', 'is_active']);
             $table->index(['type', 'is_active']);
             $table->index('stock_quantity');
-            $table->fullText(['name', 'name_ar', 'sku', 'barcode']);
         });
+        
+        // Add fulltext index for MySQL only
+        if (config('database.default') === 'mysql') {
+            Schema::table('products', function (Blueprint $table) {
+                $table->fullText(['name', 'name_ar', 'sku', 'barcode']);
+            });
+        }
 
         // Product price tiers
         Schema::create('product_price_tiers', function (Blueprint $table) {

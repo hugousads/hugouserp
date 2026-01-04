@@ -87,8 +87,14 @@ return new class extends Migration
             $table->softDeletes();
             
             $table->index(['branch_id', 'is_active']);
-            $table->fullText(['name', 'name_ar', 'phone', 'email']);
         });
+        
+        // Add fulltext index for MySQL only (customers)
+        if (config('database.default') === 'mysql') {
+            Schema::table('customers', function (Blueprint $table) {
+                $table->fullText(['name', 'name_ar', 'phone', 'email']);
+            });
+        }
 
         // Suppliers
         Schema::create('suppliers', function (Blueprint $table) {
@@ -150,8 +156,14 @@ return new class extends Migration
             $table->softDeletes();
             
             $table->index(['branch_id', 'is_active']);
-            $table->fullText(['name', 'name_ar', 'phone', 'email']);
         });
+        
+        // Add fulltext index for MySQL only (suppliers)
+        if (config('database.default') === 'mysql') {
+            Schema::table('suppliers', function (Blueprint $table) {
+                $table->fullText(['name', 'name_ar', 'phone', 'email']);
+            });
+        }
 
         // Customer attachments reference
         Schema::create('attachments', function (Blueprint $table) {

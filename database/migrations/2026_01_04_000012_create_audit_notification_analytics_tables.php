@@ -313,8 +313,14 @@ return new class extends Migration
             $table->timestamp('indexed_at')->useCurrent();
             
             $table->index(['searchable_type', 'searchable_id']);
-            $table->fullText(['title', 'content']);
         });
+        
+        // Add fulltext index for MySQL only (search_index)
+        if (config('database.default') === 'mysql') {
+            Schema::table('search_index', function (Blueprint $table) {
+                $table->fullText(['title', 'content']);
+            });
+        }
 
         // Alert rules
         Schema::create('alert_rules', function (Blueprint $table) {

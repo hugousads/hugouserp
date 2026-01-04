@@ -112,8 +112,14 @@ return new class extends Migration
             
             $table->index(['branch_id', 'status']);
             $table->index(['department', 'status']);
-            $table->fullText(['first_name', 'last_name', 'email']);
         });
+        
+        // Add fulltext index for MySQL only (hr_employees)
+        if (config('database.default') === 'mysql') {
+            Schema::table('hr_employees', function (Blueprint $table) {
+                $table->fullText(['first_name', 'last_name', 'email']);
+            });
+        }
 
         // Branch-Employee pivot for multi-branch employees
         Schema::create('branch_employee', function (Blueprint $table) {

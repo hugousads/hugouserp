@@ -265,8 +265,14 @@ return new class extends Migration
             
             $table->index(['branch_id', 'category']);
             $table->index(['documentable_type', 'documentable_id']);
-            $table->fullText(['title', 'title_ar', 'description']);
         });
+        
+        // Add fulltext index for MySQL only (documents)
+        if (config('database.default') === 'mysql') {
+            Schema::table('documents', function (Blueprint $table) {
+                $table->fullText(['title', 'title_ar', 'description']);
+            });
+        }
 
         // Document-Tag pivot
         Schema::create('document_tag', function (Blueprint $table) {
@@ -440,8 +446,14 @@ return new class extends Migration
             $table->index(['branch_id', 'status']);
             $table->index(['assigned_to', 'status']);
             $table->index(['customer_id', 'status']);
-            $table->fullText(['subject', 'description']);
         });
+        
+        // Add fulltext index for MySQL only (tickets)
+        if (config('database.default') === 'mysql') {
+            Schema::table('tickets', function (Blueprint $table) {
+                $table->fullText(['subject', 'description']);
+            });
+        }
 
         // Ticket replies
         Schema::create('ticket_replies', function (Blueprint $table) {
