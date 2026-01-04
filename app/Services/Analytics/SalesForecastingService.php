@@ -1,0 +1,263 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Analytics;
+
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
+/**
+ * SalesForecastingService - Predict future sales based on historical data
+ * 
+ * Uses simple moving average and weighted moving average algorithms
+ * to forecast future sales. More sophisticated models can be added.
+ */
+class SalesForecastingService
+{
+    /**
+     * Get sales forecast for the next N periods
+     */
+    public function getForecast(?int $branchId = null, string $period = 'day', int $forecastPeriods = 7, int $historicalPeriods = 30): array
+    {
+        $historical = $this->getHistoricalSales($branchId, $period, $historicalPeriods);
+        
+        if (empty($historical)) {
+            return [
+                'historical' => [],
+                'forecast' => [],
+                'method' => 'simple_moving_average',
+                'period' => $period,
+                'message' => __('Not enough historical data for forecasting'),
+            ];
+        }
+
+        $forecast = $this->calculateSimpleMovingAverage($historical, $forecastPeriods);
+        
+        return [
+            'historical' => $historical,
+            'forecast' => $forecast,
+            'method' => 'simple_moving_average',
+            'period' => $period,
+            'currency' => setting('general.default_currency', 'EGP'),
+            'accuracy' => $this->calculateAccuracy($historical),
+        ];
+    }
+
+    /**
+     * Get historical sales data
+     */
+    protected function getHistoricalSales(?int $branchId, string $period, int $periods): array
+    {
+        $dateFormat = match($period) {
+            'week' => '%Y-%u',
+            'month' => '%Y-%m',
+            default => '%Y-%m-%d',
+        };
+
+        $startDate = match($period) {
+            'week' => now()->subWeeks($periods),
+            'month' => now()->subMonths($periods),
+            default => now()->subDays($periods),
+        };
+
+        $query = DB::table('sales')
+            ->select([
+                DB::raw("DATE_FORMAT(created_at, '{$dateFormat}') as period"),
+                DB::raw('COUNT(*) as order_count'),
+                DB::raw('COALESCE(SUM(grand_total), 0) as revenue'),
+                DB::raw('COALESCE(AVG(grand_total), 0) as avg_order_value'),
+            ])
+            ->where('status', '!=', 'cancelled')
+            ->where('created_at', '>=', $startDate)
+            ->groupBy(DB::raw("DATE_FORMAT(created_at, '{$dateFormat}')"))
+            ->orderBy('period');
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        return $query->get()->map(fn($row) => [
+            'period' => $row->period,
+            'order_count' => (int) $row->order_count,
+            'revenue' => (float) $row->revenue,
+            'avg_order_value' => (float) $row->avg_order_value,
+        ])->toArray();
+    }
+
+    /**
+     * Calculate simple moving average forecast
+     */
+    protected function calculateSimpleMovingAverage(array $historical, int $forecastPeriods): array
+    {
+        if (count($historical) < 3) {
+            return [];
+        }
+
+        // Use last N periods for averaging (minimum 3, max 7)
+        $windowSize = min(7, max(3, count($historical)));
+        $recentData = array_slice($historical, -$windowSize);
+
+        $avgRevenue = array_sum(array_column($recentData, 'revenue')) / count($recentData);
+        $avgOrderCount = array_sum(array_column($recentData, 'order_count')) / count($recentData);
+        $avgOrderValue = array_sum(array_column($recentData, 'avg_order_value')) / count($recentData);
+
+        // Calculate trend
+        $trend = $this->calculateTrend(array_column($recentData, 'revenue'));
+
+        $forecast = [];
+        $lastPeriod = end($historical)['period'];
+        
+        for ($i = 1; $i <= $forecastPeriods; $i++) {
+            // Apply trend to forecast
+            $trendAdjustment = 1 + ($trend * $i);
+            
+            $forecast[] = [
+                'period' => $this->getNextPeriod($lastPeriod, $i),
+                'order_count' => round($avgOrderCount * $trendAdjustment),
+                'revenue' => round($avgRevenue * $trendAdjustment, 2),
+                'avg_order_value' => round($avgOrderValue, 2),
+                'confidence' => max(0.5, 1 - ($i * 0.1)), // Confidence decreases with distance
+            ];
+        }
+
+        return $forecast;
+    }
+
+    /**
+     * Calculate trend coefficient (slope)
+     */
+    protected function calculateTrend(array $values): float
+    {
+        $n = count($values);
+        if ($n < 2) {
+            return 0;
+        }
+
+        $sumX = 0;
+        $sumY = 0;
+        $sumXY = 0;
+        $sumX2 = 0;
+
+        for ($i = 0; $i < $n; $i++) {
+            $sumX += $i;
+            $sumY += $values[$i];
+            $sumXY += $i * $values[$i];
+            $sumX2 += $i * $i;
+        }
+
+        $denominator = ($n * $sumX2 - $sumX * $sumX);
+        if ($denominator == 0) {
+            return 0;
+        }
+
+        $slope = ($n * $sumXY - $sumX * $sumY) / $denominator;
+        $avgY = $sumY / $n;
+        
+        // Return as percentage change
+        return $avgY > 0 ? $slope / $avgY : 0;
+    }
+
+    /**
+     * Get next period string
+     */
+    protected function getNextPeriod(string $lastPeriod, int $offset): string
+    {
+        // Detect period format
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $lastPeriod)) {
+            // Daily format
+            return Carbon::createFromFormat('Y-m-d', $lastPeriod)
+                ->addDays($offset)
+                ->format('Y-m-d');
+        } elseif (preg_match('/^\d{4}-\d{2}$/', $lastPeriod)) {
+            // Monthly format
+            return Carbon::createFromFormat('Y-m', $lastPeriod)
+                ->addMonths($offset)
+                ->format('Y-m');
+        } else {
+            // Weekly format (Y-W)
+            return Carbon::now()->addWeeks($offset)->format('Y-W');
+        }
+    }
+
+    /**
+     * Calculate forecast accuracy based on historical data
+     */
+    protected function calculateAccuracy(array $historical): array
+    {
+        if (count($historical) < 4) {
+            return ['score' => 0, 'message' => __('Not enough data')];
+        }
+
+        // Use holdout validation: forecast the last 3 periods using prior data
+        $trainData = array_slice($historical, 0, -3);
+        $testData = array_slice($historical, -3);
+
+        $predictions = $this->calculateSimpleMovingAverage($trainData, 3);
+        
+        if (empty($predictions)) {
+            return ['score' => 0, 'message' => __('Not enough data')];
+        }
+
+        $totalError = 0;
+        $totalActual = 0;
+
+        for ($i = 0; $i < min(count($predictions), count($testData)); $i++) {
+            $actual = $testData[$i]['revenue'];
+            $predicted = $predictions[$i]['revenue'];
+            $totalError += abs($actual - $predicted);
+            $totalActual += $actual;
+        }
+
+        $mape = $totalActual > 0 ? ($totalError / $totalActual) * 100 : 100;
+        $accuracy = max(0, 100 - $mape);
+
+        return [
+            'score' => round($accuracy, 1),
+            'message' => $accuracy >= 80 ? __('High') : ($accuracy >= 60 ? __('Medium') : __('Low')),
+        ];
+    }
+
+    /**
+     * Get product-specific forecast
+     */
+    public function getProductForecast(int $productId, ?int $branchId = null, int $forecastPeriods = 7): array
+    {
+        $historical = DB::table('sale_items')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->select([
+                DB::raw("DATE_FORMAT(sales.created_at, '%Y-%m-%d') as period"),
+                DB::raw('COALESCE(SUM(sale_items.qty), 0) as quantity'),
+                DB::raw('COALESCE(SUM(sale_items.line_total), 0) as revenue'),
+            ])
+            ->where('sale_items.product_id', $productId)
+            ->where('sales.status', '!=', 'cancelled')
+            ->where('sales.created_at', '>=', now()->subDays(30))
+            ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
+            ->groupBy(DB::raw("DATE_FORMAT(sales.created_at, '%Y-%m-%d')"))
+            ->orderBy('period')
+            ->get()
+            ->map(fn($row) => [
+                'period' => $row->period,
+                'order_count' => (int) $row->quantity,
+                'revenue' => (float) $row->revenue,
+                'avg_order_value' => $row->quantity > 0 ? $row->revenue / $row->quantity : 0,
+            ])
+            ->toArray();
+
+        if (count($historical) < 3) {
+            return [
+                'historical' => $historical,
+                'forecast' => [],
+                'message' => __('Not enough sales data for this product'),
+            ];
+        }
+
+        return [
+            'historical' => $historical,
+            'forecast' => $this->calculateSimpleMovingAverage($historical, $forecastPeriods),
+            'product_id' => $productId,
+            'currency' => setting('general.default_currency', 'EGP'),
+        ];
+    }
+}

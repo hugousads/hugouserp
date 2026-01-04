@@ -1217,6 +1217,11 @@ Route::get('/app/media/{media}/download', \App\Http\Controllers\Admin\MediaDownl
             ->name('bulk-import')
             ->middleware('can:settings.view');
 
+        // Backup & Restore
+        Route::get('/backup', \App\Livewire\Admin\BackupRestore::class)
+            ->name('backup')
+            ->middleware('can:settings.manage');
+
         // Media Library
         Route::get('/media', \App\Livewire\Admin\MediaLibrary::class)
             ->name('media.index')
