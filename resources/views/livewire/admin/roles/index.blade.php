@@ -10,6 +10,25 @@
         </a>
     </div>
 
+    {{-- Role Hierarchy Info Card --}}
+    <div class="erp-card p-4 bg-gradient-to-r from-slate-50 to-blue-50 border-l-4 border-blue-500">
+        <h3 class="font-semibold text-slate-800 mb-2">{{ __('Role Hierarchy') }}</h3>
+        <div class="flex flex-wrap gap-4 text-sm">
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+                <span>{{ __('Super Admin') }} - {{ __('Full system access') }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                <span>{{ __('Branch Admin') }} - {{ __('Branch-level management') }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <span>{{ __('Branch Employee') }} - {{ __('Module-specific access') }}</span>
+            </div>
+        </div>
+    </div>
+
     <div class="erp-card p-4">
         <div class="mb-6">
             <input type="text" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search roles...') }}" class="erp-input max-w-md">
@@ -36,7 +55,17 @@
                     @forelse($roles as $role)
                         <tr>
                             <td class="font-medium text-slate-800">
-                                {{ __('role.' . $role->name, [], 'ar') !== 'role.' . $role->name ? __('role.' . $role->name) : $role->name }}
+                                <div class="flex items-center gap-2">
+                                    {{-- Role Type Indicator --}}
+                                    @if($role->name === 'Super Admin')
+                                        <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                                    @elseif(str_contains(strtolower($role->name), 'admin'))
+                                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    @else
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    @endif
+                                    {{ __('role.' . $role->name, [], 'ar') !== 'role.' . $role->name ? __('role.' . $role->name) : $role->name }}
+                                </div>
                             </td>
                             <td>
                                 <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">

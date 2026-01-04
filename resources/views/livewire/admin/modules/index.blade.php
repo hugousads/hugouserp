@@ -46,6 +46,18 @@
                     
                     <p class="text-sm text-slate-600 mb-3 line-clamp-2">{{ $module->localized_description ?? __('No description') }}</p>
                     
+                    {{-- Module Type Badge --}}
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="px-2 py-0.5 text-xs rounded-full {{ $module->getModuleTypeColor() }}">
+                            {{ $module->getModuleTypeLabel() }}
+                        </span>
+                        @if($module->supports_items)
+                            <span class="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+                                {{ __('Creates Items') }}
+                            </span>
+                        @endif
+                    </div>
+                    
                     <div class="flex items-center justify-between pt-3 border-t">
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-slate-500">{{ $module->branches_count }} {{ __('branches') }}</span>
