@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Services\StockService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -301,6 +302,32 @@ class CustomizableDashboard extends Component
         return $query;
     }
 
+    /**
+     * Calculate inventory statistics using a single query for better performance
+     */
+    protected function calculateInventoryStats(string $stockExpr, ?int $branchFilter): array
+    {
+        // Use a single query with CASE expressions for better performance
+        $result = DB::table('products')
+            ->whereNull('deleted_at')
+            ->when($branchFilter, fn ($q) => $q->where('branch_id', $branchFilter))
+            ->selectRaw("
+                SUM(CASE WHEN ({$stockExpr}) > COALESCE(min_stock, 0) THEN 1 ELSE 0 END) as in_stock,
+                SUM(CASE WHEN min_stock IS NOT NULL AND min_stock > 0 AND ({$stockExpr}) <= min_stock AND ({$stockExpr}) > 0 THEN 1 ELSE 0 END) as low_stock,
+                SUM(CASE WHEN ({$stockExpr}) <= 0 THEN 1 ELSE 0 END) as out_of_stock
+            ")
+            ->first();
+
+        return [
+            'labels' => [__('In Stock'), __('Low Stock'), __('Out of Stock')],
+            'data' => [
+                (int) ($result->in_stock ?? 0),
+                (int) ($result->low_stock ?? 0),
+                (int) ($result->out_of_stock ?? 0),
+            ],
+        ];
+    }
+
     protected function loadStats(): void
     {
         $cacheKey = "{$this->getCachePrefix()}:stats";
@@ -354,6 +381,10 @@ class CustomizableDashboard extends Component
                 ->get();
 
             $productsQuery = $this->scopeProductsQuery(Product::query());
+            
+            // Use StockService for consistent stock calculation
+            $stockExpr = StockService::getStockCalculationExpression();
+            $branchFilter = (!$this->isAdmin && $this->branchId) ? $this->branchId : null;
 
             return [
                 'sales' => ['labels' => $labels, 'data' => $salesData],
@@ -362,25 +393,7 @@ class CustomizableDashboard extends Component
                     'data' => $paymentMethodsRaw->pluck('count')->toArray(),
                     'totals' => $paymentMethodsRaw->pluck('total')->toArray(),
                 ],
-                'inventory' => [
-                    'labels' => [__('In Stock'), __('Low Stock'), __('Out of Stock')],
-                    'data' => [
-                        DB::table('products')->whereNull('deleted_at')
-                            ->when(!$this->isAdmin && $this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
-                            ->whereRaw('COALESCE((SELECT SUM(CASE WHEN direction = \'in\' THEN qty ELSE -qty END) FROM stock_movements WHERE stock_movements.product_id = products.id), 0) > COALESCE(min_stock, 0)')
-                            ->count(),
-                        DB::table('products')->whereNull('deleted_at')
-                            ->when(!$this->isAdmin && $this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
-                            ->whereNotNull('min_stock')->where('min_stock', '>', 0)
-                            ->whereRaw('COALESCE((SELECT SUM(CASE WHEN direction = \'in\' THEN qty ELSE -qty END) FROM stock_movements WHERE stock_movements.product_id = products.id), 0) <= min_stock')
-                            ->whereRaw('COALESCE((SELECT SUM(CASE WHEN direction = \'in\' THEN qty ELSE -qty END) FROM stock_movements WHERE stock_movements.product_id = products.id), 0) > 0')
-                            ->count(),
-                        DB::table('products')->whereNull('deleted_at')
-                            ->when(!$this->isAdmin && $this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
-                            ->whereRaw('COALESCE((SELECT SUM(CASE WHEN direction = \'in\' THEN qty ELSE -qty END) FROM stock_movements WHERE stock_movements.product_id = products.id), 0) <= 0')
-                            ->count(),
-                    ],
-                ],
+                'inventory' => $this->calculateInventoryStats($stockExpr, $branchFilter),
             ];
         });
 
@@ -394,7 +407,7 @@ class CustomizableDashboard extends Component
         $cacheKey = "{$this->getCachePrefix()}:low_stock";
 
         $this->lowStockProducts = Cache::remember($cacheKey, $this->cacheTtl, function () {
-            $stockExpr = \App\Services\StockService::getStockCalculationExpression();
+            $stockExpr = StockService::getStockCalculationExpression();
             
             return $this->scopeProductsQuery(Product::query())
                 ->select('products.*')
