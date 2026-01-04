@@ -282,7 +282,7 @@ if ('serviceWorker' in navigator) {
         
         // Handle messages from service worker
         navigator.serviceWorker.addEventListener('message', (event) => {
-            const { type, timestamp } = event.data || {};
+            const { type, timestamp, url } = event.data || {};
             
             if (type === 'SYNC_OFFLINE_SALES') {
                 // Trigger offline sales sync
@@ -297,6 +297,11 @@ if ('serviceWorker' in navigator) {
                     window.Livewire.dispatch('sync-offline-data');
                 }
             }
+            
+            if (type === 'NAVIGATE' && url) {
+                // Handle navigation request from service worker
+                window.location.href = url;
+            }
         });
     });
 }
@@ -307,10 +312,12 @@ window.addEventListener('online', () => {
     if (window.erpShowNotification) {
         window.erpShowNotification('Connection restored', 'success');
     }
-    // Trigger sync
-    if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+    // Trigger sync if registration supports it
+    if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((registration) => {
-            registration.sync.register('sync-offline-data').catch(() => {});
+            if (registration.sync) {
+                registration.sync.register('sync-offline-data').catch(() => {});
+            }
         });
     }
 });

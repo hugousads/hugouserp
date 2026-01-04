@@ -36,10 +36,19 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('[SW] Caching static assets');
-                return cache.addAll(STATIC_ASSETS.filter(url => {
-                    // Only cache existing URLs
-                    return true;
-                }));
+                // Only cache assets that exist and can be fetched
+                return Promise.all(
+                    STATIC_ASSETS.map(url => {
+                        return fetch(url)
+                            .then(response => {
+                                if (response.ok) {
+                                    return cache.put(url, response);
+                                }
+                                return Promise.resolve();
+                            })
+                            .catch(() => Promise.resolve());
+                    })
+                );
             })
             .then(() => self.skipWaiting())
             .catch((error) => {
@@ -244,7 +253,12 @@ self.addEventListener('notificationclick', (event) => {
                 for (const client of clientList) {
                     if (client.url.includes(self.location.origin) && 'focus' in client) {
                         client.focus();
-                        client.navigate(url);
+                        // Use postMessage for navigation if navigate is not available
+                        if ('navigate' in client) {
+                            client.navigate(url);
+                        } else {
+                            client.postMessage({ type: 'NAVIGATE', url: url });
+                        }
                         return;
                     }
                 }

@@ -49,13 +49,30 @@ class NotificationService implements NotificationServiceInterface
 
     /**
      * Send an in-app notification to multiple users
+     * Optimized to batch operations where possible
      */
     public function inAppToMany(array $userIds, string $title, string $message, array $data = []): void
     {
         $this->handleServiceOperation(
             callback: function () use ($userIds, $title, $message, $data) {
+                // Load all users at once to avoid N+1
+                $users = User::whereIn('id', $userIds)->get();
+                
+                foreach ($users as $user) {
+                    $user->notify(new InAppMessage($title, $message, $data));
+                }
+                
+                // Broadcast real-time notifications in batch
                 foreach ($userIds as $userId) {
-                    $this->inApp($userId, $title, $message, $data);
+                    event(new RealTimeNotification(
+                        userId: $userId,
+                        title: $title,
+                        message: $message,
+                        type: $data['type'] ?? 'info',
+                        link: $data['link'] ?? null,
+                        data: $data
+                    ));
+                    event(new UpdateNotificationCounters($userId));
                 }
             },
             operation: 'inAppToMany',
@@ -140,15 +157,14 @@ class NotificationService implements NotificationServiceInterface
 
     /**
      * Get unread notification count for a user
+     * Uses Eloquent relationships for consistency and caching
      */
     public function getUnreadCount(int $userId): int
     {
         return $this->handleServiceOperation(
             callback: function () use ($userId) {
-                return DB::table('notifications')
-                    ->where('notifiable_id', $userId)
-                    ->whereNull('read_at')
-                    ->count();
+                $user = User::find($userId);
+                return $user ? $user->unreadNotifications()->count() : 0;
             },
             operation: 'getUnreadCount',
             context: ['user_id' => $userId],
@@ -158,18 +174,23 @@ class NotificationService implements NotificationServiceInterface
 
     /**
      * Get recent notifications for a user
+     * Uses Eloquent relationships for consistency and caching
      */
     public function getRecent(int $userId, int $limit = 10): array
     {
         return $this->handleServiceOperation(
             callback: function () use ($userId, $limit) {
-                return DB::table('notifications')
-                    ->where('notifiable_id', $userId)
+                $user = User::find($userId);
+                if (!$user) {
+                    return [];
+                }
+                
+                return $user->notifications()
                     ->orderByDesc('created_at')
                     ->limit($limit)
                     ->get()
                     ->map(function ($notification) {
-                        $data = json_decode($notification->data, true) ?? [];
+                        $data = $notification->data ?? [];
                         return [
                             'id' => $notification->id,
                             'type' => $data['type'] ?? 'info',
