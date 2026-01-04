@@ -608,21 +608,21 @@ return [
             'max' => 10240,
             'description' => 'Maximum size of Livewire request payload in KB',
         ],
-        'max_nested_depth' => [
+        'max_nesting_depth' => [
             'label' => 'Max Nested Form Depth',
             'type' => 'integer',
             'default' => 15,
             'min' => 5,
             'max' => 30,
-            'description' => 'Maximum depth for nested form data',
+            'description' => 'Maximum depth for nested form data (matches Livewire payload.max_nesting_depth)',
         ],
-        'max_method_calls' => [
+        'max_calls' => [
             'label' => 'Max Method Calls per Request',
             'type' => 'integer',
             'default' => 100,
             'min' => 20,
             'max' => 500,
-            'description' => 'Maximum Livewire method calls per request',
+            'description' => 'Maximum Livewire method calls per request (matches Livewire payload.max_calls)',
         ],
         'enable_query_logging' => [
             'label' => 'Enable Query Logging',
