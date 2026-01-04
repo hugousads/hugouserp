@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Model Enhancements**:
+  - `CommonQueryScopes` trait - 15+ reusable scopes (date filters, search, status)
+  - `ValidatesInput` trait - model-level validation helpers
+  - Enhanced `BaseModel` with `getDisplayName()`, `getSummary()` methods
+- **New Services**:
+  - `DynamicFormService` - customizable form fields per entity/branch
+  - `BranchManagerService` - simplified operations for branch managers
+- **Code Consolidation**:
+  - `LoadsDashboardData` trait - shared dashboard data loading
+  - Reduced Dashboard/Index.php from 317 to 47 lines
+  - Reduced CustomizableDashboard.php from 490 to 256 lines
 - **PWA Support**: Added `manifest.json` for Progressive Web App installation
 - **PWA Meta Tags**: Added theme-color, mobile-web-app-capable, apple-touch-icon meta tags
 - **Offline Data Sync**: Enhanced Service Worker with IndexedDB for offline data storage
