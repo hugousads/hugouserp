@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -30,6 +31,10 @@ class Form extends Component
     public ?int $productId = null;
 
     public ?int $selectedModuleId = null;
+    
+    // URL parameter to pre-select module (e.g., ?module=motorcycle)
+    #[Url]
+    public ?string $module = null;
 
     public $thumbnailFile;
     
@@ -99,6 +104,19 @@ class Form extends Component
         $defaultCurrency = $baseCurrency?->code ?? 'USD';
         $this->form['price_currency'] = $defaultCurrency;
         $this->form['cost_currency'] = $defaultCurrency;
+        
+        // Pre-select module if passed via URL (e.g., ?module=motorcycle or ?module=rental)
+        if (!$product && $this->module) {
+            $preselectedModule = Module::where('key', $this->module)->where('supports_items', true)->first();
+            if ($preselectedModule) {
+                $this->selectedModuleId = $preselectedModule->id;
+                $this->form['module_id'] = $preselectedModule->id;
+                $this->loadModuleFields($preselectedModule->id);
+                if ($preselectedModule->is_service) {
+                    $this->form['type'] = 'service';
+                }
+            }
+        }
 
         if ($this->productId) {
             $p = Product::with(['fieldValues.field'])

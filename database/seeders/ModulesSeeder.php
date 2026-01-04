@@ -13,22 +13,47 @@ class ModulesSeeder extends Seeder
 {
     public function run(): void
     {
+        // Module Types:
+        // 1. Data Modules (supports_items=true): These modules have their own items/products
+        //    - inventory: General products that can be sold/purchased
+        //    - motorcycle: Motorcycle products (bikes, accessories)
+        //    - spares: Spare parts with vehicle compatibility
+        //    - wood: Wood/lumber products
+        //    - rental: Rental units/properties
+        //    - manufacturing: Raw materials and finished goods
+        //
+        // 2. Operational Modules (supports_items=false): These modules USE products from data modules
+        //    - sales: Uses products from inventory/motorcycle/spares/wood to create sales
+        //    - purchases: Purchases products for inventory/motorcycle/spares/wood
+        //    - pos: Point of sale - uses products from data modules
+        //    - hrm: Employee management - no products
+        //    - reports: Reporting - no products
+        //    - accounting: Financial management - no products
+        //    - projects: Project management - no products
+        //    - documents: Document storage - no products
+        //    - helpdesk: Support tickets - no products
+        
         $modules = [
-            ['key' => 'inventory',      'name' => 'Inventory',          'name_ar' => 'المخزون',           'version' => '1.0.0', 'is_core' => true,  'supports_items' => true,  'icon' => 'cube'],
-            ['key' => 'sales',          'name' => 'Sales',              'name_ar' => 'المبيعات',          'version' => '1.0.0', 'is_core' => true,  'supports_items' => true,  'icon' => 'shopping-cart'],
-            ['key' => 'purchases',      'name' => 'Purchases',          'name_ar' => 'المشتريات',         'version' => '1.0.0', 'is_core' => true,  'supports_items' => true,  'icon' => 'truck'],
-            ['key' => 'pos',            'name' => 'Point of Sale',      'name_ar' => 'نقاط البيع',        'version' => '1.0.0', 'is_core' => true,  'supports_items' => true,  'icon' => 'cash-register'],
-            ['key' => 'manufacturing',  'name' => 'Manufacturing',      'name_ar' => 'التصنيع',           'version' => '1.0.0', 'is_core' => false, 'supports_items' => true,  'icon' => 'cog'],
-            ['key' => 'rental',         'name' => 'Rental',             'name_ar' => 'الإيجارات',         'version' => '1.0.0', 'is_core' => false, 'supports_items' => true,  'icon' => 'key'],
-            ['key' => 'motorcycle',     'name' => 'Motorcycle',         'name_ar' => 'الدراجات النارية',  'version' => '1.0.0', 'is_core' => false, 'supports_items' => true,  'icon' => 'motorcycle'],
-            ['key' => 'spares',         'name' => 'Spare Parts',        'name_ar' => 'قطع الغيار',        'version' => '1.0.0', 'is_core' => false, 'supports_items' => true,  'icon' => 'tools'],
-            ['key' => 'wood',           'name' => 'Wood',               'name_ar' => 'الأخشاب',           'version' => '1.0.0', 'is_core' => false, 'supports_items' => true,  'icon' => 'tree'],
-            ['key' => 'hrm',            'name' => 'Human Resources',    'name_ar' => 'الموارد البشرية',   'version' => '1.0.0', 'is_core' => false, 'supports_items' => false, 'icon' => 'users'],
-            ['key' => 'reports',        'name' => 'Reports',            'name_ar' => 'التقارير',          'version' => '1.0.0', 'is_core' => true,  'supports_items' => false, 'icon' => 'chart-bar'],
-            ['key' => 'accounting',     'name' => 'Accounting',         'name_ar' => 'المحاسبة',          'version' => '1.0.0', 'is_core' => true,  'supports_items' => false, 'icon' => 'calculator'],
-            ['key' => 'projects',       'name' => 'Projects',           'name_ar' => 'المشاريع',          'version' => '1.0.0', 'is_core' => false, 'supports_items' => false, 'icon' => 'briefcase'],
-            ['key' => 'documents',      'name' => 'Documents',          'name_ar' => 'المستندات',         'version' => '1.0.0', 'is_core' => false, 'supports_items' => false, 'icon' => 'document'],
-            ['key' => 'helpdesk',       'name' => 'Helpdesk',           'name_ar' => 'الدعم الفني',       'version' => '1.0.0', 'is_core' => false, 'supports_items' => false, 'icon' => 'ticket'],
+            // === DATA MODULES (have their own products/items) ===
+            ['key' => 'inventory',      'name' => 'Inventory',          'name_ar' => 'المخزون',           'version' => '1.0.0', 'is_core' => true,  'supports_items' => true,  'module_type' => 'data',       'icon' => '📦'],
+            ['key' => 'motorcycle',     'name' => 'Motorcycle',         'name_ar' => 'الدراجات النارية',  'version' => '1.0.0', 'is_core' => false, 'supports_items' => true,  'module_type' => 'data',       'icon' => '🏍️'],
+            ['key' => 'spares',         'name' => 'Spare Parts',        'name_ar' => 'قطع الغيار',        'version' => '1.0.0', 'is_core' => false, 'supports_items' => true,  'module_type' => 'data',       'icon' => '🔧'],
+            ['key' => 'wood',           'name' => 'Wood',               'name_ar' => 'الأخشاب',           'version' => '1.0.0', 'is_core' => false, 'supports_items' => true,  'module_type' => 'data',       'icon' => '🪵'],
+            ['key' => 'rental',         'name' => 'Rental',             'name_ar' => 'الإيجارات',         'version' => '1.0.0', 'is_core' => false, 'supports_items' => true,  'module_type' => 'data',       'icon' => '🏠'],
+            ['key' => 'manufacturing',  'name' => 'Manufacturing',      'name_ar' => 'التصنيع',           'version' => '1.0.0', 'is_core' => false, 'supports_items' => true,  'module_type' => 'data',       'icon' => '🏭'],
+            
+            // === OPERATIONAL MODULES (use products from data modules) ===
+            ['key' => 'sales',          'name' => 'Sales',              'name_ar' => 'المبيعات',          'version' => '1.0.0', 'is_core' => true,  'supports_items' => false, 'module_type' => 'functional', 'icon' => '💰'],
+            ['key' => 'purchases',      'name' => 'Purchases',          'name_ar' => 'المشتريات',         'version' => '1.0.0', 'is_core' => true,  'supports_items' => false, 'module_type' => 'functional', 'icon' => '🛒'],
+            ['key' => 'pos',            'name' => 'Point of Sale',      'name_ar' => 'نقاط البيع',        'version' => '1.0.0', 'is_core' => true,  'supports_items' => false, 'module_type' => 'functional', 'icon' => '🖥️'],
+            
+            // === MANAGEMENT MODULES (no products) ===
+            ['key' => 'hrm',            'name' => 'Human Resources',    'name_ar' => 'الموارد البشرية',   'version' => '1.0.0', 'is_core' => false, 'supports_items' => false, 'module_type' => 'functional', 'icon' => '👥'],
+            ['key' => 'reports',        'name' => 'Reports',            'name_ar' => 'التقارير',          'version' => '1.0.0', 'is_core' => true,  'supports_items' => false, 'module_type' => 'functional', 'icon' => '📊'],
+            ['key' => 'accounting',     'name' => 'Accounting',         'name_ar' => 'المحاسبة',          'version' => '1.0.0', 'is_core' => true,  'supports_items' => false, 'module_type' => 'functional', 'icon' => '🧮'],
+            ['key' => 'projects',       'name' => 'Projects',           'name_ar' => 'المشاريع',          'version' => '1.0.0', 'is_core' => false, 'supports_items' => false, 'module_type' => 'functional', 'icon' => '📋'],
+            ['key' => 'documents',      'name' => 'Documents',          'name_ar' => 'المستندات',         'version' => '1.0.0', 'is_core' => false, 'supports_items' => false, 'module_type' => 'functional', 'icon' => '📁'],
+            ['key' => 'helpdesk',       'name' => 'Helpdesk',           'name_ar' => 'الدعم الفني',       'version' => '1.0.0', 'is_core' => false, 'supports_items' => false, 'module_type' => 'functional', 'icon' => '🎫'],
         ];
 
         $createdModules = [];
@@ -43,6 +68,7 @@ class ModulesSeeder extends Seeder
                     'is_core' => $row['is_core'],
                     'is_active' => true,
                     'supports_items' => $row['supports_items'] ?? false,
+                    'module_type' => $row['module_type'] ?? 'functional',
                     'description' => $row['name'] . ' module',
                     'description_ar' => 'وحدة ' . ($row['name_ar'] ?? $row['name']),
                     'icon' => $row['icon'] ?? null,

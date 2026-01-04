@@ -54,9 +54,18 @@
         return $route && Route::has($route);
     };
 
-    // Helper to safely get route URL
-    $safeRoute = function (?string $route) use ($routeExists) {
-        return $routeExists($route) ? route($route) : '#';
+    // Helper to safely get route URL with optional parameters
+    $safeRoute = function (?string $route, array $params = []) use ($routeExists) {
+        return $routeExists($route) ? route($route, $params) : '#';
+    };
+    
+    // Helper to get route with params from item
+    $getItemRoute = function ($item) use ($routeExists) {
+        if (!$routeExists($item['route'] ?? null)) {
+            return '#';
+        }
+        $params = $item['routeParams'] ?? [];
+        return route($item['route'], $params);
     };
 
     // Helper to check permissions
@@ -246,17 +255,73 @@
             ],
         ],
         [
+            // Quick Add section - Add items directly to specific modules
+            // Each module that supports items gets its own "Add" link with pre-selected module
+            // moduleKey is used for filtering based on enabled branch modules
+            'key' => 'quick_add',
+            'title' => __('➕ Quick Add'),
+            'items' => [
+                [
+                    'route' => 'app.inventory.products.create',
+                    'routeParams' => ['module' => 'inventory'],
+                    'label' => '📦 ' . __('Inventory Item'),
+                    'permission' => 'inventory.products.view',
+                    'moduleKey' => 'inventory',
+                    'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6',
+                ],
+                [
+                    'route' => 'app.inventory.products.create',
+                    'routeParams' => ['module' => 'motorcycle'],
+                    'label' => '🏍️ ' . __('Motorcycle'),
+                    'permission' => 'inventory.products.view',
+                    'moduleKey' => 'motorcycle',
+                    'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6',
+                ],
+                [
+                    'route' => 'app.inventory.products.create',
+                    'routeParams' => ['module' => 'spares'],
+                    'label' => '🔧 ' . __('Spare Part'),
+                    'permission' => 'inventory.products.view',
+                    'moduleKey' => 'spares',
+                    'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6',
+                ],
+                [
+                    'route' => 'app.inventory.products.create',
+                    'routeParams' => ['module' => 'rental'],
+                    'label' => '🏠 ' . __('Rental Unit'),
+                    'permission' => 'inventory.products.view',
+                    'moduleKey' => 'rental',
+                    'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6',
+                ],
+                [
+                    'route' => 'app.inventory.products.create',
+                    'routeParams' => ['module' => 'wood'],
+                    'label' => '🪵 ' . __('Wood Item'),
+                    'permission' => 'inventory.products.view',
+                    'moduleKey' => 'wood',
+                    'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6',
+                ],
+                [
+                    'route' => 'app.inventory.products.create',
+                    'routeParams' => ['module' => 'manufacturing'],
+                    'label' => '🏭 ' . __('Material'),
+                    'permission' => 'inventory.products.view',
+                    'moduleKey' => 'manufacturing',
+                    'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6',
+                ],
+            ],
+        ],
+        [
             'key' => 'inventory',
-            'title' => __('Inventory & Warehouse'),
+            'title' => __('Inventory & Products'),
             'items' => [
                 [
                     'route' => 'app.inventory.products.index',
-                    'label' => __('Products'),
+                    'label' => __('All Items'),
                     'permission' => 'inventory.products.view',
                     'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
                     'children' => [
-                        ['route' => 'app.inventory.products.index', 'label' => __('All Products'), 'permission' => 'inventory.products.view'],
-                        ['route' => 'app.inventory.products.create', 'label' => __('Add Product'), 'permission' => 'inventory.products.view'],
+                        ['route' => 'app.inventory.products.index', 'label' => __('All Items'), 'permission' => 'inventory.products.view'],
                         ['route' => 'app.inventory.categories.index', 'label' => __('Categories'), 'permission' => 'inventory.products.view'],
                         ['route' => 'app.inventory.units.index', 'label' => __('Units'), 'permission' => 'inventory.products.view'],
                         ['route' => 'app.inventory.stock-alerts', 'label' => __('Stock Alerts'), 'permission' => 'inventory.stock.alerts.view'],
@@ -277,7 +342,7 @@
                 ],
                 [
                     'route' => 'app.inventory.index',
-                    'label' => __('Inventory Overview'),
+                    'label' => __('Stock Overview'),
                     'permission' => 'inventory.products.view',
                     'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
                 ],
@@ -546,8 +611,14 @@
 
     // Filter sections based on permissions, route availability, AND branch modules
     // IMPORTANT: Show parent menu if user can access parent OR any of its children
-    $filteredSections = collect($menuSections)->map(function ($section) use ($canAccess, $routeExists, $isModuleEnabled) {
-        $items = collect($section['items'] ?? [])->map(function ($item) use ($canAccess, $routeExists, $isModuleEnabled) {
+    $filteredSections = collect($menuSections)->map(function ($section) use ($canAccess, $routeExists, $isModuleEnabled, $branchModuleKeys) {
+        $items = collect($section['items'] ?? [])->map(function ($item) use ($canAccess, $routeExists, $isModuleEnabled, $branchModuleKeys) {
+            // Check if item has a moduleKey - if so, filter by that specific module
+            $moduleKey = $item['moduleKey'] ?? null;
+            if ($moduleKey && !empty($branchModuleKeys) && !in_array($moduleKey, $branchModuleKeys)) {
+                return null;
+            }
+            
             // First, check if this module is enabled for the branch context
             if (!$isModuleEnabled($item['permission'] ?? null)) {
                 return null;
@@ -1055,7 +1126,7 @@
                         @else
                             {{-- Simple item (no children) --}}
                             <a 
-                                href="{{ $safeRoute($item['route']) }}"
+                                href="{{ $getItemRoute($item) }}"
                                 @click="sidebarOpen = false"
                                 class="erp-sidebar-item {{ $itemIsActive ? 'active' : '' }}"
                             >
