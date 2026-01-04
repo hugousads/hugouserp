@@ -190,7 +190,7 @@ class Form extends Component
             'message' => $this->isEdit ? __('Purchase requisition updated successfully') : __('Purchase requisition created successfully'),
         ]);
 
-        return $this->redirectRoute('app.purchases.requisitions.index', navigate: true);
+        $this->redirectRoute('app.purchases.requisitions.index', navigate: true);
     }
 
     public function submit(): RedirectResponse
@@ -237,7 +237,7 @@ class Form extends Component
             'message' => __('Purchase requisition submitted for approval'),
         ]);
 
-        return $this->redirectRoute('app.purchases.requisitions.index', navigate: true);
+        $this->redirectRoute('app.purchases.requisitions.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

@@ -362,7 +362,7 @@ class Form extends Component
                 : __('Product created successfully.')
             );
 
-            return $this->redirectRoute('inventory.products.index', navigate: true);
+            $this->redirectRoute('inventory.products.index', navigate: true);
         } catch (\Exception $e) {
             $this->addError('save', $e->getMessage());
         }

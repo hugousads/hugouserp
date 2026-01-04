@@ -79,7 +79,7 @@ class Form extends Component
             session()->flash('success', __('Category created successfully'));
         }
 
-        return $this->redirectRoute('app.expenses.categories.index', navigate: true);
+        $this->redirectRoute('app.expenses.categories.index', navigate: true);
     }
 
     public function render()

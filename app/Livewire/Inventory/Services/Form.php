@@ -210,7 +210,7 @@ class Form extends Component
             session()->flash('success', __('Service created successfully'));
         }
 
-        return $this->redirectRoute('app.inventory.products.index', navigate: true);
+        $this->redirectRoute('app.inventory.products.index', navigate: true);
     }
 
     /**

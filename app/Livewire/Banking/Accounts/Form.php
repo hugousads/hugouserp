@@ -139,7 +139,7 @@ class Form extends Component
             session()->flash('success', __('Bank account created successfully'));
         }
 
-        return $this->redirectRoute('app.banking.accounts.index', navigate: true);
+        $this->redirectRoute('app.banking.accounts.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

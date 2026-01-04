@@ -99,7 +99,7 @@ class Form extends Component
             session()->flash('success', __('Category created successfully'));
         }
 
-        return $this->redirectRoute('app.helpdesk.categories.index', navigate: true);
+        $this->redirectRoute('app.helpdesk.categories.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

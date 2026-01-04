@@ -21,7 +21,7 @@ trait HandlesErrors
             }
 
             if ($redirectRoute) {
-                return $this->redirectRoute($redirectRoute, navigate: true);
+                $this->redirectRoute($redirectRoute, navigate: true);
             }
         } catch (ValidationException $e) {
             // Re-throw validation exceptions so Livewire can handle them properly
@@ -61,7 +61,7 @@ trait HandlesErrors
             }
 
             if ($redirectRoute) {
-                return $this->redirectRoute($redirectRoute, navigate: true);
+                $this->redirectRoute($redirectRoute, navigate: true);
             }
         } catch (QueryException $e) {
             if (str_contains($e->getMessage(), 'foreign key')) {

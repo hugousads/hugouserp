@@ -130,7 +130,7 @@ class Form extends Component
             Cache::forget('warehouse_stats_'.($user?->branch_id ?? 'all'));
             Cache::forget('all_warehouses_'.($user?->branch_id ?? 'all'));
 
-            return $this->redirectRoute('app.warehouse.index', navigate: true);
+            $this->redirectRoute('app.warehouse.index', navigate: true);
         } catch (\Exception $e) {
             $this->addError('name', __('Failed to save warehouse. Please try again.'));
         }

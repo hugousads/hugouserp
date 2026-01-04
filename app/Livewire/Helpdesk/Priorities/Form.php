@@ -89,7 +89,7 @@ class Form extends Component
             session()->flash('success', __('Priority created successfully'));
         }
 
-        return $this->redirectRoute('app.helpdesk.priorities.index', navigate: true);
+        $this->redirectRoute('app.helpdesk.priorities.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

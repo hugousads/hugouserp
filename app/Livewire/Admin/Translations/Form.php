@@ -29,7 +29,7 @@ class Form extends Component
             if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $decodedKey) || !preg_match('/^[a-zA-Z0-9_-]+$/', $decodedGroup)) {
                 // Invalid format, redirect back with error
                 session()->flash('error', __('Invalid translation key or group format.'));
-                return $this->redirectRoute('admin.translations.index', navigate: true);
+                $this->redirectRoute('admin.translations.index', navigate: true);
             }
             
             $this->isEdit = true;
@@ -149,7 +149,7 @@ class Form extends Component
         
         session()->flash('success', $message);
         
-        return $this->redirectRoute('admin.translations.index', navigate: true);
+        $this->redirectRoute('admin.translations.index', navigate: true);
     }
     
     protected function translationExists($group, $key)
@@ -244,7 +244,7 @@ class Form extends Component
     
     public function cancel()
     {
-        return $this->redirectRoute('admin.translations.index', navigate: true);
+        $this->redirectRoute('admin.translations.index', navigate: true);
     }
     
     public function render()

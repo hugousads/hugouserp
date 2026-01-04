@@ -542,4 +542,237 @@ return [
             'description' => 'Enable new order notifications',
         ],
     ],
+
+    /**
+     * Advanced Performance Settings
+     *
+     * System performance and optimization options
+     */
+    'advanced' => [
+        'cache_ttl' => [
+            'label' => 'Cache TTL (seconds)',
+            'type' => 'integer',
+            'default' => 300,
+            'min' => 60,
+            'max' => 3600,
+            'description' => 'Default cache time-to-live for dashboard and reports',
+        ],
+        'pagination_default' => [
+            'label' => 'Default Pagination Size',
+            'type' => 'select',
+            'options' => [
+                '10' => '10 items',
+                '15' => '15 items',
+                '25' => '25 items',
+                '50' => '50 items',
+                '100' => '100 items',
+            ],
+            'default' => '15',
+            'description' => 'Default number of items per page in lists',
+        ],
+        'lazy_load_components' => [
+            'label' => 'Lazy Load Components',
+            'type' => 'boolean',
+            'default' => true,
+            'description' => 'Enable lazy loading for dashboard widgets and heavy components',
+        ],
+        'enable_smart_wire_keys' => [
+            'label' => 'Enable Smart Wire Keys',
+            'type' => 'boolean',
+            'default' => true,
+            'description' => 'Automatically generate unique keys for nested components',
+        ],
+        'spa_navigation_enabled' => [
+            'label' => 'SPA Navigation (wire:navigate)',
+            'type' => 'boolean',
+            'default' => true,
+            'description' => 'Enable SPA-like navigation between pages',
+        ],
+        'show_progress_bar' => [
+            'label' => 'Show Navigation Progress Bar',
+            'type' => 'boolean',
+            'default' => true,
+            'description' => 'Show progress bar during page navigation',
+        ],
+        'progress_bar_color' => [
+            'label' => 'Progress Bar Color',
+            'type' => 'color',
+            'default' => '#22c55e',
+            'description' => 'Color of the navigation progress bar',
+        ],
+        'max_payload_size' => [
+            'label' => 'Max Payload Size (KB)',
+            'type' => 'integer',
+            'default' => 2048,
+            'min' => 512,
+            'max' => 10240,
+            'description' => 'Maximum size of Livewire request payload in KB',
+        ],
+        'max_nested_depth' => [
+            'label' => 'Max Nested Form Depth',
+            'type' => 'integer',
+            'default' => 15,
+            'min' => 5,
+            'max' => 30,
+            'description' => 'Maximum depth for nested form data',
+        ],
+        'max_method_calls' => [
+            'label' => 'Max Method Calls per Request',
+            'type' => 'integer',
+            'default' => 100,
+            'min' => 20,
+            'max' => 500,
+            'description' => 'Maximum Livewire method calls per request',
+        ],
+        'enable_query_logging' => [
+            'label' => 'Enable Query Logging',
+            'type' => 'boolean',
+            'default' => false,
+            'description' => 'Log slow database queries (development only)',
+        ],
+        'slow_query_threshold' => [
+            'label' => 'Slow Query Threshold (ms)',
+            'type' => 'integer',
+            'default' => 100,
+            'min' => 50,
+            'max' => 5000,
+            'description' => 'Log queries that take longer than this threshold',
+        ],
+    ],
+
+    /**
+     * UI/UX Enhancement Settings
+     *
+     * User interface customization
+     */
+    'ui' => [
+        'sidebar_collapsed' => [
+            'label' => 'Default Sidebar State',
+            'type' => 'select',
+            'options' => [
+                'expanded' => 'Expanded',
+                'collapsed' => 'Collapsed',
+                'auto' => 'Auto (based on screen size)',
+            ],
+            'default' => 'auto',
+            'description' => 'Default state of the sidebar navigation',
+        ],
+        'compact_tables' => [
+            'label' => 'Compact Table Display',
+            'type' => 'boolean',
+            'default' => false,
+            'description' => 'Use compact row height in data tables',
+        ],
+        'show_breadcrumbs' => [
+            'label' => 'Show Breadcrumbs',
+            'type' => 'boolean',
+            'default' => true,
+            'description' => 'Display navigation breadcrumbs',
+        ],
+        'enable_keyboard_shortcuts' => [
+            'label' => 'Enable Keyboard Shortcuts',
+            'type' => 'boolean',
+            'default' => true,
+            'description' => 'Enable keyboard shortcuts for common actions',
+        ],
+        'toast_position' => [
+            'label' => 'Toast Notification Position',
+            'type' => 'select',
+            'options' => [
+                'top-right' => 'Top Right',
+                'top-left' => 'Top Left',
+                'bottom-right' => 'Bottom Right',
+                'bottom-left' => 'Bottom Left',
+                'top-center' => 'Top Center',
+                'bottom-center' => 'Bottom Center',
+            ],
+            'default' => 'top-right',
+            'description' => 'Position of toast notifications',
+        ],
+        'toast_duration' => [
+            'label' => 'Toast Duration (seconds)',
+            'type' => 'integer',
+            'default' => 5,
+            'min' => 2,
+            'max' => 30,
+            'description' => 'How long toast notifications are displayed',
+        ],
+        'auto_save_forms' => [
+            'label' => 'Auto-save Form Drafts',
+            'type' => 'boolean',
+            'default' => true,
+            'description' => 'Automatically save form drafts to prevent data loss',
+        ],
+        'auto_save_interval' => [
+            'label' => 'Auto-save Interval (seconds)',
+            'type' => 'integer',
+            'default' => 30,
+            'min' => 10,
+            'max' => 300,
+            'description' => 'Interval between auto-save drafts',
+        ],
+    ],
+
+    /**
+     * Data Export Settings
+     *
+     * Export and report generation options
+     */
+    'export' => [
+        'default_format' => [
+            'label' => 'Default Export Format',
+            'type' => 'select',
+            'options' => [
+                'xlsx' => 'Excel (XLSX)',
+                'csv' => 'CSV',
+                'pdf' => 'PDF',
+            ],
+            'default' => 'xlsx',
+            'description' => 'Default format for data exports',
+        ],
+        'include_headers' => [
+            'label' => 'Include Column Headers',
+            'type' => 'boolean',
+            'default' => true,
+            'description' => 'Include column headers in exports',
+        ],
+        'max_export_rows' => [
+            'label' => 'Max Export Rows',
+            'type' => 'integer',
+            'default' => 10000,
+            'min' => 1000,
+            'max' => 100000,
+            'description' => 'Maximum number of rows in a single export',
+        ],
+        'chunk_size' => [
+            'label' => 'Export Chunk Size',
+            'type' => 'integer',
+            'default' => 1000,
+            'min' => 100,
+            'max' => 5000,
+            'description' => 'Number of records processed per batch during export',
+        ],
+        'pdf_orientation' => [
+            'label' => 'PDF Orientation',
+            'type' => 'select',
+            'options' => [
+                'portrait' => 'Portrait',
+                'landscape' => 'Landscape',
+            ],
+            'default' => 'portrait',
+            'description' => 'Default orientation for PDF exports',
+        ],
+        'pdf_paper_size' => [
+            'label' => 'PDF Paper Size',
+            'type' => 'select',
+            'options' => [
+                'a4' => 'A4',
+                'letter' => 'Letter',
+                'legal' => 'Legal',
+                'a3' => 'A3',
+            ],
+            'default' => 'a4',
+            'description' => 'Default paper size for PDF exports',
+        ],
+    ],
 ];

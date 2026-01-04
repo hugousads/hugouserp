@@ -208,7 +208,7 @@ class BranchSettings extends Component
 
         $this->dispatch('settings-saved');
 
-        return $this->redirectRoute('admin.settings.branch', ['branch' => $this->branchId], navigate: true);
+        $this->redirectRoute('admin.settings.branch', ['branch' => $this->branchId], navigate: true);
     }
 
     public function render()

@@ -180,7 +180,7 @@ class Form extends Component
             session()->flash('success', __('Mapping created successfully'));
         }
 
-        return $this->redirectRoute('app.inventory.products.store-mappings', ['product' => $this->productId], navigate: true);
+        $this->redirectRoute('app.inventory.products.store-mappings', ['product' => $this->productId], navigate: true);
     }
 
     #[Layout('layouts.app')]

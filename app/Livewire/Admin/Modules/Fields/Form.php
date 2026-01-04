@@ -5,8 +5,6 @@ namespace App\Livewire\Admin\Modules\Fields;
 use App\Models\Module;
 use App\Models\ModuleProductField;
 use App\Services\ModuleProductService;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -134,7 +132,7 @@ class Form extends Component
         unset($this->field_options[$key]);
     }
 
-    public function save(): Redirector|RedirectResponse
+    public function save(): void
     {
         $this->authorize('modules.manage');
         $this->validate($this->getRules());
@@ -167,7 +165,7 @@ class Form extends Component
             session()->flash('success', __('Field created successfully'));
         }
 
-        return $this->redirectRoute('admin.modules.fields', ['module' => $this->module->id], navigate: true);
+        $this->redirectRoute('admin.modules.fields', ['module' => $this->module->id], navigate: true);
     }
 
     #[Layout('layouts.app')]

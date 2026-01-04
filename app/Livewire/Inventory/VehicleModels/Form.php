@@ -82,7 +82,7 @@ class Form extends Component
             session()->flash('status', __('Vehicle model created successfully.'));
         }
 
-        return $this->redirectRoute('app.inventory.vehicle-models.index', navigate: true);
+        $this->redirectRoute('app.inventory.vehicle-models.index', navigate: true);
     }
 
     public function cancel(): void

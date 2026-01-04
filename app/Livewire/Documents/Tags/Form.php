@@ -68,7 +68,7 @@ class Form extends Component
             session()->flash('success', __('Tag created successfully'));
         }
 
-        return $this->redirectRoute('app.documents.tags.index', navigate: true);
+        $this->redirectRoute('app.documents.tags.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

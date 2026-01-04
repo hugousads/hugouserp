@@ -274,7 +274,7 @@ class UnifiedSettings extends Component
     {
         $tab ??= $this->activeTab;
 
-        return $this->redirectRoute('admin.settings', ['tab' => $tab], navigate: true);
+        $this->redirectRoute('admin.settings', ['tab' => $tab], navigate: true);
     }
 
     public function saveGeneral(): mixed

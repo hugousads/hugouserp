@@ -146,7 +146,7 @@ class Form extends Component
             session()->flash('success', __('Shift created successfully'));
         }
 
-        return $this->redirectRoute('app.hrm.shifts.index', navigate: true);
+        $this->redirectRoute('app.hrm.shifts.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

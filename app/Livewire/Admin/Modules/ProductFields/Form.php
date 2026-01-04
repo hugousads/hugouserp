@@ -7,8 +7,6 @@ namespace App\Livewire\Admin\Modules\ProductFields;
 use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\Module;
 use App\Models\ModuleProductField;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -155,7 +153,7 @@ class Form extends Component
         ];
     }
 
-    public function save(): Redirector|RedirectResponse|null
+    public function save(): void
     {
         $user = auth()->user();
         if (! $user || ! $user->can('modules.manage')) {
@@ -167,7 +165,7 @@ class Form extends Component
         if (! $this->moduleId) {
             session()->flash('error', __('Please select a module before saving a field.'));
 
-            return null;
+            return;
         }
 
         $options = array_filter(array_map('trim', explode("\n", $this->optionsText)));
@@ -201,7 +199,7 @@ class Form extends Component
             session()->flash('success', __('Field created successfully'));
         }
 
-        return $this->redirectRoute('admin.modules.product-fields', ['moduleId' => $this->moduleId], navigate: true);
+        $this->redirectRoute('admin.modules.product-fields', ['moduleId' => $this->moduleId], navigate: true);
     }
 
     #[Layout('layouts.app')]

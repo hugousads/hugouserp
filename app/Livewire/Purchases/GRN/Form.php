@@ -8,7 +8,6 @@ use App\Models\Purchase;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\RedirectResponse;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\Features\SupportRedirects\Redirector;
@@ -204,7 +203,7 @@ class Form extends Component
         }
     }
 
-    public function save(): Redirector|RedirectResponse|null
+    public function save(): void
     {
         $this->validateGRN();
         DB::transaction(function () {
@@ -214,10 +213,10 @@ class Form extends Component
 
         session()->flash('success', __('GRN saved successfully.'));
 
-        return $this->redirectRoute('app.purchases.grn.index', navigate: true);
+        $this->redirectRoute('app.purchases.grn.index', navigate: true);
     }
 
-    public function submit(): Redirector|RedirectResponse|null
+    public function submit(): void
     {
         $this->validateGRN();
         DB::transaction(function () {
@@ -227,7 +226,7 @@ class Form extends Component
 
         session()->flash('success', __('GRN submitted for inspection.'));
 
-        return $this->redirectRoute('app.purchases.grn.index', navigate: true);
+        $this->redirectRoute('app.purchases.grn.index', navigate: true);
     }
 
     public function render()

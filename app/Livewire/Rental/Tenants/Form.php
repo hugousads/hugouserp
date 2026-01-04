@@ -84,7 +84,7 @@ class Form extends Component
 
         Cache::forget('tenants_stats_'.($user->branch_id ?? 'all'));
 
-        return $this->redirectRoute('app.rental.tenants.index', navigate: true);
+        $this->redirectRoute('app.rental.tenants.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

@@ -169,7 +169,7 @@ class Form extends Component
                 : __('Employee created successfully.')
         );
 
-        return $this->redirectRoute('app.hrm.employees.index', navigate: true);
+        $this->redirectRoute('app.hrm.employees.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

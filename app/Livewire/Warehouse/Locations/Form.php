@@ -97,7 +97,7 @@ class Form extends Component
 
         Cache::forget('warehouses_stats_'.($user->branch_id ?? 'all'));
 
-        return $this->redirectRoute('app.warehouse.locations.index', navigate: true);
+        $this->redirectRoute('app.warehouse.locations.index', navigate: true);
     }
 
     #[Layout('layouts.app')]
