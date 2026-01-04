@@ -5043,4 +5043,20 @@
     "Main Branch": "الفرع الرئيسي",
     "Administrator": "المدير",
     "Unauthorized": "غير مصرح"
+,
+    "Low Stock Alert": "تنبيه مخزون منخفض",
+    ":product stock is low (:qty remaining, min: :min)": "مخزون :product منخفض (:qty متبقي، الحد الأدنى: :min)",
+    "Overdue Invoice": "فاتورة متأخرة",
+    "Invoice :ref from :customer is :days days overdue (Due: :amount)": "فاتورة :ref من :customer متأخرة :days يوم (المستحق: :amount)",
+    "Payment Reminder": "تذكير بالدفع",
+    "Invoice :ref from :customer is due in :days days (Amount: :amount)": "فاتورة :ref من :customer مستحقة خلال :days يوم (المبلغ: :amount)",
+    "View Product": "عرض المنتج",
+    "View Invoice": "عرض الفاتورة",
+    "Walk-in": "عميل عابر",
+    "Smart Notifications": "الإشعارات الذكية",
+    "Low stock notifications": "إشعارات المخزون المنخفض",
+    "Overdue invoice notifications": "إشعارات الفواتير المتأخرة",
+    "Payment reminder notifications": "إشعارات تذكير الدفع",
+    "Running smart notifications check...": "جاري فحص الإشعارات الذكية...",
+    "Total notifications sent:": "إجمالي الإشعارات المرسلة:"
 }
