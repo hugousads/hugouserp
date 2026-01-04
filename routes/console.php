@@ -53,9 +53,19 @@ Schedule::command('hrm:payroll --period='.now()->format('Y-m'))
     ->description('Run monthly payroll for all branches');
 
 Schedule::command('reports:run-scheduled')
-    ->dailyAt('08:00')
+    ->hourly()
     ->description('Run scheduled reports and send via email');
 
 Schedule::command('stock:check-low')
     ->dailyAt('07:00')
     ->description('Check for low stock alerts');
+
+// Smart notifications - check for low stock, overdue invoices, payment reminders
+Schedule::command('erp:notifications:check')
+    ->dailyAt('08:00')
+    ->description('Send smart notifications for low stock, overdue invoices, and payment reminders');
+
+// Additional check for overdue invoices at midday
+Schedule::command('erp:notifications:check --type=overdue')
+    ->dailyAt('12:00')
+    ->description('Send overdue invoice reminders');

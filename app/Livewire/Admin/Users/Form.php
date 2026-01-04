@@ -7,6 +7,7 @@ namespace App\Livewire\Admin\Users;
 use App\Livewire\Concerns\HandlesErrors;
 use App\Models\AuditLog;
 use App\Models\Branch;
+use App\Models\BranchModule;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -48,6 +49,12 @@ class Form extends Component
      */
     public array $selectedRoles = [];
 
+    /**
+     * Enabled modules for the selected branch
+     * @var array<string>
+     */
+    public array $branchModules = [];
+
     public function mount(?int $user = null): void
     {
         $authUser = Auth::user();
@@ -81,9 +88,37 @@ class Form extends Component
                 ->where('guard_name', 'web')
                 ->pluck('id')
                 ->all();
+
+            // Load branch modules for the user's branch
+            $this->loadBranchModules($u->branch_id);
         } else {
             $this->form['timezone'] = config('app.timezone');
         }
+    }
+
+    /**
+     * Load enabled modules for a branch
+     */
+    public function loadBranchModules(?int $branchId): void
+    {
+        if (!$branchId) {
+            $this->branchModules = [];
+            return;
+        }
+
+        $this->branchModules = BranchModule::query()
+            ->where('branch_id', $branchId)
+            ->where('enabled', true)
+            ->pluck('module_key')
+            ->all();
+    }
+
+    /**
+     * Update branch modules when branch changes
+     */
+    public function updatedFormBranchId($value): void
+    {
+        $this->loadBranchModules($value ? (int) $value : null);
     }
 
     protected function rules(): array
@@ -179,12 +214,14 @@ class Form extends Component
     public function render()
     {
         $branches = Branch::query()
+            ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
 
         return view('livewire.admin.users.form', [
             'branches' => $branches,
             'availableRoles' => $this->availableRoles,
+            'branchModules' => $this->branchModules,
         ]);
     }
 }

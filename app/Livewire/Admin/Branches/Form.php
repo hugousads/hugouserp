@@ -7,7 +7,10 @@ namespace App\Livewire\Admin\Branches;
 use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Livewire\Concerns\HandlesErrors;
 use App\Models\Branch;
+use App\Models\BranchModule;
+use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -35,6 +38,18 @@ class Form extends Component
         'is_active' => true,
         'is_main' => false,
     ];
+
+    /**
+     * Available modules for selection
+     * @var array<int,array<string,mixed>>
+     */
+    public array $availableModules = [];
+
+    /**
+     * Selected module IDs
+     * @var array<int>
+     */
+    public array $selectedModules = [];
 
     /**
      * @var array<int,array<string,mixed>>
@@ -86,6 +101,22 @@ class Form extends Component
             ['name' => 'currency',  'label' => __('Currency'),  'type' => 'select', 'options' => $currencies],
         ];
 
+        // Load available modules
+        $this->availableModules = Module::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($m) => [
+                'id' => $m->id,
+                'key' => $m->key,
+                'name' => $m->localized_name,
+                'description' => $m->localized_description,
+                'is_core' => $m->is_core,
+                'icon' => $m->icon,
+            ])
+            ->all();
+
         if ($branchModel) {
             $this->form['name'] = $branchModel->name;
             $this->form['code'] = $branchModel->code ?? '';
@@ -95,8 +126,21 @@ class Form extends Component
             $this->form['currency'] = $branchModel->currency ?? 'EGP';
             $this->form['is_active'] = (bool) $branchModel->is_active;
             $this->form['is_main'] = (bool) $branchModel->is_main;
+
+            // Load selected modules for this branch
+            $this->selectedModules = BranchModule::query()
+                ->where('branch_id', $branchModel->id)
+                ->where('enabled', true)
+                ->pluck('module_id')
+                ->all();
         } else {
             $this->form['timezone'] = config('app.timezone');
+            
+            // Pre-select core modules for new branches
+            $this->selectedModules = collect($this->availableModules)
+                ->where('is_core', true)
+                ->pluck('id')
+                ->all();
         }
     }
 
@@ -134,25 +178,47 @@ class Form extends Component
         $validated = $this->validate();
         $data = $this->form;
         $branchId = $this->branchId;
+        $selectedModules = $this->selectedModules;
+        $availableModules = $this->availableModules;
 
         return $this->handleOperation(
-            operation: function () use ($data, $branchId) {
-                if ($branchId) {
-                    $branch = Branch::findOrFail($branchId);
-                } else {
-                    $branch = new Branch;
-                }
+            operation: function () use ($data, $branchId, $selectedModules, $availableModules) {
+                DB::transaction(function () use ($data, $branchId, $selectedModules, $availableModules) {
+                    if ($branchId) {
+                        $branch = Branch::findOrFail($branchId);
+                    } else {
+                        $branch = new Branch;
+                    }
 
-                $branch->name = $data['name'];
-                $branch->code = $data['code'];
-                $branch->address = $data['address'] ?: null;
-                $branch->phone = $data['phone'] ?: null;
-                $branch->timezone = $data['timezone'];
-                $branch->currency = $data['currency'];
-                $branch->is_active = (bool) $data['is_active'];
-                $branch->is_main = (bool) $data['is_main'];
+                    $branch->name = $data['name'];
+                    $branch->code = $data['code'];
+                    $branch->address = $data['address'] ?: null;
+                    $branch->phone = $data['phone'] ?: null;
+                    $branch->timezone = $data['timezone'];
+                    $branch->currency = $data['currency'];
+                    $branch->is_active = (bool) $data['is_active'];
+                    $branch->is_main = (bool) $data['is_main'];
 
-                $branch->save();
+                    $branch->save();
+
+                    // Sync branch modules
+                    foreach ($availableModules as $module) {
+                        $moduleId = $module['id'];
+                        $enabled = in_array($moduleId, $selectedModules);
+
+                        BranchModule::updateOrCreate(
+                            [
+                                'branch_id' => $branch->id,
+                                'module_id' => $moduleId,
+                            ],
+                            [
+                                'module_key' => $module['key'],
+                                'enabled' => $enabled,
+                                'settings' => [],
+                            ]
+                        );
+                    }
+                });
             },
             successMessage: $this->branchId
                 ? __('Branch updated successfully.')

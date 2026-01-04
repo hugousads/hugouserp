@@ -3,7 +3,6 @@
 use App\Console\Commands\ClosePosDay;
 use App\Console\Commands\SendScheduledReports;
 use App\Console\Commands\SystemDiagnostics;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -93,23 +92,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ClosePosDay::class,
         SystemDiagnostics::class,
     ])
-    ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('reports:send-scheduled')
-            ->dailyAt('08:00')
-            ->withoutOverlapping()
-            ->runInBackground();
-
-        $schedule->command('pos:close-day')
-            ->dailyAt('23:59')
-            ->withoutOverlapping()
-            ->runInBackground();
-
-        $schedule->command('queue:work --stop-when-empty')
-            ->everyMinute()
-            ->withoutOverlapping()
-            ->runInBackground();
-
-        $schedule->command('cache:prune-stale-tags')
-            ->hourly();
-    })
+    // Note: Scheduling is defined in routes/console.php using Schedule facade
+    // See docs/SCHEDULER_SETUP.md for cron configuration
     ->create();

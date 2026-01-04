@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Rental\Properties;
 
+use App\Livewire\Concerns\HandlesErrors;
 use App\Models\Property;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Cache;
@@ -13,6 +14,7 @@ use Livewire\Component;
 class Form extends Component
 {
     use AuthorizesRequests;
+    use HandlesErrors;
 
     public ?int $propertyId = null;
 
@@ -66,17 +68,20 @@ class Form extends Component
             'branch_id' => $user->branch_id ?? 1,
         ]);
 
-        if ($this->propertyId) {
-            Property::findOrFail($this->propertyId)->update($data);
-            session()->flash('success', __('Property updated successfully'));
-        } else {
-            Property::create($data);
-            session()->flash('success', __('Property created successfully'));
-        }
-
-        Cache::forget('properties_stats_'.($user->branch_id ?? 'all'));
-
-        return $this->redirectRoute('app.rental.properties.index', navigate: true);
+        return $this->handleOperation(
+            operation: function () use ($data, $user) {
+                if ($this->propertyId) {
+                    Property::findOrFail($this->propertyId)->update($data);
+                } else {
+                    Property::create($data);
+                }
+                Cache::forget('properties_stats_'.($user->branch_id ?? 'all'));
+            },
+            successMessage: $this->propertyId 
+                ? __('Property updated successfully') 
+                : __('Property created successfully'),
+            redirectRoute: 'app.rental.properties.index'
+        );
     }
 
     #[Layout('layouts.app')]

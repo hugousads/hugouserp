@@ -324,7 +324,8 @@ class BranchAccessService
     {
         return $this->handleServiceOperation(
             callback: function () use ($query, $user, $branchColumn) {
-                if ($this->isSuperAdmin($user)) {
+                // Super admins and users with view-all permission see all data
+                if ($this->canViewAllBranches($user)) {
                     return $query;
                 }
 
@@ -370,5 +371,17 @@ class BranchAccessService
     private function isSuperAdmin(User $user): bool
     {
         return method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['Super Admin', 'super-admin']);
+    }
+
+    /**
+     * Check if user can view all branches data (Super Admin or has branches.view-all permission)
+     */
+    public function canViewAllBranches(User $user): bool
+    {
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        return method_exists($user, 'can') && $user->can('branches.view-all');
     }
 }

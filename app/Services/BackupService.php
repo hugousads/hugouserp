@@ -117,4 +117,147 @@ class BackupService implements BackupServiceInterface
             defaultValue: false
         );
     }
+
+    /**
+     * Restore database from a backup file
+     * 
+     * WARNING: This will replace all current data with the backup data.
+     * Make sure to create a backup before restoring.
+     */
+    public function restore(string $path): array
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($path) {
+                // Validate the backup file exists
+                if (!Storage::disk($this->disk)->exists($path)) {
+                    throw new \RuntimeException('Backup file not found: ' . $path);
+                }
+
+                // Get the full path
+                $fullPath = Storage::disk($this->disk)->path($path);
+
+                // Determine if file is compressed
+                $isCompressed = str_ends_with($path, '.gz');
+
+                // Get database connection settings
+                $connection = config('database.default');
+                $config = config("database.connections.{$connection}");
+
+                if ($config['driver'] !== 'mysql') {
+                    throw new \RuntimeException('Only MySQL database restore is supported');
+                }
+
+                $host = $config['host'];
+                $port = $config['port'] ?? 3306;
+                $database = $config['database'];
+                $username = $config['username'];
+                $password = $config['password'];
+
+                // Build the mysql command
+                $command = sprintf(
+                    '%s mysql -h %s -P %s -u %s %s %s < %s 2>&1',
+                    $isCompressed ? "gunzip -c {$fullPath} |" : '',
+                    escapeshellarg($host),
+                    escapeshellarg((string) $port),
+                    escapeshellarg($username),
+                    $password ? '-p' . escapeshellarg($password) : '',
+                    escapeshellarg($database),
+                    $isCompressed ? '-' : escapeshellarg($fullPath)
+                );
+
+                // Execute restore
+                $output = [];
+                $returnVar = 0;
+                exec($command, $output, $returnVar);
+
+                if ($returnVar !== 0) {
+                    throw new \RuntimeException('Restore failed: ' . implode("\n", $output));
+                }
+
+                // Clear all caches after restore
+                Artisan::call('cache:clear');
+                Artisan::call('config:clear');
+
+                return [
+                    'success' => true,
+                    'path' => $path,
+                    'restored_at' => now()->toISOString(),
+                ];
+            },
+            operation: 'restore',
+            context: ['path' => $path]
+        );
+    }
+
+    /**
+     * Download a backup file
+     */
+    public function download(string $path): ?string
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($path) {
+                if (!Storage::disk($this->disk)->exists($path)) {
+                    throw new \RuntimeException('Backup file not found');
+                }
+
+                return Storage::disk($this->disk)->path($path);
+            },
+            operation: 'download',
+            context: ['path' => $path],
+            defaultValue: null
+        );
+    }
+
+    /**
+     * Get backup info (size, date, etc.)
+     */
+    public function getInfo(string $path): ?array
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($path) {
+                if (!Storage::disk($this->disk)->exists($path)) {
+                    return null;
+                }
+
+                $disk = Storage::disk($this->disk);
+                
+                return [
+                    'path' => $path,
+                    'filename' => basename($path),
+                    'size' => $disk->size($path),
+                    'size_human' => $this->formatBytes($disk->size($path)),
+                    'modified' => $disk->lastModified($path),
+                    'modified_human' => \Carbon\Carbon::createFromTimestamp($disk->lastModified($path))->diffForHumans(),
+                ];
+            },
+            operation: 'getInfo',
+            context: ['path' => $path],
+            defaultValue: null
+        );
+    }
+
+    /**
+     * Format bytes to human-readable format
+     */
+    protected function formatBytes(int $bytes, int $precision = 2): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        $bytes /= (1 << (10 * $pow));
+
+        return round($bytes, $precision) . ' ' . $units[$pow];
+    }
+
+    /**
+     * Create a pre-restore backup
+     */
+    public function createPreRestoreBackup(): array
+    {
+        $filename = 'pre_restore_'.now()->format('Ymd_His').'.sql.gz';
+        $path = trim($this->dir, '/').'/'.$filename;
+
+        return $this->run(true);
+    }
 }

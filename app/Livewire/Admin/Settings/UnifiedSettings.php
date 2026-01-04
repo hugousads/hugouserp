@@ -38,6 +38,27 @@ class UnifiedSettings extends Component
         'advanced' => 'Advanced',
     ];
 
+    public array $tabDescriptions = [
+        'general' => 'Company information, timezone, and regional settings',
+        'branding' => 'Logo, colors, and company appearance',
+        'inventory' => 'Stock management and costing method',
+        'pos' => 'Point of Sale terminal settings',
+        'accounting' => 'Chart of accounts and financial settings',
+        'warehouse' => 'Warehouse locations and stock alerts',
+        'manufacturing' => 'Production and BOM settings',
+        'hrm' => 'Employee, payroll, and attendance settings',
+        'rental' => 'Rental units and contracts settings',
+        'fixed_assets' => 'Asset depreciation settings',
+        'sales' => 'Invoice numbering and sales defaults',
+        'purchases' => 'Purchase order settings',
+        'integrations' => 'API keys and third-party connections',
+        'notifications' => 'Email and alert preferences',
+        'branch' => 'Branch-specific settings',
+        'security' => 'Password policies and session settings',
+        'backup' => 'Database backup settings',
+        'advanced' => 'Developer and system settings',
+    ];
+
     // General settings
     public string $company_name = '';
     public string $company_email = '';
