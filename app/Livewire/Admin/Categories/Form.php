@@ -6,8 +6,6 @@ namespace App\Livewire\Admin\Categories;
 
 use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\ProductCategory;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -83,7 +81,7 @@ class Form extends Component
         ];
     }
 
-    public function save(): Redirector|RedirectResponse|null
+    public function save(): void
     {
         $user = Auth::user();
         if (! $user || ! $user->can('inventory.categories.manage')) {
@@ -116,7 +114,7 @@ class Form extends Component
                 session()->flash('success', __('Category created successfully'));
             }
 
-            return $this->redirectRoute('app.inventory.categories.index', navigate: true);
+            $this->redirectRoute('app.inventory.categories.index', navigate: true);
         } catch (\Exception $e) {
             $this->addError('name', __('Failed to save category. Please try again.'));
         }

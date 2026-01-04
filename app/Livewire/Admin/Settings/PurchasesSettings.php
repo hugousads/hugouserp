@@ -91,7 +91,7 @@ class PurchasesSettings extends Component
 
         session()->flash('success', __('Purchase settings saved successfully'));
 
-        return $this->redirectRoute('admin.settings.purchases', navigate: true);
+        $this->redirectRoute('admin.settings.purchases', navigate: true);
     }
 
     public function render()

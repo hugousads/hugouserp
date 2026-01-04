@@ -7,6 +7,7 @@ namespace App\Livewire\Admin\Categories;
 use App\Models\ProductCategory;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -15,9 +16,8 @@ class Index extends Component
 {
     use WithPagination;
 
+    #[Url]
     public string $search = '';
-
-    protected $queryString = ['search'];
 
     public function mount(): void
     {

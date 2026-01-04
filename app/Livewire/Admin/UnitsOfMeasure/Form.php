@@ -6,8 +6,6 @@ namespace App\Livewire\Admin\UnitsOfMeasure;
 
 use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Models\UnitOfMeasure;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -105,7 +103,7 @@ class Form extends Component
         ];
     }
 
-    public function save(): Redirector|RedirectResponse|null
+    public function save(): void
     {
         $user = Auth::user();
         if (! $user || ! $user->can('inventory.units.manage')) {
@@ -139,7 +137,7 @@ class Form extends Component
                 session()->flash('success', __('Unit created successfully'));
             }
 
-            return $this->redirectRoute('app.inventory.units.index', navigate: true);
+            $this->redirectRoute('app.inventory.units.index', navigate: true);
         } catch (\Exception $e) {
             $this->addError('name', __('Failed to save unit. Please try again.'));
         }

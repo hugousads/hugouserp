@@ -41,7 +41,7 @@
                 <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     {{ __('Email Address') }}
                 </label>
-                <input id="email" type="email" wire:model.defer="email" required autofocus
+                <input id="email" type="email" wire:model="email" required autofocus
                        autocomplete="email"
                        placeholder="{{ __('Enter your email address') }}"
                        class="erp-input @error('email') border-red-500 ring-red-500 @enderror">

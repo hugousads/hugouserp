@@ -8,6 +8,7 @@ use App\Models\ExpenseCategory;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,9 +18,8 @@ class Index extends Component
     use AuthorizesRequests;
     use WithPagination;
 
+    #[Url]
     public string $search = '';
-
-    protected $queryString = ['search'];
 
     public function mount(): void
     {

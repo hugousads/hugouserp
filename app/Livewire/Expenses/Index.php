@@ -9,6 +9,7 @@ use App\Models\ExpenseCategory;
 use App\Traits\HasExport;
 use App\Traits\HasSortableColumns;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -19,8 +20,10 @@ class Index extends Component
     use HasSortableColumns;
     use WithPagination;
 
+    #[Url]
     public string $search = '';
 
+    #[Url]
     public string $categoryId = '';
 
     public string $dateFrom = '';
@@ -33,8 +36,6 @@ class Index extends Component
     public string $sortField = 'expense_date';
 
     public string $sortDirection = 'desc';
-
-    protected $queryString = ['search', 'categoryId'];
 
     public function mount(): void
     {

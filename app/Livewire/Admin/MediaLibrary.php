@@ -8,6 +8,7 @@ use App\Models\Media;
 use App\Services\ImageOptimizationService;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -37,14 +38,16 @@ class MediaLibrary extends Component
     ];
 
     public $files = [];
+    
+    #[Url]
     public string $search = '';
+    
+    #[Url]
     public string $filterOwner = 'all'; // all, mine
     
     // Image preview modal
     public bool $showPreview = false;
     public ?array $previewImage = null;
-
-    protected $queryString = ['search', 'filterOwner'];
 
     public function mount(): void
     {

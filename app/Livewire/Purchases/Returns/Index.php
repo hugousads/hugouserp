@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,10 +18,13 @@ class Index extends Component
 {
     use WithPagination;
 
+    #[Url]
     public string $search = '';
 
+    #[Url]
     public string $dateFrom = '';
 
+    #[Url]
     public string $dateTo = '';
 
     public int $perPage = 15;
@@ -34,8 +38,6 @@ class Index extends Component
     public array $returnItems = [];
 
     public string $returnReason = '';
-
-    protected $queryString = ['search', 'dateFrom', 'dateTo'];
 
     protected function getUserBranchId(): ?int
     {

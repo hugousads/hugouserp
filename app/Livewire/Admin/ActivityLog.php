@@ -7,6 +7,7 @@ namespace App\Livewire\Admin;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Activitylog\Models\Activity;
@@ -16,22 +17,25 @@ class ActivityLog extends Component
 {
     use WithPagination;
 
+    #[Url(except: '')]
     public string $search = '';
+    
+    #[Url(except: '')]
     public string $logType = '';
+    
+    #[Url(except: '')]
     public string $eventType = '';
+    
+    #[Url(except: '')]
     public string $causerType = '';
+    
+    #[Url(except: '')]
     public string $dateFrom = '';
+    
+    #[Url(except: '')]
     public string $dateTo = '';
+    
     public int $perPage = 25;
-
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'logType' => ['except' => ''],
-        'eventType' => ['except' => ''],
-        'causerType' => ['except' => ''],
-        'dateFrom' => ['except' => ''],
-        'dateTo' => ['except' => ''],
-    ];
 
     public function updatingSearch(): void
     {

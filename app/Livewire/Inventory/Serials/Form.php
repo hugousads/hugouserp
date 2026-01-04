@@ -88,7 +88,7 @@ class Form extends Component
             session()->flash('success', __('Serial number created successfully'));
         }
 
-        return $this->redirectRoute('app.inventory.serials.index', navigate: true);
+        $this->redirectRoute('app.inventory.serials.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

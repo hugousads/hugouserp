@@ -50,7 +50,7 @@
                 <div class="relative" x-data="{ showPassword: false }">
                     <input id="password" 
                            :type="showPassword ? 'text' : 'password'" 
-                           wire:model.defer="password" 
+                           wire:model="password" 
                            required
                            autocomplete="new-password"
                            placeholder="{{ __('Enter new password (min 8 characters)') }}"
@@ -81,7 +81,7 @@
                 <label for="password_confirmation" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     {{ __('Confirm Password') }}
                 </label>
-                <input id="password_confirmation" type="password" wire:model.defer="password_confirmation" required
+                <input id="password_confirmation" type="password" wire:model="password_confirmation" required
                        autocomplete="new-password"
                        placeholder="{{ __('Confirm your new password') }}"
                        class="erp-input">

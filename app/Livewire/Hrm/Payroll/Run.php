@@ -104,7 +104,7 @@ class Run extends Component
 
         session()->flash('status', __('Payroll generated for :period', ['period' => $this->period]));
 
-        return $this->redirectRoute('app.hrm.payroll.index', navigate: true);
+        $this->redirectRoute('app.hrm.payroll.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

@@ -192,7 +192,7 @@ class Form extends Component
             session()->flash('success', __('Project created successfully'));
         }
 
-        return $this->redirectRoute('app.projects.index', navigate: true);
+        $this->redirectRoute('app.projects.index', navigate: true);
     }
 
     protected function payloadWithNormalizedDates(): array

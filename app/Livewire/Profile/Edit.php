@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire\Profile;
 
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -49,7 +47,7 @@ class Edit extends Component
         $this->currentAvatar = $user->avatar ?? null;
     }
 
-    public function updateProfile(): Redirector|RedirectResponse
+    public function updateProfile(): void
     {
         $user = Auth::user();
 
@@ -63,10 +61,10 @@ class Edit extends Component
 
         session()->flash('success', __('Profile updated successfully'));
 
-        return $this->redirectRoute('profile.edit', navigate: true);
+        $this->redirectRoute('profile.edit', navigate: true);
     }
 
-    public function updatePassword(): Redirector|RedirectResponse
+    public function updatePassword(): void
     {
         $user = Auth::user();
 
@@ -83,11 +81,11 @@ class Edit extends Component
 
         session()->flash('success', __('Password updated successfully'));
 
-        return $this->redirectRoute('profile.edit', navigate: true);
+        $this->redirectRoute('profile.edit', navigate: true);
     }
 
     #[On('file-uploaded')]
-    public function handleFileUploaded(string $fieldId, string $path, array $fileInfo): Redirector|RedirectResponse|null
+    public function handleFileUploaded(string $fieldId, string $path, array $fileInfo): void
     {
         if ($fieldId === 'profile-avatar') {
             $user = Auth::user();
@@ -105,7 +103,7 @@ class Edit extends Component
             $this->currentAvatar = $path;
             session()->flash('success', __('Avatar updated successfully'));
 
-            return $this->redirectRoute('profile.edit', navigate: true);
+            $this->redirectRoute('profile.edit', navigate: true);
         }
     }
 
@@ -117,7 +115,7 @@ class Edit extends Component
         }
     }
 
-    public function updateAvatar(): Redirector|RedirectResponse
+    public function updateAvatar(): void
     {
         $user = Auth::user();
 
@@ -140,10 +138,10 @@ class Edit extends Component
 
         session()->flash('success', __('Avatar updated successfully'));
 
-        return $this->redirectRoute('profile.edit', navigate: true);
+        $this->redirectRoute('profile.edit', navigate: true);
     }
 
-    public function removeAvatar(): Redirector|RedirectResponse
+    public function removeAvatar(): void
     {
         $user = Auth::user();
 
@@ -159,7 +157,7 @@ class Edit extends Component
 
         session()->flash('success', __('Avatar removed successfully'));
 
-        return $this->redirectRoute('profile.edit', navigate: true);
+        $this->redirectRoute('profile.edit', navigate: true);
     }
 
     public function render()

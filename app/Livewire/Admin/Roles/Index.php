@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Roles;
 
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Permission\Models\Role;
@@ -12,13 +13,12 @@ class Index extends Component
 {
     use WithPagination;
 
+    #[Url]
     public string $search = '';
 
     public string $sortField = 'name';
 
     public string $sortDirection = 'asc';
-
-    protected $queryString = ['search'];
 
     public function mount(): void
     {

@@ -112,7 +112,7 @@ class Form extends Component
             session()->flash('success', __('Schedule created successfully'));
         }
 
-        return $this->redirectRoute('admin.reports.scheduled', navigate: true);
+        $this->redirectRoute('admin.reports.scheduled', navigate: true);
     }
 
     protected function calculateNextRun(): string

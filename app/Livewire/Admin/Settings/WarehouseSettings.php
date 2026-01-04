@@ -89,7 +89,7 @@ class WarehouseSettings extends Component
 
         session()->flash('success', __('Warehouse settings saved successfully'));
 
-        return $this->redirectRoute('admin.settings.warehouse', navigate: true);
+        $this->redirectRoute('admin.settings.warehouse', navigate: true);
     }
 
     public function render()

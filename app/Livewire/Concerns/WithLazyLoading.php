@@ -1,0 +1,146 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Livewire\Concerns;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+
+/**
+ * Livewire 4 Lazy Loading Trait
+ * 
+ * Provides:
+ * - Skeleton loading states
+ * - Progressive data loading
+ * - Optimized queries with caching
+ * - Mobile-friendly pagination
+ */
+trait WithLazyLoading
+{
+    public bool $isLazyLoaded = false;
+    public bool $showLoadingState = true;
+    public int $skeletonCount = 5;
+    
+    /**
+     * Initialize lazy loading
+     */
+    public function bootWithLazyLoading(): void
+    {
+        // Check if we should enable skeleton loading
+        $this->showLoadingState = config('settings.advanced.lazy_load_components', true);
+    }
+
+    /**
+     * Mark component as loaded (call after initial data fetch)
+     */
+    public function markAsLoaded(): void
+    {
+        $this->isLazyLoaded = true;
+    }
+
+    /**
+     * Get skeleton placeholder count based on viewport
+     */
+    #[Computed]
+    public function placeholderCount(): int
+    {
+        return $this->skeletonCount;
+    }
+
+    /**
+     * Execute query with caching for better performance
+     * @return \Illuminate\Support\Collection
+     */
+    protected function cachedQuery(Builder $query, string $cacheKey, int $ttl = 300): \Illuminate\Support\Collection
+    {
+        if (!config('settings.advanced.cache_ttl', 0)) {
+            return $query->get();
+        }
+
+        $fullCacheKey = $this->buildCacheKey($cacheKey);
+        
+        return Cache::remember($fullCacheKey, $ttl, fn() => $query->get());
+    }
+
+    /**
+     * Execute paginated query with simple pagination (more efficient)
+     * Use this for better performance when you don't need total count
+     */
+    protected function cachedSimplePaginate(Builder $query, int $perPage, string $cacheKey): \Illuminate\Contracts\Pagination\Paginator
+    {
+        return $query->simplePaginate($perPage);
+    }
+
+    /**
+     * Execute paginated query with cached total count
+     * More efficient than standard paginate() for large datasets
+     */
+    protected function cachedPaginate(Builder $query, int $perPage, string $cacheKey, int $ttl = 60): LengthAwarePaginator
+    {
+        $totalCacheKey = $this->buildCacheKey($cacheKey . '_total');
+        
+        // Cache the total count for faster subsequent paginations
+        $total = Cache::remember($totalCacheKey, $ttl, fn() => (clone $query)->count());
+        
+        // Get the current page items
+        $page = request()->get('page', 1);
+        $items = $query->skip(($page - 1) * $perPage)->take($perPage)->get();
+        
+        // Create paginator with cached total
+        return new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]
+        );
+    }
+
+    /**
+     * Build a cache key with user/branch context
+     */
+    protected function buildCacheKey(string $key): string
+    {
+        $userId = auth()->id() ?? 'guest';
+        $branchId = auth()->user()?->branch_id ?? 'all';
+        
+        return "lazy_{$key}_{$userId}_{$branchId}";
+    }
+
+    /**
+     * Clear cached data for this component
+     */
+    protected function clearLazyCache(string $cacheKey): void
+    {
+        Cache::forget($this->buildCacheKey($cacheKey));
+        Cache::forget($this->buildCacheKey($cacheKey . '_total'));
+    }
+
+    /**
+     * Get loading state CSS classes
+     */
+    #[Computed]
+    public function loadingClasses(): string
+    {
+        return $this->showLoadingState && !$this->isLazyLoaded 
+            ? 'animate-pulse opacity-50' 
+            : '';
+    }
+
+    /**
+     * Handle refresh events
+     */
+    #[On('refresh-data')]
+    public function refreshLazyData(): void
+    {
+        $this->isLazyLoaded = false;
+        // Subclasses should override to clear specific caches
+    }
+}

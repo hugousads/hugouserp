@@ -14,7 +14,7 @@
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
                 {{ __('Period (month)') }}
             </label>
-            <input type="month" wire:model.defer="period" class="erp-input w-48">
+            <input type="month" wire:model="period" class="erp-input w-48">
             @error('period')
                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
             @enderror
@@ -22,7 +22,7 @@
 
         <div class="space-y-1">
             <label class="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200">
-                <input type="checkbox" wire:model.defer="includeInactive"
+                <input type="checkbox" wire:model="includeInactive"
                        class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                 <span>{{ __('Include inactive employees') }}</span>
             </label>

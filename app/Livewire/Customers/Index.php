@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Traits\HasExport;
 use App\Traits\HasSortableColumns;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -19,8 +20,10 @@ class Index extends Component
     use HasSortableColumns;
     use WithPagination;
 
+    #[Url]
     public string $search = '';
 
+    #[Url]
     public string $customerType = '';
 
     public string $sortField = 'created_at';
@@ -40,8 +43,6 @@ class Index extends Component
     public bool $isSuperAdmin = false;
 
     public bool $canManageAll = false;
-
-    protected $queryString = ['search', 'customerType'];
 
     /**
      * Define allowed sort columns to prevent SQL injection.

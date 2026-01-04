@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Shared;
 
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -19,10 +20,13 @@ class DynamicTable extends Component
 
     public array $filterValues = [];
 
+    #[Url(except: '')]
     public ?string $search = null;
 
+    #[Url(except: '')]
     public string $sortField = '';
 
+    #[Url(except: 'asc')]
     public string $sortDirection = 'asc';
 
     public int $perPage = 10;
@@ -48,12 +52,6 @@ class DynamicTable extends Component
     public array $selected = [];
 
     public array $allowedActions = [];
-
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'sortField' => ['except' => ''],
-        'sortDirection' => ['except' => 'asc'],
-    ];
 
     public function mount(
         array $columns = [],

@@ -58,7 +58,7 @@ class ExportColumnSelector extends Component
         $this->showModal = false;
 
         // Redirect to export
-        return $this->redirect($url, navigate: true);
+        $this->redirect($url, navigate: true);
     }
 
     public function openModal()

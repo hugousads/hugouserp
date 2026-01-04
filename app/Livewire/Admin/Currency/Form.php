@@ -6,8 +6,6 @@ namespace App\Livewire\Admin\Currency;
 
 use App\Models\Currency;
 use App\Services\CurrencyService;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -80,7 +78,7 @@ class Form extends Component
         ];
     }
 
-    public function save(): Redirector|RedirectResponse|null
+    public function save(): void
     {
         $user = Auth::user();
         if (! $user || ! $user->can('settings.currency.manage')) {
@@ -107,7 +105,7 @@ class Form extends Component
             } elseif (! $this->isBase && $currency->is_base) {
                 session()->flash('error', __('Cannot unset base currency. Set another currency as base first.'));
 
-                return null;
+                return;
             }
 
             $currency->update($data);
@@ -126,7 +124,7 @@ class Form extends Component
 
         $this->currencyService->clearCurrencyCache();
 
-        return $this->redirectRoute('admin.currencies.index', navigate: true);
+        $this->redirectRoute('admin.currencies.index', navigate: true);
     }
 
     #[Layout('layouts.app')]

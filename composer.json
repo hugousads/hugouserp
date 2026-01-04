@@ -12,7 +12,7 @@
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.2",
         "laravel/tinker": "^2.10.1",
-        "livewire/livewire": "^3.7",
+        "livewire/livewire": "^4.0.0-beta",
         "phpoffice/phpspreadsheet": "^2.1",
         "pragmarx/google2fa": "^9.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
@@ -95,6 +95,6 @@
             "php-http/discovery": true
         }
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "beta",
     "prefer-stable": true
 }

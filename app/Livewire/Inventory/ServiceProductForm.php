@@ -32,7 +32,7 @@ class ServiceProductForm extends Component
             $params['moduleId'] = $moduleId;
         }
 
-        return $this->redirectRoute('app.inventory.services.create', $params, navigate: true);
+        $this->redirectRoute('app.inventory.services.create', $params, navigate: true);
     }
 
     public function redirectToEdit(int $productId): void

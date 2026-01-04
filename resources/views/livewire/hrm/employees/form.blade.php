@@ -17,7 +17,7 @@
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
                     {{ __('Employee code') }}
                 </label>
-                <input type="text" wire:model.defer="form.code" class="erp-input">
+                <input type="text" wire:model="form.code" class="erp-input">
                 @error('form.code')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
@@ -27,7 +27,7 @@
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
                     {{ __('Full name') }}
                 </label>
-                <input type="text" wire:model.defer="form.name" class="erp-input">
+                <input type="text" wire:model="form.name" class="erp-input">
                 @error('form.name')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
@@ -37,7 +37,7 @@
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
                     {{ __('Position / title') }}
                 </label>
-                <input type="text" wire:model.defer="form.position" class="erp-input">
+                <input type="text" wire:model="form.position" class="erp-input">
                 @error('form.position')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
@@ -47,7 +47,7 @@
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-200">
                     {{ __('Base salary') }}
                 </label>
-                <input type="number" step="0.01" min="0" wire:model.defer="form.salary" class="erp-input">
+                <input type="number" step="0.01" min="0" wire:model="form.salary" class="erp-input">
                 @error('form.salary')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                 @enderror
@@ -63,7 +63,7 @@
                         label="{{ __('Add Branch') }}"
                         permission="branches.create" />
                 </div>
-                <select wire:model.defer="form.branch_id" class="erp-input">
+                <select wire:model="form.branch_id" class="erp-input">
                     @foreach(\App\Models\Branch::where('is_active', true)->orderBy('name')->get(['id', 'name']) as $branch)
                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                     @endforeach
@@ -83,7 +83,7 @@
                         label="{{ __('Add User') }}"
                         permission="users.manage" />
                 </div>
-                <select wire:model.defer="form.user_id" class="erp-input">
+                <select wire:model="form.user_id" class="erp-input">
                     <option value="">{{ __('Not linked') }}</option>
                     @foreach($availableUsers as $option)
                         <option value="{{ $option['id'] }}">
@@ -101,7 +101,7 @@
                     {{ __('Status') }}
                 </label>
                 <label class="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200">
-                    <input type="checkbox" wire:model.defer="form.is_active"
+                    <input type="checkbox" wire:model="form.is_active"
                            class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                     <span>{{ __('Active') }}</span>
                 </label>

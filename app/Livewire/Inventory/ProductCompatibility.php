@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductCompatibility as ProductCompatibilityModel;
 use App\Models\VehicleModel;
 use App\Services\SparePartsService;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,8 +18,10 @@ class ProductCompatibility extends Component
 
     public ?int $productId = null;
 
+    #[Url]
     public string $search = '';
 
+    #[Url]
     public string $brandFilter = '';
 
     public ?int $editingId = null;
@@ -50,8 +53,6 @@ class ProductCompatibility extends Component
     public bool $showCompatibilityForm = false;
 
     protected SparePartsService $sparePartsService;
-
-    protected $queryString = ['search', 'brandFilter'];
 
     protected $listeners = ['refreshComponent' => '$refresh'];
 

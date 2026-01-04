@@ -42,13 +42,20 @@ return [
             'password' => env('DB_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
-            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            // MySQL 8.4 optimized collation (faster sorting, better Unicode support)
+            'collation' => env('DB_COLLATION', 'utf8mb4_0900_ai_ci'),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
-            'engine' => null,
+            'engine' => 'InnoDB',
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                // Enable persistent connections for better performance
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
+                // Use buffered queries
+                PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
+                // Set transaction isolation level for better concurrency
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED",
             ]) : [],
         ],
 

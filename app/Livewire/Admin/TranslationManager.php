@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -14,8 +15,12 @@ class TranslationManager extends Component
 {
     use WithPagination;
 
+    #[Url]
     public $search = '';
+    
+    #[Url]
     public $selectedGroup = '';
+    
     public $selectedLocale = 'en';
     public $showAddModal = false;
     public $showEditModal = false;
@@ -31,8 +36,6 @@ class TranslationManager extends Component
     public $editGroup = '';
     public $editValueEn = '';
     public $editValueAr = '';
-    
-    protected $queryString = ['search', 'selectedGroup'];
     
     public function mount()
     {

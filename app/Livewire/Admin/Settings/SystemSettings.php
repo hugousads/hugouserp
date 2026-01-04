@@ -264,7 +264,7 @@ class SystemSettings extends Component
 
         $this->dispatch('settings-saved');
 
-        return $this->redirectRoute('admin.settings.system', navigate: true);
+        $this->redirectRoute('admin.settings.system', navigate: true);
     }
 
     protected function loadRolesAndPermissions(): void

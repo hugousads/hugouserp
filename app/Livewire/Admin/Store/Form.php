@@ -7,8 +7,6 @@ namespace App\Livewire\Admin\Store;
 use App\Models\Branch;
 use App\Models\Store;
 use App\Models\StoreIntegration;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -134,7 +132,7 @@ class Form extends Component
             ->all();
     }
 
-    public function save(): Redirector|RedirectResponse|null
+    public function save(): void
     {
         $this->validate();
         $this->sanitizeSyncSettings();
@@ -185,7 +183,7 @@ class Form extends Component
 
             session()->flash('success', $this->storeId ? __('Store updated successfully') : __('Store created successfully'));
 
-            return $this->redirectRoute('admin.stores.index', navigate: true);
+            $this->redirectRoute('admin.stores.index', navigate: true);
 
         } catch (\Exception $e) {
             DB::rollBack();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Notifications;
 
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -12,11 +13,8 @@ class Center extends Component
 {
     use WithPagination;
 
+    #[Url(except: 'all')]
     public string $type = 'all';
-
-    protected $queryString = [
-        'type' => ['except' => 'all'],
-    ];
 
     public function updatingType(): void
     {

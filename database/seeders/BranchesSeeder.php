@@ -17,6 +17,7 @@ class BranchesSeeder extends Seeder
 
         Branch::query()->create([
             'name' => 'Main Branch',
+            'name_ar' => 'الفرع الرئيسي',
             'code' => 'MAIN',
             'is_active' => true,
             'address' => 'Head Office',

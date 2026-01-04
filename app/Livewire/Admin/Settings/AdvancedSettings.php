@@ -76,6 +76,38 @@ class AdvancedSettings extends Component
         'vapid_key' => '',
     ];
 
+    public array $performance = [
+        'cache_ttl' => 300,
+        'pagination_default' => '15',
+        'lazy_load_components' => true,
+        'spa_navigation_enabled' => true,
+        'show_progress_bar' => true,
+        'progress_bar_color' => '#22c55e',
+        'max_payload_size' => 2048,
+        'enable_query_logging' => false,
+        'slow_query_threshold' => 100,
+    ];
+
+    public array $ui = [
+        'sidebar_collapsed' => 'auto',
+        'compact_tables' => false,
+        'show_breadcrumbs' => true,
+        'enable_keyboard_shortcuts' => true,
+        'toast_position' => 'top-right',
+        'toast_duration' => 5,
+        'auto_save_forms' => true,
+        'auto_save_interval' => 30,
+    ];
+
+    public array $export = [
+        'default_format' => 'xlsx',
+        'include_headers' => true,
+        'max_export_rows' => 10000,
+        'chunk_size' => 1000,
+        'pdf_orientation' => 'portrait',
+        'pdf_paper_size' => 'a4',
+    ];
+
     protected SettingsService $settingsService;
 
     protected SmsManager $smsManager;
@@ -162,6 +194,41 @@ class AdvancedSettings extends Component
             'app_id' => $this->settingsService->get('firebase.app_id', ''),
             'vapid_key' => $this->settingsService->getDecrypted('firebase.vapid_key', ''),
         ];
+
+        // Load performance settings
+        $this->performance = [
+            'cache_ttl' => (int) $this->settingsService->get('advanced.cache_ttl', 300),
+            'pagination_default' => (string) $this->settingsService->get('advanced.pagination_default', '15'),
+            'lazy_load_components' => (bool) $this->settingsService->get('advanced.lazy_load_components', true),
+            'spa_navigation_enabled' => (bool) $this->settingsService->get('advanced.spa_navigation_enabled', true),
+            'show_progress_bar' => (bool) $this->settingsService->get('advanced.show_progress_bar', true),
+            'progress_bar_color' => (string) $this->settingsService->get('advanced.progress_bar_color', '#22c55e'),
+            'max_payload_size' => (int) $this->settingsService->get('advanced.max_payload_size', 2048),
+            'enable_query_logging' => (bool) $this->settingsService->get('advanced.enable_query_logging', false),
+            'slow_query_threshold' => (int) $this->settingsService->get('advanced.slow_query_threshold', 100),
+        ];
+
+        // Load UI settings
+        $this->ui = [
+            'sidebar_collapsed' => (string) $this->settingsService->get('ui.sidebar_collapsed', 'auto'),
+            'compact_tables' => (bool) $this->settingsService->get('ui.compact_tables', false),
+            'show_breadcrumbs' => (bool) $this->settingsService->get('ui.show_breadcrumbs', true),
+            'enable_keyboard_shortcuts' => (bool) $this->settingsService->get('ui.enable_keyboard_shortcuts', true),
+            'toast_position' => (string) $this->settingsService->get('ui.toast_position', 'top-right'),
+            'toast_duration' => (int) $this->settingsService->get('ui.toast_duration', 5),
+            'auto_save_forms' => (bool) $this->settingsService->get('ui.auto_save_forms', true),
+            'auto_save_interval' => (int) $this->settingsService->get('ui.auto_save_interval', 30),
+        ];
+
+        // Load export settings
+        $this->export = [
+            'default_format' => (string) $this->settingsService->get('export.default_format', 'xlsx'),
+            'include_headers' => (bool) $this->settingsService->get('export.include_headers', true),
+            'max_export_rows' => (int) $this->settingsService->get('export.max_export_rows', 10000),
+            'chunk_size' => (int) $this->settingsService->get('export.chunk_size', 1000),
+            'pdf_orientation' => (string) $this->settingsService->get('export.pdf_orientation', 'portrait'),
+            'pdf_paper_size' => (string) $this->settingsService->get('export.pdf_paper_size', 'a4'),
+        ];
     }
 
     public function setTab(string $tab): void
@@ -171,7 +238,7 @@ class AdvancedSettings extends Component
 
     protected function redirectToAdvanced(): mixed
     {
-        return $this->redirectRoute('admin.settings', ['tab' => 'advanced'], navigate: true);
+        $this->redirectRoute('admin.settings', ['tab' => 'advanced'], navigate: true);
     }
 
     public function saveGeneral(): mixed
@@ -314,6 +381,62 @@ class AdvancedSettings extends Component
 
         $this->dispatch('settings-saved');
         session()->flash('success', __('Firebase settings saved successfully'));
+
+        return $this->redirectToAdvanced();
+    }
+
+    public function savePerformance(): mixed
+    {
+        $this->authorize('settings.update');
+
+        $this->settingsService->set('advanced.cache_ttl', $this->performance['cache_ttl'], ['group' => 'advanced']);
+        $this->settingsService->set('advanced.pagination_default', $this->performance['pagination_default'], ['group' => 'advanced']);
+        $this->settingsService->set('advanced.lazy_load_components', $this->performance['lazy_load_components'], ['group' => 'advanced']);
+        $this->settingsService->set('advanced.spa_navigation_enabled', $this->performance['spa_navigation_enabled'], ['group' => 'advanced']);
+        $this->settingsService->set('advanced.show_progress_bar', $this->performance['show_progress_bar'], ['group' => 'advanced']);
+        $this->settingsService->set('advanced.progress_bar_color', $this->performance['progress_bar_color'], ['group' => 'advanced']);
+        $this->settingsService->set('advanced.max_payload_size', $this->performance['max_payload_size'], ['group' => 'advanced']);
+        $this->settingsService->set('advanced.enable_query_logging', $this->performance['enable_query_logging'], ['group' => 'advanced']);
+        $this->settingsService->set('advanced.slow_query_threshold', $this->performance['slow_query_threshold'], ['group' => 'advanced']);
+
+        $this->dispatch('settings-saved');
+        session()->flash('success', __('Performance settings saved successfully'));
+
+        return $this->redirectToAdvanced();
+    }
+
+    public function saveUi(): mixed
+    {
+        $this->authorize('settings.update');
+
+        $this->settingsService->set('ui.sidebar_collapsed', $this->ui['sidebar_collapsed'], ['group' => 'ui']);
+        $this->settingsService->set('ui.compact_tables', $this->ui['compact_tables'], ['group' => 'ui']);
+        $this->settingsService->set('ui.show_breadcrumbs', $this->ui['show_breadcrumbs'], ['group' => 'ui']);
+        $this->settingsService->set('ui.enable_keyboard_shortcuts', $this->ui['enable_keyboard_shortcuts'], ['group' => 'ui']);
+        $this->settingsService->set('ui.toast_position', $this->ui['toast_position'], ['group' => 'ui']);
+        $this->settingsService->set('ui.toast_duration', $this->ui['toast_duration'], ['group' => 'ui']);
+        $this->settingsService->set('ui.auto_save_forms', $this->ui['auto_save_forms'], ['group' => 'ui']);
+        $this->settingsService->set('ui.auto_save_interval', $this->ui['auto_save_interval'], ['group' => 'ui']);
+
+        $this->dispatch('settings-saved');
+        session()->flash('success', __('UI settings saved successfully'));
+
+        return $this->redirectToAdvanced();
+    }
+
+    public function saveExport(): mixed
+    {
+        $this->authorize('settings.update');
+
+        $this->settingsService->set('export.default_format', $this->export['default_format'], ['group' => 'export']);
+        $this->settingsService->set('export.include_headers', $this->export['include_headers'], ['group' => 'export']);
+        $this->settingsService->set('export.max_export_rows', $this->export['max_export_rows'], ['group' => 'export']);
+        $this->settingsService->set('export.chunk_size', $this->export['chunk_size'], ['group' => 'export']);
+        $this->settingsService->set('export.pdf_orientation', $this->export['pdf_orientation'], ['group' => 'export']);
+        $this->settingsService->set('export.pdf_paper_size', $this->export['pdf_paper_size'], ['group' => 'export']);
+
+        $this->dispatch('settings-saved');
+        session()->flash('success', __('Export settings saved successfully'));
 
         return $this->redirectToAdvanced();
     }

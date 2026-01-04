@@ -127,6 +127,15 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        // Slow query logging for performance monitoring
+        'slow-queries' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/slow-queries.log'),
+            'level' => 'warning',
+            'days' => 7,
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

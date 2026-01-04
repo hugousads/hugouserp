@@ -105,13 +105,13 @@ class Form extends Component
             $this->ticket->update($data);
             session()->flash('success', __('Ticket updated successfully.'));
 
-            return $this->redirectRoute('app.helpdesk.tickets.index', navigate: true);
+            $this->redirectRoute('app.helpdesk.tickets.index', navigate: true);
         } else {
             $data['created_by'] = $user->id;
             $ticket = Ticket::create($data);
             session()->flash('success', __('Ticket created successfully.'));
 
-            return $this->redirectRoute('app.helpdesk.tickets.show', ['ticket' => $ticket->id], navigate: true);
+            $this->redirectRoute('app.helpdesk.tickets.show', ['ticket' => $ticket->id], navigate: true);
         }
     }
 
