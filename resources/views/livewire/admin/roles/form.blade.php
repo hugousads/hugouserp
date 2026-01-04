@@ -21,6 +21,35 @@
         <div>
             <label class="erp-label mb-4">{{ __('Permissions') }}</label>
             
+            {{-- Branch filter section --}}
+            <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" wire:model.live="filterByBranch" id="filterByBranch"
+                               class="rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500">
+                        <label for="filterByBranch" class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {{ __('Filter by branch modules') }}
+                        </label>
+                    </div>
+                    @if($filterByBranch)
+                        <select wire:model.live="filterBranchId" class="erp-input text-sm py-1.5 w-full sm:w-64">
+                            <option value="">{{ __('Select a branch...') }}</option>
+                            @foreach($branches as $branch)
+                                <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                            @endforeach
+                        </select>
+                    @endif
+                </div>
+                @if($filterByBranch && $filterBranchId)
+                    <p class="mt-2 text-xs text-blue-600 dark:text-blue-400">
+                        <svg class="inline w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{ __('Only showing permissions for modules enabled in the selected branch') }}
+                    </p>
+                @endif
+            </div>
+            
             {{-- Quick select buttons --}}
             <div class="flex gap-2 mb-4">
                 <button type="button" wire:click="selectAllPermissions" 
@@ -35,70 +64,72 @@
 
             <div class="space-y-6">
                 @foreach($permissions as $group => $groupPermissions)
-                    @php
-                        $groupLabels = [
-                            'dashboard' => __('Dashboard'),
-                            'pos' => __('Point of Sale'),
-                            'sales' => __('Sales'),
-                            'purchases' => __('Purchases'),
-                            'customers' => __('Customers'),
-                            'suppliers' => __('Suppliers'),
-                            'inventory' => __('Inventory'),
-                            'warehouse' => __('Warehouse'),
-                            'expenses' => __('Expenses'),
-                            'income' => __('Income'),
-                            'accounting' => __('Accounting'),
-                            'banking' => __('Banking'),
-                            'hrm' => __('Human Resources'),
-                            'hr' => __('Human Resources'),
-                            'rental' => __('Rental'),
-                            'rentals' => __('Rentals'),
-                            'manufacturing' => __('Manufacturing'),
-                            'fixed-assets' => __('Fixed Assets'),
-                            'projects' => __('Projects'),
-                            'documents' => __('Documents'),
-                            'helpdesk' => __('Helpdesk'),
-                            'tickets' => __('Tickets'),
-                            'media' => __('Media Library'),
-                            'reports' => __('Reports'),
-                            'settings' => __('Settings'),
-                            'users' => __('Users'),
-                            'roles' => __('Roles'),
-                            'branches' => __('Branches'),
-                            'branch' => __('Branch'),
-                            'modules' => __('Modules'),
-                            'stores' => __('Stores'),
-                            'store' => __('Store'),
-                            'logs' => __('Logs'),
-                            'system' => __('System'),
-                            'spares' => __('Spare Parts'),
-                            'impersonate' => __('Impersonation'),
-                        ];
-                        $groupLabel = $groupLabels[$group] ?? ucfirst($group);
-                    @endphp
-                    <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                        <div class="bg-slate-50 dark:bg-slate-800 px-4 py-2 font-medium text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                            <span>{{ $groupLabel }}</span>
-                            <span class="text-xs text-slate-500 dark:text-slate-400">({{ $groupPermissions->count() }} {{ __('permissions') }})</span>
+                    @if($this->isGroupVisible($group))
+                        @php
+                            $groupLabels = [
+                                'dashboard' => __('Dashboard'),
+                                'pos' => __('Point of Sale'),
+                                'sales' => __('Sales'),
+                                'purchases' => __('Purchases'),
+                                'customers' => __('Customers'),
+                                'suppliers' => __('Suppliers'),
+                                'inventory' => __('Inventory'),
+                                'warehouse' => __('Warehouse'),
+                                'expenses' => __('Expenses'),
+                                'income' => __('Income'),
+                                'accounting' => __('Accounting'),
+                                'banking' => __('Banking'),
+                                'hrm' => __('Human Resources'),
+                                'hr' => __('Human Resources'),
+                                'rental' => __('Rental'),
+                                'rentals' => __('Rentals'),
+                                'manufacturing' => __('Manufacturing'),
+                                'fixed-assets' => __('Fixed Assets'),
+                                'projects' => __('Projects'),
+                                'documents' => __('Documents'),
+                                'helpdesk' => __('Helpdesk'),
+                                'tickets' => __('Tickets'),
+                                'media' => __('Media Library'),
+                                'reports' => __('Reports'),
+                                'settings' => __('Settings'),
+                                'users' => __('Users'),
+                                'roles' => __('Roles'),
+                                'branches' => __('Branches'),
+                                'branch' => __('Branch'),
+                                'modules' => __('Modules'),
+                                'stores' => __('Stores'),
+                                'store' => __('Store'),
+                                'logs' => __('Logs'),
+                                'system' => __('System'),
+                                'spares' => __('Spare Parts'),
+                                'impersonate' => __('Impersonation'),
+                            ];
+                            $groupLabel = $groupLabels[$group] ?? ucfirst($group);
+                        @endphp
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                            <div class="bg-slate-50 dark:bg-slate-800 px-4 py-2 font-medium text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                <span>{{ $groupLabel }}</span>
+                                <span class="text-xs text-slate-500 dark:text-slate-400">({{ $groupPermissions->count() }} {{ __('permissions') }})</span>
+                            </div>
+                            <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                @foreach($groupPermissions as $permission)
+                                    @php
+                                        // Get translation from permissions.php lang file
+                                        $permLabel = __('permissions.' . $permission->name);
+                                        // Fall back to formatted permission name if translation not found
+                                        if ($permLabel === 'permissions.' . $permission->name) {
+                                            $permLabel = ucwords(str_replace(['.', '-', '_'], ' ', $permission->name));
+                                        }
+                                    @endphp
+                                    <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 p-2 rounded transition-colors">
+                                        <input type="checkbox" wire:model="selectedPermissions" value="{{ $permission->id }}" 
+                                               class="rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 dark:bg-slate-700">
+                                        <span class="text-slate-700 dark:text-slate-300">{{ $permLabel }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
                         </div>
-                        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            @foreach($groupPermissions as $permission)
-                                @php
-                                    // Get translation from permissions.php lang file
-                                    $permLabel = __('permissions.' . $permission->name);
-                                    // Fall back to formatted permission name if translation not found
-                                    if ($permLabel === 'permissions.' . $permission->name) {
-                                        $permLabel = ucwords(str_replace(['.', '-', '_'], ' ', $permission->name));
-                                    }
-                                @endphp
-                                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 p-2 rounded transition-colors">
-                                    <input type="checkbox" wire:model="selectedPermissions" value="{{ $permission->id }}" 
-                                           class="rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 dark:bg-slate-700">
-                                    <span class="text-slate-700 dark:text-slate-300">{{ $permLabel }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
+                    @endif
                 @endforeach
             </div>
         </div>

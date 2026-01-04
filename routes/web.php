@@ -1182,6 +1182,11 @@ Route::get('/app/media/{media}/download', \App\Http\Controllers\Admin\MediaDownl
             ->name('currency-rates.edit')
             ->middleware('can:settings.manage');
 
+        // Setup Wizard
+        Route::get('/setup', \App\Livewire\Admin\SetupWizard::class)
+            ->name('setup-wizard')
+            ->middleware('can:settings.manage');
+
         // Unified Settings (NEW)
         Route::get('/settings', UnifiedSettings::class)
             ->name('settings')
