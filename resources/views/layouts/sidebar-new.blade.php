@@ -255,18 +255,19 @@
             ],
         ],
         [
-            // Quick Add section - Add items directly to specific modules
-            // Each module that supports items gets its own "Add" link with pre-selected module
+            // Quick Add section - Add items directly to specific PRODUCT modules
+            // Note: "Inventory" is for stock TRACKING, not product creation
+            // Products are created in specialized modules (general, motorcycle, spares, etc.)
             // moduleKey is used for filtering based on enabled branch modules
             'key' => 'quick_add',
             'title' => __('➕ Quick Add'),
             'items' => [
                 [
                     'route' => 'app.inventory.products.create',
-                    'routeParams' => ['module' => 'inventory'],
-                    'label' => '📦 ' . __('Inventory Item'),
+                    'routeParams' => ['module' => 'general'],
+                    'label' => '📦 ' . __('General Product'),
                     'permission' => 'inventory.products.view',
-                    'moduleKey' => 'inventory',
+                    'moduleKey' => 'general',
                     'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6',
                 ],
                 [
@@ -312,16 +313,18 @@
             ],
         ],
         [
+            // Inventory section is for STOCK MANAGEMENT (not product creation)
+            // Shows ALL products from ALL data modules
             'key' => 'inventory',
-            'title' => __('Inventory & Products'),
+            'title' => __('Stock Management'),
             'items' => [
                 [
                     'route' => 'app.inventory.products.index',
-                    'label' => __('All Items'),
+                    'label' => __('All Products'),
                     'permission' => 'inventory.products.view',
                     'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
                     'children' => [
-                        ['route' => 'app.inventory.products.index', 'label' => __('All Items'), 'permission' => 'inventory.products.view'],
+                        ['route' => 'app.inventory.products.index', 'label' => __('All Products'), 'permission' => 'inventory.products.view'],
                         ['route' => 'app.inventory.categories.index', 'label' => __('Categories'), 'permission' => 'inventory.products.view'],
                         ['route' => 'app.inventory.units.index', 'label' => __('Units'), 'permission' => 'inventory.products.view'],
                         ['route' => 'app.inventory.stock-alerts', 'label' => __('Stock Alerts'), 'permission' => 'inventory.stock.alerts.view'],
