@@ -73,6 +73,34 @@
                     </svg>
                     {{ __('Backup') }}
                 </button>
+
+                {{-- Divider --}}
+                <div class="my-2 border-t border-slate-200"></div>
+                <div class="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">{{ __('Advanced') }}</div>
+
+                <button wire:click="setTab('performance')" 
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-{{ $dir === 'rtl' ? 'right' : 'left' }} transition-all {{ $activeTab === 'performance' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    {{ __('Performance') }}
+                </button>
+
+                <button wire:click="setTab('ui')" 
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-{{ $dir === 'rtl' ? 'right' : 'left' }} transition-all {{ $activeTab === 'ui' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                    {{ __('UI/UX') }}
+                </button>
+
+                <button wire:click="setTab('export')" 
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-{{ $dir === 'rtl' ? 'right' : 'left' }} transition-all {{ $activeTab === 'export' ? 'bg-emerald-50 text-emerald-700 font-medium' : 'text-slate-600 hover:bg-slate-50' }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {{ __('Export') }}
+                </button>
             </nav>
         </div>
 
@@ -432,6 +460,243 @@
                         <button wire:click="saveBackup" class="erp-btn-primary">
                             <span wire:loading.remove wire:target="saveBackup">{{ __('Save') }}</span>
                             <span wire:loading wire:target="saveBackup">{{ __('Saving...') }}</span>
+                        </button>
+                    </div>
+                @endif
+
+                {{-- Performance Tab --}}
+                @if ($activeTab === 'performance')
+                    <h2 class="text-lg font-semibold text-slate-800 mb-6">{{ __('Performance Settings') }}</h2>
+                    
+                    <div class="space-y-6">
+                        {{-- Caching Section --}}
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 class="font-medium text-slate-800 mb-4">{{ __('Caching & Optimization') }}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Cache TTL (seconds)') }}</label>
+                                    <input type="number" wire:model="performance.cache_ttl" min="60" max="86400" class="erp-input w-full">
+                                    <p class="text-xs text-slate-500 mt-1">{{ __('How long data stays cached (60-86400)') }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Default Pagination') }}</label>
+                                    <select wire:model="performance.pagination_default" class="erp-input w-full">
+                                        <option value="10">10 {{ __('items') }}</option>
+                                        <option value="15">15 {{ __('items') }}</option>
+                                        <option value="25">25 {{ __('items') }}</option>
+                                        <option value="50">50 {{ __('items') }}</option>
+                                        <option value="100">100 {{ __('items') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Livewire Settings --}}
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 class="font-medium text-slate-800 mb-4">{{ __('Livewire & SPA Settings') }}</h3>
+                            <div class="space-y-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="performance.lazy_load_components" class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-sm text-slate-700">{{ __('Enable lazy loading for components') }}</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="performance.spa_navigation_enabled" class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-sm text-slate-700">{{ __('Enable SPA navigation (faster page loads)') }}</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="performance.show_progress_bar" class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-sm text-slate-700">{{ __('Show progress bar during navigation') }}</span>
+                                </label>
+                                <div class="flex items-center gap-3">
+                                    <label class="text-sm text-slate-700">{{ __('Progress bar color') }}:</label>
+                                    <input type="color" wire:model="performance.progress_bar_color" class="h-8 w-12 rounded cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Query Logging --}}
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 class="font-medium text-slate-800 mb-4">{{ __('Query Monitoring') }}</h3>
+                            <div class="space-y-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="performance.enable_query_logging" class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-sm text-slate-700">{{ __('Enable slow query logging') }}</span>
+                                </label>
+                                @if($performance['enable_query_logging'])
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Slow query threshold (ms)') }}</label>
+                                        <input type="number" wire:model="performance.slow_query_threshold" min="10" max="5000" class="erp-input w-full">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Max payload size (KB)') }}</label>
+                                        <input type="number" wire:model="performance.max_payload_size" min="512" max="10240" class="erp-input w-full">
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button wire:click="savePerformance" class="erp-btn-primary">
+                            <span wire:loading.remove wire:target="savePerformance">{{ __('Save') }}</span>
+                            <span wire:loading wire:target="savePerformance">{{ __('Saving...') }}</span>
+                        </button>
+                    </div>
+                @endif
+
+                {{-- UI/UX Tab --}}
+                @if ($activeTab === 'ui')
+                    <h2 class="text-lg font-semibold text-slate-800 mb-6">{{ __('UI/UX Settings') }}</h2>
+                    
+                    <div class="space-y-6">
+                        {{-- Layout Section --}}
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 class="font-medium text-slate-800 mb-4">{{ __('Layout & Navigation') }}</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Sidebar default state') }}</label>
+                                    <select wire:model="ui.sidebar_collapsed" class="erp-input w-full">
+                                        <option value="auto">{{ __('Auto (based on screen size)') }}</option>
+                                        <option value="expanded">{{ __('Always expanded') }}</option>
+                                        <option value="collapsed">{{ __('Always collapsed') }}</option>
+                                    </select>
+                                </div>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="ui.show_breadcrumbs" class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-sm text-slate-700">{{ __('Show breadcrumbs navigation') }}</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="ui.compact_tables" class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-sm text-slate-700">{{ __('Use compact tables (smaller row height)') }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {{-- Interaction Section --}}
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 class="font-medium text-slate-800 mb-4">{{ __('Interaction & Feedback') }}</h3>
+                            <div class="space-y-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="ui.enable_keyboard_shortcuts" class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-sm text-slate-700">{{ __('Enable keyboard shortcuts') }}</span>
+                                </label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Toast notification position') }}</label>
+                                        <select wire:model="ui.toast_position" class="erp-input w-full">
+                                            <option value="top-right">{{ __('Top Right') }}</option>
+                                            <option value="top-left">{{ __('Top Left') }}</option>
+                                            <option value="bottom-right">{{ __('Bottom Right') }}</option>
+                                            <option value="bottom-left">{{ __('Bottom Left') }}</option>
+                                            <option value="top-center">{{ __('Top Center') }}</option>
+                                            <option value="bottom-center">{{ __('Bottom Center') }}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Toast duration (seconds)') }}</label>
+                                        <input type="number" wire:model="ui.toast_duration" min="2" max="30" class="erp-input w-full">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Auto-Save Section --}}
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 class="font-medium text-slate-800 mb-4">{{ __('Auto-Save') }}</h3>
+                            <div class="space-y-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="ui.auto_save_forms" class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-sm text-slate-700">{{ __('Enable auto-save for forms') }}</span>
+                                </label>
+                                @if($ui['auto_save_forms'])
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Auto-save interval (seconds)') }}</label>
+                                    <input type="number" wire:model="ui.auto_save_interval" min="10" max="300" class="erp-input w-48">
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button wire:click="saveUi" class="erp-btn-primary">
+                            <span wire:loading.remove wire:target="saveUi">{{ __('Save') }}</span>
+                            <span wire:loading wire:target="saveUi">{{ __('Saving...') }}</span>
+                        </button>
+                    </div>
+                @endif
+
+                {{-- Export Tab --}}
+                @if ($activeTab === 'export')
+                    <h2 class="text-lg font-semibold text-slate-800 mb-6">{{ __('Export Settings') }}</h2>
+                    
+                    <div class="space-y-6">
+                        {{-- General Export Settings --}}
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 class="font-medium text-slate-800 mb-4">{{ __('Default Export Settings') }}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Default format') }}</label>
+                                    <select wire:model="export.default_format" class="erp-input w-full">
+                                        <option value="xlsx">Excel (.xlsx)</option>
+                                        <option value="csv">CSV (.csv)</option>
+                                        <option value="pdf">PDF (.pdf)</option>
+                                        <option value="json">JSON (.json)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Max rows per export') }}</label>
+                                    <input type="number" wire:model="export.max_export_rows" min="100" max="100000" class="erp-input w-full">
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" wire:model="export.include_headers" class="w-4 h-4 text-emerald-600 rounded">
+                                    <span class="text-sm text-slate-700">{{ __('Include headers in exports') }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {{-- Performance Settings --}}
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 class="font-medium text-slate-800 mb-4">{{ __('Export Performance') }}</h3>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Chunk size (rows per batch)') }}</label>
+                                <input type="number" wire:model="export.chunk_size" min="100" max="10000" class="erp-input w-48">
+                                <p class="text-xs text-slate-500 mt-1">{{ __('Larger values = faster export, but more memory usage') }}</p>
+                            </div>
+                        </div>
+
+                        {{-- PDF Settings --}}
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <h3 class="font-medium text-slate-800 mb-4">{{ __('PDF Export Settings') }}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Page orientation') }}</label>
+                                    <select wire:model="export.pdf_orientation" class="erp-input w-full">
+                                        <option value="portrait">{{ __('Portrait') }}</option>
+                                        <option value="landscape">{{ __('Landscape') }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ __('Paper size') }}</label>
+                                    <select wire:model="export.pdf_paper_size" class="erp-input w-full">
+                                        <option value="a4">A4</option>
+                                        <option value="letter">Letter</option>
+                                        <option value="legal">Legal</option>
+                                        <option value="a3">A3</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button wire:click="saveExport" class="erp-btn-primary">
+                            <span wire:loading.remove wire:target="saveExport">{{ __('Save') }}</span>
+                            <span wire:loading wire:target="saveExport">{{ __('Saving...') }}</span>
                         </button>
                     </div>
                 @endif

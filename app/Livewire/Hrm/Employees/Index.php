@@ -6,7 +6,9 @@ namespace App\Livewire\Hrm\Employees;
 
 use App\Models\HREmployee;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,6 +19,7 @@ class Index extends Component
     /**
      * Simple text search across code, name, position and linked user.
      */
+    #[Url(except: '')]
     public ?string $search = '';
 
     /**
@@ -24,7 +27,20 @@ class Index extends Component
      *
      * @var null|"active"|"inactive"
      */
+    #[Url(except: '')]
     public ?string $status = null;
+
+    /**
+     * Filter by department/position
+     */
+    #[Url(except: '')]
+    public ?string $department = '';
+
+    /**
+     * Results per page
+     */
+    #[Url(except: 15)]
+    public int $perPage = 15;
 
     /**
      * Current branch scope.
@@ -52,6 +68,11 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingDepartment(): void
+    {
+        $this->resetPage();
+    }
+
     #[Layout('layouts.app')]
     public function render()
     {
@@ -73,6 +94,8 @@ class Index extends Component
                     $inner->where('name', 'like', $term)
                         ->orWhere('code', 'like', $term)
                         ->orWhere('position', 'like', $term)
+                        ->orWhere('phone', 'like', $term)
+                        ->orWhere('email', 'like', $term)
                         ->orWhereHas('user', function ($userQuery) use ($term) {
                             $userQuery->where('name', 'like', $term)
                                 ->orWhere('email', 'like', $term)
@@ -86,12 +109,39 @@ class Index extends Component
             ->when($this->status === 'inactive', function ($q) {
                 $q->where('is_active', false);
             })
+            ->when($this->department !== null && $this->department !== '', function ($q) {
+                $q->where('position', $this->department);
+            })
             ->orderByDesc('id');
 
-        $employees = $query->paginate(15);
+        $employees = $query->paginate($this->perPage);
+
+        // Statistics
+        $baseQuery = HREmployee::query()
+            ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId));
+        
+        $totalEmployees = (clone $baseQuery)->count();
+        $activeEmployees = (clone $baseQuery)->where('is_active', true)->count();
+        $inactiveEmployees = $totalEmployees - $activeEmployees;
+        $totalSalary = (clone $baseQuery)->where('is_active', true)->sum('salary');
+        
+        // Get departments/positions for filter
+        $departments = HREmployee::query()
+            ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
+            ->whereNotNull('position')
+            ->where('position', '!=', '')
+            ->distinct()
+            ->pluck('position')
+            ->sort()
+            ->values();
 
         return view('livewire.hrm.employees.index', [
             'employees' => $employees,
+            'totalEmployees' => $totalEmployees,
+            'activeEmployees' => $activeEmployees,
+            'inactiveEmployees' => $inactiveEmployees,
+            'totalSalary' => $totalSalary,
+            'departments' => $departments,
         ]);
     }
 }
