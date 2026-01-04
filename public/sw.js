@@ -8,16 +8,20 @@
  * - Offline fallback pages
  * - Background sync for offline operations
  * - Push notification support
+ * - IndexedDB for offline data storage
  */
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.1.0';
 const CACHE_NAME = `hugouserp-${CACHE_VERSION}`;
 const API_CACHE_NAME = `hugouserp-api-${CACHE_VERSION}`;
+const DB_NAME = 'hugouserp-offline';
+const DB_VERSION = 1;
 
 // Assets to cache on install
 const STATIC_ASSETS = [
     '/',
     '/offline.html',
+    '/manifest.json',
     '/favicon.ico',
     '/sounds/notification.mp3',
 ];
@@ -29,6 +33,161 @@ const CACHEABLE_API_PATTERNS = [
     /\/api\/categories/,
     /\/api\/settings/,
 ];
+
+// ===========================================
+// IndexedDB for Offline Data Storage
+// ===========================================
+let db = null;
+
+function openDatabase() {
+    return new Promise((resolve, reject) => {
+        if (db) {
+            resolve(db);
+            return;
+        }
+        
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            db = request.result;
+            resolve(db);
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const database = event.target.result;
+            
+            // Store for offline sales
+            if (!database.objectStoreNames.contains('offline_sales')) {
+                const salesStore = database.createObjectStore('offline_sales', { 
+                    keyPath: 'id', 
+                    autoIncrement: true 
+                });
+                salesStore.createIndex('created_at', 'created_at', { unique: false });
+                salesStore.createIndex('synced', 'synced', { unique: false });
+            }
+            
+            // Store for offline products (for POS)
+            if (!database.objectStoreNames.contains('offline_products')) {
+                const productsStore = database.createObjectStore('offline_products', { 
+                    keyPath: 'id' 
+                });
+                productsStore.createIndex('sku', 'sku', { unique: false });
+                productsStore.createIndex('barcode', 'barcode', { unique: false });
+            }
+            
+            // Store for offline customers
+            if (!database.objectStoreNames.contains('offline_customers')) {
+                const customersStore = database.createObjectStore('offline_customers', { 
+                    keyPath: 'id' 
+                });
+                customersStore.createIndex('name', 'name', { unique: false });
+            }
+            
+            // Store for pending sync operations
+            if (!database.objectStoreNames.contains('sync_queue')) {
+                const syncStore = database.createObjectStore('sync_queue', { 
+                    keyPath: 'id', 
+                    autoIncrement: true 
+                });
+                syncStore.createIndex('type', 'type', { unique: false });
+                syncStore.createIndex('created_at', 'created_at', { unique: false });
+            }
+        };
+    });
+}
+
+// Store data for offline use
+async function storeOfflineData(storeName, data) {
+    try {
+        const database = await openDatabase();
+        const tx = database.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        
+        if (Array.isArray(data)) {
+            data.forEach(item => store.put(item));
+        } else {
+            store.put(data);
+        }
+        
+        return new Promise((resolve, reject) => {
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (error) {
+        console.error('[SW] Store offline data failed:', error);
+        return false;
+    }
+}
+
+// Get data from offline store
+async function getOfflineData(storeName, key = null) {
+    try {
+        const database = await openDatabase();
+        const tx = database.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        
+        const request = key ? store.get(key) : store.getAll();
+        
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.error('[SW] Get offline data failed:', error);
+        return null;
+    }
+}
+
+// Add to sync queue
+async function addToSyncQueue(type, data) {
+    try {
+        const database = await openDatabase();
+        const tx = database.transaction('sync_queue', 'readwrite');
+        const store = tx.objectStore('sync_queue');
+        
+        store.add({
+            type,
+            data,
+            created_at: new Date().toISOString(),
+            attempts: 0
+        });
+        
+        return new Promise((resolve, reject) => {
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (error) {
+        console.error('[SW] Add to sync queue failed:', error);
+        return false;
+    }
+}
+
+// Get pending sync items
+async function getPendingSyncItems() {
+    try {
+        return await getOfflineData('sync_queue');
+    } catch (error) {
+        return [];
+    }
+}
+
+// Remove from sync queue
+async function removeFromSyncQueue(id) {
+    try {
+        const database = await openDatabase();
+        const tx = database.transaction('sync_queue', 'readwrite');
+        const store = tx.objectStore('sync_queue');
+        store.delete(id);
+        
+        return new Promise((resolve, reject) => {
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (error) {
+        return false;
+    }
+}
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
@@ -339,7 +498,88 @@ self.addEventListener('message', (event) => {
                 });
             });
             break;
+        case 'STORE_OFFLINE_DATA':
+            if (data && data.storeName && data.items) {
+                storeOfflineData(data.storeName, data.items)
+                    .then(() => {
+                        event.source?.postMessage({ 
+                            type: 'OFFLINE_DATA_STORED', 
+                            storeName: data.storeName 
+                        });
+                    });
+            }
+            break;
+        case 'GET_OFFLINE_DATA':
+            if (data && data.storeName) {
+                getOfflineData(data.storeName, data.key)
+                    .then(result => {
+                        event.source?.postMessage({ 
+                            type: 'OFFLINE_DATA_RESULT', 
+                            storeName: data.storeName,
+                            data: result 
+                        });
+                    });
+            }
+            break;
+        case 'ADD_TO_SYNC_QUEUE':
+            if (data && data.type && data.payload) {
+                addToSyncQueue(data.type, data.payload)
+                    .then(() => {
+                        event.source?.postMessage({ 
+                            type: 'SYNC_QUEUE_UPDATED' 
+                        });
+                    });
+            }
+            break;
+        case 'PROCESS_SYNC_QUEUE':
+            processSyncQueue()
+                .then(results => {
+                    event.source?.postMessage({ 
+                        type: 'SYNC_COMPLETE', 
+                        results 
+                    });
+                });
+            break;
         default:
             break;
     }
 });
+
+// Process sync queue when online
+async function processSyncQueue() {
+    const results = { success: 0, failed: 0, items: [] };
+    
+    try {
+        const pendingItems = await getPendingSyncItems();
+        
+        for (const item of pendingItems) {
+            try {
+                // Try to sync the item
+                const response = await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Sync-Type': item.type
+                    },
+                    body: JSON.stringify(item.data)
+                });
+                
+                if (response.ok) {
+                    await removeFromSyncQueue(item.id);
+                    results.success++;
+                    results.items.push({ id: item.id, status: 'success' });
+                } else {
+                    results.failed++;
+                    results.items.push({ id: item.id, status: 'failed', error: 'Server error' });
+                }
+            } catch (error) {
+                results.failed++;
+                results.items.push({ id: item.id, status: 'failed', error: error.message });
+            }
+        }
+    } catch (error) {
+        console.error('[SW] Process sync queue failed:', error);
+    }
+    
+    return results;
+}

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PWA Support**: Added `manifest.json` for Progressive Web App installation
+- **PWA Meta Tags**: Added theme-color, mobile-web-app-capable, apple-touch-icon meta tags
+- **Offline Data Sync**: Enhanced Service Worker with IndexedDB for offline data storage
+- **Offline Stores**: Added IndexedDB stores for offline_sales, offline_products, offline_customers, sync_queue
+- **Sync Queue**: Background sync queue for offline operations
+- **Enhanced Onboarding**: Added comprehensive onboarding guides for POS, Reports, and more contexts
+- **WebSocket Config**: Added Reverb/Pusher configuration to `.env.example`
 - **Livewire 4 Compatibility**: Migrated all components from deprecated `$listeners` property to `#[On]` attributes
 - **Service Worker**: Added offline support with `/sw.js` and `/offline.html` for PWA-like experience
 - **Real-time Notifications**: Created `RealTimeNotification` broadcast event for WebSocket notifications
@@ -39,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `Items.php` - notificationsUpdated event
   - `ScheduledReports.php` - refreshComponent event
 - Enhanced `app.js` with Service Worker registration and offline/online status handling
+- Enhanced `OnboardingGuide` with more contexts (POS, Reports) and additional steps
+- Updated Service Worker to v1.1.0 with IndexedDB support
 
 ### Security
 - ✅ All passwords properly hashed with bcrypt (cost factor 12)

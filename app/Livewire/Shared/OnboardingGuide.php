@@ -88,6 +88,13 @@ class OnboardingGuide extends Component
                     'target' => '[data-quick-actions]',
                 ],
                 [
+                    'id' => 'dashboard_customize',
+                    'title' => __('Customize Dashboard'),
+                    'description' => __('Click "Customize" to show/hide widgets, drag to reorder, and choose your preferred layout.'),
+                    'icon' => '🎨',
+                    'target' => '[wire\\:click="toggleEditMode"]',
+                ],
+                [
                     'id' => 'notifications',
                     'title' => __('Notifications'),
                     'description' => __('Check the notification bell for important alerts about stock, invoices, and system updates.'),
@@ -100,6 +107,13 @@ class OnboardingGuide extends Component
                     'description' => __('Click your name to access profile settings, change password, or logout.'),
                     'icon' => '👤',
                     'target' => '[data-user-menu]',
+                ],
+                [
+                    'id' => 'offline_mode',
+                    'title' => __('Works Offline!'),
+                    'description' => __('This app works offline. When connection is lost, you can still view cached data and create drafts.'),
+                    'icon' => '📱',
+                    'target' => null,
                 ],
             ],
             'sales' => [
@@ -117,6 +131,20 @@ class OnboardingGuide extends Component
                     'icon' => '➕',
                     'target' => '[data-create-button]',
                 ],
+                [
+                    'id' => 'sales_filters',
+                    'title' => __('Filter & Search'),
+                    'description' => __('Use filters to find sales by date, status, customer, or search by invoice number.'),
+                    'icon' => '🔍',
+                    'target' => '[data-filters]',
+                ],
+                [
+                    'id' => 'sales_export',
+                    'title' => __('Export Data'),
+                    'description' => __('Export sales data to Excel or PDF using the export button.'),
+                    'icon' => '📊',
+                    'target' => '[data-export]',
+                ],
             ],
             'inventory' => [
                 [
@@ -133,6 +161,57 @@ class OnboardingGuide extends Component
                     'icon' => '➕',
                     'target' => '[data-create-button]',
                 ],
+                [
+                    'id' => 'stock_alerts',
+                    'title' => __('Stock Alerts'),
+                    'description' => __('Set minimum stock levels to receive alerts when products run low.'),
+                    'icon' => '⚠️',
+                    'target' => null,
+                ],
+                [
+                    'id' => 'barcode_scan',
+                    'title' => __('Barcode Scanning'),
+                    'description' => __('Use barcode scanner or camera to quickly find and add products.'),
+                    'icon' => '📸',
+                    'target' => '[data-barcode]',
+                ],
+            ],
+            'pos' => [
+                [
+                    'id' => 'pos_intro',
+                    'title' => __('Point of Sale'),
+                    'description' => __('Fast checkout system for retail sales. Works great on touch screens!'),
+                    'icon' => '🛒',
+                    'target' => null,
+                ],
+                [
+                    'id' => 'pos_products',
+                    'title' => __('Add Products'),
+                    'description' => __('Click products or scan barcodes to add them to the cart.'),
+                    'icon' => '🛍️',
+                    'target' => '[data-products-grid]',
+                ],
+                [
+                    'id' => 'pos_cart',
+                    'title' => __('Shopping Cart'),
+                    'description' => __('View items, adjust quantities, and apply discounts in the cart.'),
+                    'icon' => '🛒',
+                    'target' => '[data-cart]',
+                ],
+                [
+                    'id' => 'pos_payment',
+                    'title' => __('Complete Payment'),
+                    'description' => __('Choose payment method, enter amount, and complete the sale.'),
+                    'icon' => '💳',
+                    'target' => '[data-pay-button]',
+                ],
+                [
+                    'id' => 'pos_offline',
+                    'title' => __('Offline Mode'),
+                    'description' => __('POS works offline! Sales are saved and synced when connection returns.'),
+                    'icon' => '📱',
+                    'target' => null,
+                ],
             ],
             'settings' => [
                 [
@@ -148,6 +227,50 @@ class OnboardingGuide extends Component
                     'description' => __('Use the tabs to navigate between different settings categories.'),
                     'icon' => '📑',
                     'target' => '[data-settings-tabs]',
+                ],
+                [
+                    'id' => 'settings_company',
+                    'title' => __('Company Info'),
+                    'description' => __('Set your company name, logo, and contact details for invoices.'),
+                    'icon' => '🏢',
+                    'target' => null,
+                ],
+                [
+                    'id' => 'settings_notifications',
+                    'title' => __('Notification Preferences'),
+                    'description' => __('Choose which alerts you want to receive and how.'),
+                    'icon' => '🔔',
+                    'target' => null,
+                ],
+            ],
+            'reports' => [
+                [
+                    'id' => 'reports_intro',
+                    'title' => __('Reports & Analytics'),
+                    'description' => __('Generate detailed reports to understand your business performance.'),
+                    'icon' => '📈',
+                    'target' => null,
+                ],
+                [
+                    'id' => 'reports_types',
+                    'title' => __('Report Types'),
+                    'description' => __('Choose from sales, inventory, financial, and custom reports.'),
+                    'icon' => '📊',
+                    'target' => '[data-report-types]',
+                ],
+                [
+                    'id' => 'reports_filters',
+                    'title' => __('Date & Filters'),
+                    'description' => __('Filter reports by date range, branch, category, and more.'),
+                    'icon' => '📅',
+                    'target' => '[data-report-filters]',
+                ],
+                [
+                    'id' => 'reports_export',
+                    'title' => __('Export Reports'),
+                    'description' => __('Download reports as PDF, Excel, or schedule automatic email delivery.'),
+                    'icon' => '💾',
+                    'target' => '[data-export]',
                 ],
             ],
         ];
