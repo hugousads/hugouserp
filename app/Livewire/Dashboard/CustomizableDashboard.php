@@ -219,17 +219,33 @@ class CustomizableDashboard extends Component
         $model = class_basename($activity->subject_type ?? 'Unknown');
         $action = __($activity->event ?? 'unknown');
         
-        $properties = $activity->properties?->toArray() ?? [];
-
-        $identifier = $properties['attributes']['name'] ?? null
-            ?? $properties['attributes']['reference_number'] ?? null
-            ?? $properties['attributes']['code'] ?? null
-            ?? $properties['old']['name'] ?? null
-            ?? $properties['old']['reference_number'] ?? null
-            ?? $properties['old']['code'] ?? null
-            ?? "#" . ($activity->subject_id ?? 'N/A');
+        $identifier = $this->getActivityIdentifier($activity);
 
         return "{$action} {$model}: {$identifier}";
+    }
+
+    /**
+     * Extract an identifier from activity properties
+     */
+    protected function getActivityIdentifier(\Spatie\Activitylog\Models\Activity $activity): string
+    {
+        $properties = $activity->properties?->toArray() ?? [];
+        $attributes = $properties['attributes'] ?? [];
+        $old = $properties['old'] ?? [];
+
+        // Try common identifier fields in order of preference
+        $identifierFields = ['name', 'reference_number', 'code', 'title', 'email'];
+        
+        foreach ($identifierFields as $field) {
+            if (!empty($attributes[$field])) {
+                return $attributes[$field];
+            }
+            if (!empty($old[$field])) {
+                return $old[$field];
+            }
+        }
+
+        return '#' . ($activity->subject_id ?? 'N/A');
     }
 
     /**
