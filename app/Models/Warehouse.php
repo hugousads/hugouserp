@@ -13,12 +13,32 @@ class Warehouse extends BaseModel
 
     protected $table = 'warehouses';
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000003_create_inventory_tables.php
+     */
     protected $fillable = [
-        'uuid', 'code', 'name', 'type', 'status', 'address',
-        'notes', 'extra_attributes', 'branch_id', 'created_by', 'updated_by',
+        'branch_id',
+        'name',
+        'name_ar',
+        'code',
+        'type',
+        'address',
+        'phone',
+        'manager_id',
+        'is_active',
+        'is_default',
+        'allow_negative_stock',
+        'settings',
+        // For BaseModel compatibility
+        'extra_attributes',
     ];
 
     protected $casts = [
+        'is_active' => 'boolean',
+        'is_default' => 'boolean',
+        'allow_negative_stock' => 'boolean',
+        'settings' => 'array',
         'extra_attributes' => 'array',
     ];
 
@@ -27,7 +47,6 @@ class Warehouse extends BaseModel
         parent::booted();
 
         static::creating(function ($m) {
-            $m->uuid = $m->uuid ?: (string) Str::uuid();
             $m->code = $m->code ?: 'WH-'.Str::upper(Str::random(6));
         });
     }
@@ -57,23 +76,29 @@ class Warehouse extends BaseModel
         return $this->hasMany(Transfer::class, 'to_warehouse_id');
     }
 
-    public function createdBy(): BelongsTo
+    public function manager(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function updatedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'updated_by');
+        return $this->belongsTo(User::class, 'manager_id');
     }
 
     public function scopeActive($q)
     {
-        return $q->where('status', 'active');
+        return $q->where('is_active', true);
+    }
+
+    public function scopeDefault($q)
+    {
+        return $q->where('is_default', true);
     }
 
     public function scopeSearch($q, $t)
     {
         return $q->where('name', 'like', "%$t%")->orWhere('code', 'like', "%$t%");
+    }
+
+    // Backward compatibility accessor
+    public function getStatusAttribute(): string
+    {
+        return $this->is_active ? 'active' : 'inactive';
     }
 }
