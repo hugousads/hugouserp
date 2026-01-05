@@ -15,24 +15,91 @@ class HREmployee extends BaseModel
 
     protected ?string $moduleKey = 'hr';
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000006_create_hr_payroll_tables.php
+     */
     protected $fillable = [
-        'branch_id', 'user_id', 'code', 'employee_code', 'name', 'email', 'phone', 'national_id',
-        'date_of_birth', 'gender', 'address', 'position', 'department', 'hire_date', 'salary', 'salary_type',
-        'employment_type', 'status', 'termination_date', 'bank_account_number', 'bank_name', 'is_active',
-        'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
-        'contract_start_date', 'contract_end_date', 'work_permit_number', 'work_permit_expiry',
-        'extra_attributes'
+        'branch_id',
+        'user_id',
+        'employee_code',
+        // Personal info
+        'first_name',
+        'last_name',
+        'first_name_ar',
+        'last_name_ar',
+        'email',
+        'phone',
+        'mobile',
+        'birth_date',
+        'gender',
+        'marital_status',
+        'nationality',
+        'national_id',
+        'passport_number',
+        'passport_expiry',
+        // Address
+        'address',
+        'city',
+        'country',
+        // Emergency contact
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'emergency_contact_relation',
+        // Employment info
+        'position',
+        'department',
+        'manager_id',
+        'hire_date',
+        'contract_start_date',
+        'contract_end_date',
+        'termination_date',
+        'employment_type',
+        'status',
+        // Salary info
+        'basic_salary',
+        'salary_currency',
+        'payment_method',
+        'bank_name',
+        'bank_account',
+        'bank_iban',
+        // Allowances
+        'housing_allowance',
+        'transport_allowance',
+        'meal_allowance',
+        'other_allowances',
+        // Leave balances
+        'annual_leave_balance',
+        'sick_leave_balance',
+        // Working hours
+        'work_start_time',
+        'work_end_time',
+        'work_days',
+        // Additional
+        'profile_photo',
+        'documents',
+        'skills',
+        'notes',
+        'custom_fields',
+        'extra_attributes',
     ];
 
     protected $casts = [
-        'salary' => 'decimal:2',
-        'is_active' => 'bool',
-        'date_of_birth' => 'date',
+        'basic_salary' => 'decimal:4',
+        'housing_allowance' => 'decimal:4',
+        'transport_allowance' => 'decimal:4',
+        'meal_allowance' => 'decimal:4',
+        'other_allowances' => 'decimal:4',
+        'birth_date' => 'date',
+        'passport_expiry' => 'date',
         'hire_date' => 'date',
-        'termination_date' => 'date',
         'contract_start_date' => 'date',
         'contract_end_date' => 'date',
-        'work_permit_expiry' => 'date'
+        'termination_date' => 'date',
+        'work_days' => 'array',
+        'documents' => 'array',
+        'skills' => 'array',
+        'custom_fields' => 'array',
     ];
 
     public function branch(): BelongsTo
@@ -44,7 +111,7 @@ class HREmployee extends BaseModel
     public function branches(): BelongsToMany
     {
         return $this->belongsToMany(Branch::class, 'branch_employee', 'employee_id', 'branch_id')
-            ->withPivot(['is_primary', 'assigned_at', 'detached_at'])
+            ->withPivot(['is_primary'])
             ->withTimestamps();
     }
 
@@ -71,14 +138,14 @@ class HREmployee extends BaseModel
     public function shifts()
     {
         return $this->belongsToMany(Shift::class, 'employee_shifts', 'employee_id', 'shift_id')
-            ->withPivot(['start_date', 'end_date', 'is_active'])
+            ->withPivot(['start_date', 'end_date', 'is_current'])
             ->withTimestamps();
     }
 
     public function currentShift()
     {
         return $this->employeeShifts()
-            ->where('is_active', true)
+            ->where('is_current', true)
             ->where('start_date', '<=', now()->toDateString())
             ->where(function ($q) {
                 $q->whereNull('end_date')
@@ -86,6 +153,32 @@ class HREmployee extends BaseModel
             })
             ->with('shift')
             ->first();
+    }
+
+    // Backward compatibility accessors
+    public function getNameAttribute(): string
+    {
+        return trim($this->first_name . ' ' . $this->last_name);
+    }
+
+    public function getSalaryAttribute()
+    {
+        return $this->basic_salary;
+    }
+
+    public function getDateOfBirthAttribute()
+    {
+        return $this->birth_date;
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return $this->name;
+    }
+
+    public function getFullNameArAttribute(): string
+    {
+        return trim(($this->first_name_ar ?? '') . ' ' . ($this->last_name_ar ?? ''));
     }
 
     protected static function booted(): void

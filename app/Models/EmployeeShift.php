@@ -10,18 +10,22 @@ class EmployeeShift extends BaseModel
 {
     protected ?string $moduleKey = 'hr';
 
+    /**
+     * Fillable fields aligned with migration:
+     * employee_shifts table in 2026_01_04_000006_create_hr_payroll_tables.php
+     */
     protected $fillable = [
         'employee_id',
         'shift_id',
         'start_date',
         'end_date',
-        'is_active',
+        'is_current',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'is_active' => 'boolean',
+        'is_current' => 'boolean',
     ];
 
     public function employee(): BelongsTo
@@ -36,13 +40,14 @@ class EmployeeShift extends BaseModel
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('is_current', true);
     }
 
     public function scopeCurrent($query)
     {
         $today = now()->toDateString();
-        return $query->where('start_date', '<=', $today)
+        return $query->where('is_current', true)
+            ->where('start_date', '<=', $today)
             ->where(function ($q) use ($today) {
                 $q->whereNull('end_date')
                     ->orWhere('end_date', '>=', $today);
@@ -51,7 +56,7 @@ class EmployeeShift extends BaseModel
 
     public function isCurrentlyActive(): bool
     {
-        if (!$this->is_active) {
+        if (!$this->is_current) {
             return false;
         }
 
@@ -66,5 +71,11 @@ class EmployeeShift extends BaseModel
         }
 
         return true;
+    }
+
+    // Backward compatibility accessor
+    public function getIsActiveAttribute(): bool
+    {
+        return $this->is_current;
     }
 }

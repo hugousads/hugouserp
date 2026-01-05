@@ -11,21 +11,34 @@ class Shift extends BaseModel
 {
     protected ?string $moduleKey = 'hr';
 
+    /**
+     * Fillable fields aligned with migration:
+     * shifts table in 2026_01_04_000006_create_hr_payroll_tables.php
+     */
     protected $fillable = [
         'branch_id',
         'name',
-        'code',
+        'name_ar',
         'start_time',
         'end_time',
-        'grace_period_minutes',
+        'break_start',
+        'break_end',
+        'break_duration_minutes',
+        'late_grace_minutes',
+        'early_leave_grace_minutes',
+        'overtime_rate',
         'working_days',
+        'is_night_shift',
         'is_active',
-        'description',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'grace_period_minutes' => 'integer',
+        'is_night_shift' => 'boolean',
+        'break_duration_minutes' => 'integer',
+        'late_grace_minutes' => 'integer',
+        'early_leave_grace_minutes' => 'integer',
+        'overtime_rate' => 'decimal:2',
         'working_days' => 'array',
     ];
 
@@ -42,7 +55,7 @@ class Shift extends BaseModel
     public function employees()
     {
         return $this->belongsToMany(HREmployee::class, 'employee_shifts', 'shift_id', 'employee_id')
-            ->withPivot(['start_date', 'end_date', 'is_active'])
+            ->withPivot(['start_date', 'end_date', 'is_current'])
             ->withTimestamps();
     }
 
@@ -60,12 +73,14 @@ class Shift extends BaseModel
         $start = \Carbon\Carbon::parse($this->start_time);
         $end = \Carbon\Carbon::parse($this->end_time);
 
-        if ($end->lt($start)) {
+        if ($end->lt($start) || $this->is_night_shift) {
             // Shift crosses midnight
             $end->addDay();
         }
 
-        return $start->diffInHours($end, true);
+        // Subtract break duration
+        $durationMinutes = $start->diffInMinutes($end) - ($this->break_duration_minutes ?? 0);
+        return $durationMinutes / 60;
     }
 
     public function isWorkingDay(string $day): bool
@@ -75,5 +90,13 @@ class Shift extends BaseModel
         }
 
         return in_array(strtolower($day), array_map('strtolower', $this->working_days), true);
+    }
+
+    /**
+     * Get grace period minutes - returns late_grace_minutes for backward compatibility
+     */
+    public function getGracePeriodMinutesAttribute(): int
+    {
+        return $this->late_grace_minutes ?? 15;
     }
 }
