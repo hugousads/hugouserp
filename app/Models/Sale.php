@@ -20,36 +20,68 @@ class Sale extends BaseModel
 
     protected $with = ['customer', 'createdBy'];
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000005_create_sales_purchases_tables.php
+     */
     protected $fillable = [
-        'uuid', 'code', 'branch_id', 'warehouse_id', 'customer_id',
-        'status', 'channel', 'currency',
-        'sub_total', 'discount_total', 'discount_type', 'discount_value',
-        'tax_total', 'shipping_total', 'shipping_method', 'shipping_carrier', 'tracking_number',
-        'grand_total', 'estimated_profit_margin', 'paid_total', 'due_total', 'amount_paid', 'amount_due',
-        'payment_status', 'payment_due_date',
-        'delivery_date', 'expected_delivery_date', 'actual_delivery_date',
-        'reference_no', 'posted_at', 'sales_person',
+        'branch_id',
+        'warehouse_id',
+        'customer_id',
+        'reference_number',
+        'type',
+        'status',
+        'payment_status',
+        // Dates
+        'sale_date',
+        'due_date',
+        'delivery_date',
+        // Amounts
+        'subtotal',
+        'discount_type',
+        'discount_amount',
+        'tax_amount',
+        'shipping_amount',
+        'total_amount',
+        'paid_amount',
+        'change_amount',
+        'currency',
+        'exchange_rate',
+        // Shipping
+        'shipping_address',
+        'shipping_method',
+        'tracking_number',
+        // Additional
+        'notes',
+        'internal_notes',
+        'terms_conditions',
+        'custom_fields',
+        // References
         'store_order_id',
-        'notes', 'customer_notes', 'internal_notes', 'extra_attributes', 'created_by', 'updated_by',
+        'quotation_id',
+        'salesperson_id',
+        'created_by',
+        // POS specific
+        'pos_session_id',
+        'is_pos_sale',
+        // For BaseModel compatibility
+        'extra_attributes',
     ];
 
     protected $casts = [
-        'sub_total' => 'decimal:4',
-        'discount_total' => 'decimal:4',
-        'discount_value' => 'decimal:4',
-        'tax_total' => 'decimal:4',
-        'shipping_total' => 'decimal:4',
-        'grand_total' => 'decimal:4',
-        'estimated_profit_margin' => 'decimal:4',
-        'paid_total' => 'decimal:4',
-        'due_total' => 'decimal:4',
-        'amount_paid' => 'decimal:4',
-        'amount_due' => 'decimal:4',
-        'posted_at' => 'datetime',
-        'payment_due_date' => 'date',
+        'subtotal' => 'decimal:4',
+        'discount_amount' => 'decimal:4',
+        'tax_amount' => 'decimal:4',
+        'shipping_amount' => 'decimal:4',
+        'total_amount' => 'decimal:4',
+        'paid_amount' => 'decimal:4',
+        'change_amount' => 'decimal:4',
+        'exchange_rate' => 'decimal:8',
+        'sale_date' => 'date',
+        'due_date' => 'date',
         'delivery_date' => 'date',
-        'expected_delivery_date' => 'date',
-        'actual_delivery_date' => 'date',
+        'is_pos_sale' => 'boolean',
+        'custom_fields' => 'array',
         'extra_attributes' => 'array',
     ];
 
@@ -58,10 +90,9 @@ class Sale extends BaseModel
         parent::booted();
 
         static::creating(function ($m) {
-            $m->uuid = $m->uuid ?: (string) Str::uuid();
             // Use configurable invoice prefix from settings
             $prefix = setting('sales.invoice_prefix', 'SO-');
-            $m->code = $m->code ?: $prefix.Str::upper(Str::random(8));
+            $m->reference_number = $m->reference_number ?: $prefix.Str::upper(Str::random(8));
         });
 
         // Clear cache when sales are created, updated, or deleted (BUG-004 fix)
@@ -161,7 +192,7 @@ class Sale extends BaseModel
 
     public function getRemainingAmountAttribute(): float
     {
-        return max(0, (float) $this->grand_total - $this->total_paid);
+        return max(0, (float) $this->total_amount - $this->total_paid);
     }
 
     public function isPaid(): bool
@@ -171,22 +202,22 @@ class Sale extends BaseModel
 
     public function isOverdue(): bool
     {
-        return $this->payment_due_date &&
-            $this->payment_due_date->isPast() &&
+        return $this->due_date &&
+            $this->due_date->isPast() &&
             !$this->isPaid();
     }
 
     public function isDelivered(): bool
     {
-        return $this->actual_delivery_date !== null;
+        return $this->delivery_date !== null;
     }
 
     public function updatePaymentStatus(): void
     {
         $totalPaid = $this->total_paid;
-        $grandTotal = (float) $this->grand_total;
+        $totalAmount = (float) $this->total_amount;
 
-        if ($totalPaid >= $grandTotal) {
+        if ($totalPaid >= $totalAmount) {
             $this->payment_status = 'paid';
         } elseif ($totalPaid > 0) {
             $this->payment_status = 'partial';
@@ -194,13 +225,50 @@ class Sale extends BaseModel
             $this->payment_status = 'unpaid';
         }
 
-        // Update amount fields for consistency
-        $this->amount_paid = $totalPaid;
-        $this->amount_due = max(0, $grandTotal - $totalPaid);
-        $this->paid_total = $totalPaid;
-        $this->due_total = $this->amount_due;
+        $this->paid_amount = $totalPaid;
 
         $this->saveQuietly();
+    }
+
+    // Backward compatibility accessors
+    public function getCodeAttribute()
+    {
+        return $this->reference_number;
+    }
+
+    public function getGrandTotalAttribute()
+    {
+        return $this->total_amount;
+    }
+
+    public function getSubTotalAttribute()
+    {
+        return $this->subtotal;
+    }
+
+    public function getTaxTotalAttribute()
+    {
+        return $this->tax_amount;
+    }
+
+    public function getShippingTotalAttribute()
+    {
+        return $this->shipping_amount;
+    }
+
+    public function getPaymentDueDateAttribute()
+    {
+        return $this->due_date;
+    }
+
+    public function getAmountPaidAttribute()
+    {
+        return $this->paid_amount;
+    }
+
+    public function getAmountDueAttribute()
+    {
+        return $this->remaining_amount;
     }
 
     public function storeOrder(): BelongsTo
@@ -211,9 +279,9 @@ class Sale extends BaseModel
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['code', 'status', 'grand_total', 'paid_total', 'customer_id', 'branch_id'])
+            ->logOnly(['reference_number', 'status', 'total_amount', 'paid_amount', 'customer_id', 'branch_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "Sale {$this->code} was {$eventName}");
+            ->setDescriptionForEvent(fn(string $eventName) => "Sale {$this->reference_number} was {$eventName}");
     }
 }

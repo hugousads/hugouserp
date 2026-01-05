@@ -20,35 +20,59 @@ class Purchase extends BaseModel
 
     protected $with = ['supplier', 'createdBy'];
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000005_create_sales_purchases_tables.php
+     */
     protected $fillable = [
-        'uuid', 'code', 'branch_id', 'warehouse_id', 'supplier_id',
-        'status', 'currency', 'sub_total', 'discount_total', 'discount_type', 'discount_value',
-        'tax_total', 'shipping_total', 'shipping_method', 'shipping_carrier', 'grand_total',
-        'estimated_profit_margin', 'paid_total', 'due_total', 'amount_paid', 'amount_due',
-        'payment_status', 'payment_due_date',
-        'expected_delivery_date', 'actual_delivery_date', 'delivery_status',
-        'approved_by', 'approved_at', 'requisition_number',
-        'reference_no', 'posted_at',
-        'notes', 'supplier_notes', 'internal_notes', 'extra_attributes', 'created_by', 'updated_by',
+        'branch_id',
+        'warehouse_id',
+        'supplier_id',
+        'reference_number',
+        'supplier_invoice',
+        'type',
+        'status',
+        'payment_status',
+        // Dates
+        'purchase_date',
+        'due_date',
+        'expected_date',
+        // Amounts
+        'subtotal',
+        'discount_amount',
+        'tax_amount',
+        'shipping_amount',
+        'other_charges',
+        'total_amount',
+        'paid_amount',
+        'currency',
+        'exchange_rate',
+        // Additional
+        'notes',
+        'terms_conditions',
+        'custom_fields',
+        // Approvals
+        'created_by',
+        'approved_by',
+        'approved_at',
+        // For BaseModel compatibility
+        'extra_attributes',
     ];
 
     protected $casts = [
-        'sub_total' => 'decimal:4',
-        'discount_total' => 'decimal:4',
-        'discount_value' => 'decimal:4',
-        'tax_total' => 'decimal:4',
-        'shipping_total' => 'decimal:4',
-        'grand_total' => 'decimal:4',
-        'estimated_profit_margin' => 'decimal:4',
-        'paid_total' => 'decimal:4',
-        'due_total' => 'decimal:4',
-        'amount_paid' => 'decimal:4',
-        'amount_due' => 'decimal:4',
-        'posted_at' => 'datetime',
+        'subtotal' => 'decimal:4',
+        'discount_amount' => 'decimal:4',
+        'tax_amount' => 'decimal:4',
+        'shipping_amount' => 'decimal:4',
+        'other_charges' => 'decimal:4',
+        'total_amount' => 'decimal:4',
+        'paid_amount' => 'decimal:4',
+        'exchange_rate' => 'decimal:8',
+        'purchase_date' => 'date',
+        'due_date' => 'date',
+        'expected_date' => 'date',
         'approved_at' => 'datetime',
-        'payment_due_date' => 'date',
-        'expected_delivery_date' => 'date',
-        'actual_delivery_date' => 'date',
+        'custom_fields' => 'array',
         'extra_attributes' => 'array',
     ];
 
@@ -57,10 +81,9 @@ class Purchase extends BaseModel
         parent::booted();
 
         static::creating(function ($m) {
-            $m->uuid = $m->uuid ?: (string) Str::uuid();
             // Use configurable purchase order prefix from settings
             $prefix = setting('purchases.purchase_order_prefix', 'PO-');
-            $m->code = $m->code ?: $prefix.Str::upper(Str::random(8));
+            $m->reference_number = $m->reference_number ?: $prefix.Str::upper(Str::random(8));
         });
     }
 
@@ -128,21 +151,21 @@ class Purchase extends BaseModel
     public function scopeOverdue($q)
     {
         return $q->where('payment_status', '!=', 'paid')
-            ->whereNotNull('payment_due_date')
-            ->where('payment_due_date', '<', now());
+            ->whereNotNull('due_date')
+            ->where('due_date', '<', now());
     }
 
     // Business Logic
     public function getTotalQuantityReceived(): float
     {
-        return $this->grns()->where('status', 'approved')->get()->sum(function ($grn) {
-            return $grn->getTotalQuantityAccepted();
+        return $this->grns()->where('status', 'completed')->get()->sum(function ($grn) {
+            return $grn->items()->sum('accepted_quantity');
         });
     }
 
     public function isFullyReceived(): bool
     {
-        $orderedQty = $this->items->sum('qty');
+        $orderedQty = $this->items->sum('quantity');
         $receivedQty = $this->getTotalQuantityReceived();
 
         return $receivedQty >= $orderedQty;
@@ -157,12 +180,12 @@ class Purchase extends BaseModel
 
     public function getTotalPaidAttribute(): float
     {
-        return (float) $this->payments()->sum('amount');
+        return (float) $this->paid_amount;
     }
 
     public function getRemainingAmountAttribute(): float
     {
-        return max(0, (float) $this->grand_total - $this->total_paid);
+        return max(0, (float) $this->total_amount - (float) $this->paid_amount);
     }
 
     public function isPaid(): bool
@@ -177,65 +200,93 @@ class Purchase extends BaseModel
 
     public function isOverdue(): bool
     {
-        return $this->payment_due_date &&
-            $this->payment_due_date->isPast() &&
+        return $this->due_date &&
+            $this->due_date->isPast() &&
             !$this->isPaid();
     }
 
-    public function isDelivered(): bool
+    public function isReceived(): bool
     {
-        return $this->delivery_status === 'completed';
+        return $this->status === 'received' || $this->status === 'completed';
     }
 
     public function approve(int $userId): void
     {
         $this->approved_by = $userId;
         $this->approved_at = now();
-        $this->status = 'approved';
+        $this->status = 'confirmed';
         $this->save();
     }
 
     public function updatePaymentStatus(): void
     {
-        $totalPaid = $this->total_paid;
-        $grandTotal = (float) $this->grand_total;
+        $paidAmount = (float) $this->paid_amount;
+        $totalAmount = (float) $this->total_amount;
 
-        if ($totalPaid >= $grandTotal) {
+        if ($paidAmount >= $totalAmount) {
             $this->payment_status = 'paid';
-        } elseif ($totalPaid > 0) {
+        } elseif ($paidAmount > 0) {
             $this->payment_status = 'partial';
         } else {
             $this->payment_status = 'unpaid';
         }
 
-        // Update amount fields for consistency
-        $this->amount_paid = $totalPaid;
-        $this->amount_due = max(0, $grandTotal - $totalPaid);
-        $this->paid_total = $totalPaid;
-        $this->due_total = $this->amount_due;
-
         $this->saveQuietly();
     }
 
-    public function updateDeliveryStatus(): void
+    public function updateReceivingStatus(): void
     {
         if ($this->isFullyReceived()) {
-            $this->delivery_status = 'completed';
+            $this->status = 'completed';
         } elseif ($this->isPartiallyReceived()) {
-            $this->delivery_status = 'partial';
-        } else {
-            $this->delivery_status = 'pending';
+            $this->status = 'received'; // partial received
         }
 
         $this->saveQuietly();
     }
 
+    // Backward compatibility accessors
+    public function getCodeAttribute()
+    {
+        return $this->reference_number;
+    }
+
+    public function getGrandTotalAttribute()
+    {
+        return $this->total_amount;
+    }
+
+    public function getSubTotalAttribute()
+    {
+        return $this->subtotal;
+    }
+
+    public function getTaxTotalAttribute()
+    {
+        return $this->tax_amount;
+    }
+
+    public function getShippingTotalAttribute()
+    {
+        return $this->shipping_amount;
+    }
+
+    public function getPaymentDueDateAttribute()
+    {
+        return $this->due_date;
+    }
+
+    public function getExpectedDeliveryDateAttribute()
+    {
+        return $this->expected_date;
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['code', 'status', 'grand_total', 'paid_total', 'supplier_id', 'branch_id', 'approved_by', 'approved_at'])
+            ->logOnly(['reference_number', 'status', 'total_amount', 'paid_amount', 'supplier_id', 'branch_id', 'approved_by', 'approved_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "Purchase {$this->code} was {$eventName}");
+            ->setDescriptionForEvent(fn(string $eventName) => "Purchase {$this->reference_number} was {$eventName}");
     }
 }
