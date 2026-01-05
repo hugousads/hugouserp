@@ -5433,5 +5433,22 @@
     "User Type": "نوع المستخدم",
     "All Users": "جميع المستخدمين",
     "Module Statistics": "إحصائيات الوحدة",
-    "Statistics for this module will be displayed here when data is available.": "ستظهر إحصائيات هذه الوحدة هنا عندما تتوفر البيانات."
+    "Statistics for this module will be displayed here when data is available.": "ستظهر إحصائيات هذه الوحدة هنا عندما تتوفر البيانات.",
+    "No data available": "لا توجد بيانات متاحة",
+    "Products": "المنتجات",
+    "Total Value": "القيمة الإجمالية",
+    "Low Stock": "مخزون منخفض",
+    "Sales This Month": "مبيعات هذا الشهر",
+    "Search or type > for commands...": "ابحث أو اكتب > للأوامر...",
+    "Recent": "الأخيرة",
+    "Clear": "مسح",
+    "for quick actions": "للإجراءات السريعة",
+    "Type to search or": "اكتب للبحث أو",
+    "Quick Action": "إجراء سريع",
+    "New Sale": "بيع جديد",
+    "New Purchase": "شراء جديد",
+    "New Product": "منتج جديد",
+    "New Customer": "عميل جديد",
+    "POS Terminal": "نقطة البيع",
+    "Action": "إجراء"
 }

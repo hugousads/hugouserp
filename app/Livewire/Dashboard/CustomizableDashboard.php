@@ -43,6 +43,7 @@ class CustomizableDashboard extends Component
     public array $recentSales = [];
     public array $recentActivities = [];
     public array $trendIndicators = [];
+    public array $moduleStatsData = [];
     
     // UI state
     public bool $isEditing = false;
@@ -189,6 +190,78 @@ class CustomizableDashboard extends Component
         if ($user->can('logs.audit.view')) {
             $this->loadRecentActivities();
         }
+        
+        // Load module-specific statistics
+        $this->loadModuleStats();
+    }
+
+    /**
+     * Load statistics for module-specific widgets
+     */
+    protected function loadModuleStats(): void
+    {
+        $user = Auth::user();
+        $branch = $user->branch ?? $user->currentBranch ?? null;
+        
+        if (!$branch) {
+            return;
+        }
+        
+        $moduleKeys = ['motorcycle', 'spares', 'rental', 'manufacturing', 'wood'];
+        
+        foreach ($moduleKeys as $moduleKey) {
+            if ($branch->hasModule($moduleKey)) {
+                $this->moduleStatsData[$moduleKey] = $this->getModuleStatistics($moduleKey, $branch->id);
+            }
+        }
+    }
+
+    /**
+     * Get statistics for a specific module
+     */
+    protected function getModuleStatistics(string $moduleKey, int $branchId): array
+    {
+        $cacheKey = "module_stats:{$moduleKey}:branch_{$branchId}";
+        
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($moduleKey, $branchId) {
+            $module = \App\Models\Module::where('slug', $moduleKey)
+                ->orWhere('key', $moduleKey)
+                ->first();
+            
+            if (!$module) {
+                return [];
+            }
+            
+            $productsQuery = \App\Models\Product::where('module_id', $module->id)
+                ->where('branch_id', $branchId);
+            
+            $totalProducts = (clone $productsQuery)->count();
+            $totalValue = (clone $productsQuery)->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(default_price, 0) * COALESCE(stock_quantity, 0)'));
+            
+            $lowStock = (clone $productsQuery)
+                ->whereNotNull('min_stock')
+                ->where('min_stock', '>', 0)
+                ->whereColumn('stock_quantity', '<=', 'min_stock')
+                ->count();
+            
+            // Get this month's sales for this module
+            $thisMonthSales = \App\Models\Sale::where('branch_id', $branchId)
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->whereHas('items', function ($q) use ($module) {
+                    $q->whereHas('product', function ($pq) use ($module) {
+                        $pq->where('module_id', $module->id);
+                    });
+                })
+                ->count();
+            
+            return [
+                'total_products' => $totalProducts,
+                'total_value' => $totalValue,
+                'low_stock' => $lowStock,
+                'this_month_sales' => $thisMonthSales,
+            ];
+        });
     }
 
     /**

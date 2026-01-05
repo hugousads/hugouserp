@@ -5198,5 +5198,22 @@
     "User Type": "User Type",
     "All Users": "All Users",
     "Module Statistics": "Module Statistics",
-    "Statistics for this module will be displayed here when data is available.": "Statistics for this module will be displayed here when data is available."
+    "Statistics for this module will be displayed here when data is available.": "Statistics for this module will be displayed here when data is available.",
+    "No data available": "No data available",
+    "Products": "Products",
+    "Total Value": "Total Value",
+    "Low Stock": "Low Stock",
+    "Sales This Month": "Sales This Month",
+    "Search or type > for commands...": "Search or type > for commands...",
+    "Recent": "Recent",
+    "Clear": "Clear",
+    "for quick actions": "for quick actions",
+    "Type to search or": "Type to search or",
+    "Quick Action": "Quick Action",
+    "New Sale": "New Sale",
+    "New Purchase": "New Purchase",
+    "New Product": "New Product",
+    "New Customer": "New Customer",
+    "POS Terminal": "POS Terminal",
+    "Action": "Action"
 }
