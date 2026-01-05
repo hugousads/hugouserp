@@ -23,6 +23,7 @@
         @foreach($results as $index => $result)
         <a href="{{ $result['url'] }}" 
            wire:key="result-{{ $index }}"
+           wire:navigate
            class="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition {{ $index === $selectedIndex ? 'bg-slate-50 dark:bg-slate-700/50' : '' }}">
             <div class="flex-shrink-0 text-2xl">
                 {{ $result['icon'] }}

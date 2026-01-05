@@ -37,8 +37,8 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('User Type') }}</label>
                 <select wire:model.live="causerType" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm">
                     <option value="">{{ __('All Users') }}</option>
-                    @foreach($causerTypes as $type)
-                        <option value="App\\Models\\{{ $type }}">{{ __($type) }}</option>
+                    @foreach($causerTypes as $fullType => $displayName)
+                        <option value="{{ $fullType }}">{{ __($displayName) }}</option>
                     @endforeach
                 </select>
             </div>

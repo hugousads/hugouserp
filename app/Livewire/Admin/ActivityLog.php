@@ -52,6 +52,21 @@ class ActivityLog extends Component
         $this->resetPage();
     }
 
+    public function updatingCauserType(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateFrom(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDateTo(): void
+    {
+        $this->resetPage();
+    }
+
     public function clearFilters(): void
     {
         $this->reset(['search', 'logType', 'eventType', 'causerType', 'dateFrom', 'dateTo']);
@@ -73,9 +88,8 @@ class ActivityLog extends Component
                 ->whereNotNull('causer_type')
                 ->pluck('causer_type')
                 ->filter()
-                ->map(fn($type) => class_basename($type))
                 ->unique()
-                ->values()
+                ->mapWithKeys(fn($type) => [$type => class_basename($type)])
                 ->toArray();
         });
     }

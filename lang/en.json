@@ -5194,5 +5194,9 @@
     "Filterable": "Filterable",
     "Create": "Create",
     "Update": "Update",
-    "Cancel": "Cancel"
+    "Cancel": "Cancel",
+    "User Type": "User Type",
+    "All Users": "All Users",
+    "Module Statistics": "Module Statistics",
+    "Statistics for this module will be displayed here when data is available.": "Statistics for this module will be displayed here when data is available."
 }

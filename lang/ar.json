@@ -5429,5 +5429,9 @@
     "Filterable": "قابل للتصفية",
     "Create": "إنشاء",
     "Update": "تحديث",
-    "Cancel": "إلغاء"
+    "Cancel": "إلغاء",
+    "User Type": "نوع المستخدم",
+    "All Users": "جميع المستخدمين",
+    "Module Statistics": "إحصائيات الوحدة",
+    "Statistics for this module will be displayed here when data is available.": "ستظهر إحصائيات هذه الوحدة هنا عندما تتوفر البيانات."
 }

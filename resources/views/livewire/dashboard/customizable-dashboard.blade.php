@@ -167,6 +167,13 @@
                         @case('quick_stats')
                             @include('livewire.dashboard.partials.quick-stats-widget')
                             @break
+                        @case('motorcycle_stats')
+                        @case('spares_stats')
+                        @case('rental_stats')
+                        @case('manufacturing_stats')
+                        @case('wood_stats')
+                            @include('livewire.dashboard.partials.module-stats-widget', ['widgetConfig' => $widget])
+                            @break
                     @endswitch
                 </div>
             @endif
