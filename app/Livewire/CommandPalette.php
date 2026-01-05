@@ -222,7 +222,7 @@ class CommandPalette extends Component
         $actions = [
             ['name' => __('New Sale'), 'icon' => '➕', 'url' => route('app.sales.create'), 'permission' => 'sales.manage', 'keywords' => 'new sale create invoice'],
             ['name' => __('New Purchase'), 'icon' => '📥', 'url' => route('app.purchases.create'), 'permission' => 'purchases.manage', 'keywords' => 'new purchase create order'],
-            ['name' => __('New Product'), 'icon' => '📦', 'url' => route('products.create'), 'permission' => 'inventory.products.create', 'keywords' => 'new product create item'],
+            ['name' => __('New Product'), 'icon' => '📦', 'url' => route('app.inventory.products.create'), 'permission' => 'inventory.products.create', 'keywords' => 'new product create item'],
             ['name' => __('New Customer'), 'icon' => '👤', 'url' => route('customers.create'), 'permission' => 'customers.manage', 'keywords' => 'new customer create client'],
             ['name' => __('Dashboard'), 'icon' => '📊', 'url' => route('dashboard'), 'permission' => 'dashboard.view', 'keywords' => 'dashboard home main'],
             ['name' => __('Settings'), 'icon' => '⚙️', 'url' => route('admin.settings'), 'permission' => 'settings.view', 'keywords' => 'settings config preferences'],

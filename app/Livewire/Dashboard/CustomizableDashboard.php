@@ -224,9 +224,9 @@ class CustomizableDashboard extends Component
         $cacheKey = "module_stats:{$moduleKey}:branch_{$branchId}";
         
         return \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($moduleKey, $branchId) {
-            $module = \App\Models\Module::where('slug', $moduleKey)
-                ->orWhere('key', $moduleKey)
-                ->first();
+            // Query by key first (more common), then fallback to slug
+            $module = \App\Models\Module::where('key', $moduleKey)->first()
+                ?? \App\Models\Module::where('slug', $moduleKey)->first();
             
             if (!$module) {
                 return [];
