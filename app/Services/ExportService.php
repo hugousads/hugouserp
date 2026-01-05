@@ -417,7 +417,11 @@ class ExportService
                 $value = $row[$column] ?? '';
                 // Format dates nicely
                 if (preg_match('/^\d{4}-\d{2}-\d{2}/', (string) $value)) {
-                    $value = \Carbon\Carbon::parse($value)->format($options['date_format'] ?? 'Y-m-d');
+                    try {
+                        $value = \Carbon\Carbon::parse($value)->format($options['date_format'] ?? 'Y-m-d');
+                    } catch (\Exception $e) {
+                        // Keep original value if parsing fails
+                    }
                 }
                 $html .= '<td>'.htmlspecialchars((string) $value).'</td>';
             }
@@ -426,9 +430,8 @@ class ExportService
 
         $html .= '</tbody></table></body></html>';
 
-        $filepath = $this->getExportPath($filename, 'pdf');
-
         if (class_exists(\Dompdf\Dompdf::class)) {
+            $filepath = $this->getExportPath($filename, 'pdf');
             $dompdf = new \Dompdf\Dompdf([
                 'isHtml5ParserEnabled' => true,
                 'isRemoteEnabled' => false,
@@ -439,8 +442,9 @@ class ExportService
             $dompdf->render();
             file_put_contents($filepath, $dompdf->output());
         } else {
+            // Fallback to HTML when Dompdf is not available
+            $filepath = $this->getExportPath($filename, 'html');
             file_put_contents($filepath, $html);
-            $filepath = str_replace('.pdf', '.html', $filepath);
         }
 
         return $filepath;

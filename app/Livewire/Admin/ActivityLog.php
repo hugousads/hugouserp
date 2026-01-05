@@ -60,8 +60,23 @@ class ActivityLog extends Component
 
     public function getLogTypes(): array
     {
-        return Cache::remember('activity_log_types', 300, function () {
+        // Use shorter cache duration to catch new log types more quickly
+        return Cache::remember('activity_log_types', 60, function () {
             return Activity::distinct()->pluck('log_name')->filter()->toArray();
+        });
+    }
+
+    public function getCauserTypes(): array
+    {
+        return Cache::remember('activity_causer_types', 60, function () {
+            return Activity::distinct()
+                ->whereNotNull('causer_type')
+                ->pluck('causer_type')
+                ->filter()
+                ->map(fn($type) => class_basename($type))
+                ->unique()
+                ->values()
+                ->toArray();
         });
     }
 
@@ -93,6 +108,7 @@ class ActivityLog extends Component
             'activities' => $activities,
             'logTypes' => $this->getLogTypes(),
             'eventTypes' => $this->getEventTypes(),
+            'causerTypes' => $this->getCauserTypes(),
         ]);
     }
 }

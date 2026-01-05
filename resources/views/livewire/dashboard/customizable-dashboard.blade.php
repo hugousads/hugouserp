@@ -161,6 +161,9 @@
                         @case('recent_sales')
                             @include('livewire.dashboard.partials.recent-sales-widget')
                             @break
+                        @case('recent_activity')
+                            @include('livewire.dashboard.partials.recent-activity-widget')
+                            @break
                         @case('quick_stats')
                             @include('livewire.dashboard.partials.quick-stats-widget')
                             @break

@@ -41,6 +41,7 @@ class CustomizableDashboard extends Component
     public array $paymentMethodsData = [];
     public array $lowStockProducts = [];
     public array $recentSales = [];
+    public array $recentActivities = [];
     public array $trendIndicators = [];
     
     // UI state
@@ -105,6 +106,14 @@ class CustomizableDashboard extends Component
             'size' => 'half',
             'default_enabled' => true,
             'permission' => 'sales.view',
+        ],
+        'recent_activity' => [
+            'title' => 'Recent Activity',
+            'title_ar' => 'النشاط الأخير',
+            'icon' => 'clock',
+            'size' => 'half',
+            'default_enabled' => true,
+            'permission' => 'logs.audit.view',
         ],
         'quick_stats' => [
             'title' => 'Quick Stats',
@@ -175,6 +184,68 @@ class CustomizableDashboard extends Component
         
         // Load all data using the shared trait
         $this->loadAllDashboardData();
+        
+        // Load recent activities if user has permission
+        if ($user->can('logs.audit.view')) {
+            $this->loadRecentActivities();
+        }
+    }
+
+    /**
+     * Load recent activities from audit log
+     */
+    protected function loadRecentActivities(): void
+    {
+        $this->recentActivities = \Spatie\Activitylog\Models\Activity::with('causer')
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(fn($activity) => [
+                'id' => $activity->id,
+                'action' => $activity->event ?? 'unknown',
+                'model' => class_basename($activity->subject_type ?? 'Unknown'),
+                'description' => $this->formatActivityDescription($activity),
+                'user' => $activity->causer?->name ?? __('System'),
+                'time' => $activity->created_at->diffForHumans(),
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Format activity description for display
+     */
+    protected function formatActivityDescription(\Spatie\Activitylog\Models\Activity $activity): string
+    {
+        $model = class_basename($activity->subject_type ?? 'Unknown');
+        $action = __($activity->event ?? 'unknown');
+        
+        $identifier = $this->getActivityIdentifier($activity);
+
+        return "{$action} {$model}: {$identifier}";
+    }
+
+    /**
+     * Extract an identifier from activity properties
+     */
+    protected function getActivityIdentifier(\Spatie\Activitylog\Models\Activity $activity): string
+    {
+        $properties = $activity->properties?->toArray() ?? [];
+        $attributes = $properties['attributes'] ?? [];
+        $old = $properties['old'] ?? [];
+
+        // Try common identifier fields in order of preference
+        $identifierFields = ['name', 'reference_number', 'code', 'title', 'email'];
+        
+        foreach ($identifierFields as $field) {
+            if (!empty($attributes[$field])) {
+                return $attributes[$field];
+            }
+            if (!empty($old[$field])) {
+                return $old[$field];
+            }
+        }
+
+        return '#' . ($activity->subject_id ?? 'N/A');
     }
 
     /**
@@ -312,6 +383,12 @@ class CustomizableDashboard extends Component
     public function refreshData(): void
     {
         $this->refreshDashboardData();
+        
+        // Also reload recent activities if user has permission
+        $user = Auth::user();
+        if ($user && $user->can('logs.audit.view')) {
+            $this->loadRecentActivities();
+        }
     }
 
     public function render(): View

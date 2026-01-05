@@ -437,20 +437,32 @@ const KeyboardShortcuts = {
     },
     
     showHelp() {
-        // Create table using DOM methods to prevent XSS
-        const table = document.createElement('table');
-        table.className = 'w-full text-sm';
-        const tbody = document.createElement('tbody');
+        // Create container for better organization
+        const container = document.createElement('div');
+        container.className = 'text-left';
         
-        const shortcuts = [
+        // Active shortcuts section
+        const activeSection = document.createElement('div');
+        activeSection.className = 'mb-4';
+        const activeTitle = document.createElement('h4');
+        activeTitle.className = 'text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2';
+        activeTitle.textContent = 'Active Shortcuts / اختصارات نشطة';
+        activeSection.appendChild(activeTitle);
+        
+        const activeTable = document.createElement('table');
+        activeTable.className = 'w-full text-sm';
+        const activeTbody = document.createElement('tbody');
+        
+        const activeShortcuts = [
             { key: 'Ctrl + S', action: 'Save / حفظ' },
             { key: 'Ctrl + F', action: 'Search / بحث' },
             { key: 'Ctrl + N', action: 'New Item / إضافة جديد' },
+            { key: 'Ctrl + K', action: 'Command Palette / لوحة الأوامر' },
             { key: 'Escape', action: 'Close Modal / إغلاق' },
             { key: 'F1', action: 'Help / مساعدة' }
         ];
         
-        shortcuts.forEach(s => {
+        activeShortcuts.forEach(s => {
             const tr = document.createElement('tr');
             tr.className = 'border-b border-gray-200 dark:border-gray-700';
             
@@ -467,17 +479,61 @@ const KeyboardShortcuts = {
             
             tr.appendChild(tdKey);
             tr.appendChild(tdAction);
-            tbody.appendChild(tr);
+            activeTbody.appendChild(tr);
         });
         
-        table.appendChild(tbody);
+        activeTable.appendChild(activeTbody);
+        activeSection.appendChild(activeTable);
+        container.appendChild(activeSection);
+        
+        // POS shortcuts section (only active in POS terminal)
+        const posSection = document.createElement('div');
+        const posTitle = document.createElement('h4');
+        posTitle.className = 'text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2';
+        posTitle.textContent = 'POS Terminal Only / فقط في نقطة البيع';
+        posSection.appendChild(posTitle);
+        
+        const posTable = document.createElement('table');
+        posTable.className = 'w-full text-sm';
+        const posTbody = document.createElement('tbody');
+        
+        const posShortcuts = [
+            { key: 'F2', action: 'Focus Quantity / الكمية' },
+            { key: 'F4', action: 'Apply Discount / خصم' },
+            { key: 'F8', action: 'Clear Cart / مسح' },
+            { key: 'F12', action: 'Complete Sale / إتمام البيع' }
+        ];
+        
+        posShortcuts.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-200 dark:border-gray-700';
+            
+            const tdKey = document.createElement('td');
+            tdKey.className = 'py-2 px-3';
+            const kbd = document.createElement('kbd');
+            kbd.className = 'px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono';
+            kbd.textContent = s.key;
+            tdKey.appendChild(kbd);
+            
+            const tdAction = document.createElement('td');
+            tdAction.className = 'py-2 px-3 text-gray-600 dark:text-gray-400';
+            tdAction.textContent = s.action;
+            
+            tr.appendChild(tdKey);
+            tr.appendChild(tdAction);
+            posTbody.appendChild(tr);
+        });
+        
+        posTable.appendChild(posTbody);
+        posSection.appendChild(posTable);
+        container.appendChild(posSection);
         
         Swal.fire({
             title: 'Keyboard Shortcuts / اختصارات لوحة المفاتيح',
-            html: table,
+            html: container,
             icon: 'info',
             confirmButtonText: 'OK',
-            width: '400px'
+            width: '450px'
         });
     }
 };
