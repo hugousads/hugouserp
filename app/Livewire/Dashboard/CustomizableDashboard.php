@@ -196,16 +196,16 @@ class CustomizableDashboard extends Component
      */
     protected function loadRecentActivities(): void
     {
-        $this->recentActivities = \App\Models\AuditLog::with('user')
+        $this->recentActivities = \Spatie\Activitylog\Models\Activity::with('causer')
             ->latest()
             ->limit(5)
             ->get()
             ->map(fn($activity) => [
                 'id' => $activity->id,
-                'action' => $activity->action ?? 'unknown',
-                'model' => class_basename($activity->auditable_type ?? 'Unknown'),
+                'action' => $activity->event ?? 'unknown',
+                'model' => class_basename($activity->subject_type ?? 'Unknown'),
                 'description' => $this->formatActivityDescription($activity),
-                'user' => $activity->user?->name ?? __('System'),
+                'user' => $activity->causer?->name ?? __('System'),
                 'time' => $activity->created_at->diffForHumans(),
             ])
             ->toArray();
@@ -214,18 +214,20 @@ class CustomizableDashboard extends Component
     /**
      * Format activity description for display
      */
-    protected function formatActivityDescription(\App\Models\AuditLog $activity): string
+    protected function formatActivityDescription(\Spatie\Activitylog\Models\Activity $activity): string
     {
-        $model = class_basename($activity->auditable_type ?? 'Unknown');
-        $action = __($activity->action ?? 'unknown');
+        $model = class_basename($activity->subject_type ?? 'Unknown');
+        $action = __($activity->event ?? 'unknown');
+        
+        $properties = $activity->properties?->toArray() ?? [];
 
-        $identifier = $activity->new_values['name'] 
-            ?? $activity->new_values['reference_number']
-            ?? $activity->new_values['code']
-            ?? $activity->old_values['name']
-            ?? $activity->old_values['reference_number']
-            ?? $activity->old_values['code']
-            ?? "#" . ($activity->auditable_id ?? 'N/A');
+        $identifier = $properties['attributes']['name'] ?? null
+            ?? $properties['attributes']['reference_number'] ?? null
+            ?? $properties['attributes']['code'] ?? null
+            ?? $properties['old']['name'] ?? null
+            ?? $properties['old']['reference_number'] ?? null
+            ?? $properties['old']['code'] ?? null
+            ?? "#" . ($activity->subject_id ?? 'N/A');
 
         return "{$action} {$model}: {$identifier}";
     }
