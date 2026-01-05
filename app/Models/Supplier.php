@@ -130,7 +130,9 @@ class Supplier extends BaseModel
 
     public function updateRating(float $newRating): void
     {
-        $this->rating = round($newRating);
+        // Validate rating is within acceptable range (1-5)
+        $validatedRating = max(1, min(5, round($newRating)));
+        $this->rating = (int) $validatedRating;
         $this->save();
     }
 

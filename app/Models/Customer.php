@@ -135,8 +135,14 @@ class Customer extends BaseModel
             return false;
         }
 
-        if (!$this->credit_limit) {
+        // If credit_limit is null or not set, allow purchase (no credit limit)
+        // If credit_limit is explicitly 0, no credit is allowed
+        if ($this->credit_limit === null) {
             return true;
+        }
+
+        if ($this->credit_limit == 0) {
+            return false;
         }
 
         $availableCredit = $this->credit_limit - $this->balance;

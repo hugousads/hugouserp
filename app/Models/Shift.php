@@ -93,10 +93,15 @@ class Shift extends BaseModel
     }
 
     /**
+     * Default late grace minutes if not specified
+     */
+    public const DEFAULT_LATE_GRACE_MINUTES = 15;
+
+    /**
      * Get grace period minutes - returns late_grace_minutes for backward compatibility
      */
     public function getGracePeriodMinutesAttribute(): int
     {
-        return $this->late_grace_minutes ?? 15;
+        return $this->late_grace_minutes ?? self::DEFAULT_LATE_GRACE_MINUTES;
     }
 }
