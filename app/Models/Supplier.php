@@ -16,30 +16,75 @@ class Supplier extends BaseModel
 
     protected ?string $moduleKey = 'suppliers';
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000004_create_crm_tables.php
+     */
     protected $fillable = [
-        'branch_id', 'name', 'company_name', 'email', 'phone', 'address', 'city', 'country', 'tax_number', 'is_active',
-        'balance', 'total_purchases', 'average_lead_time_days',
-        'payment_terms', 'payment_due_days', 'preferred_currency',
-        'minimum_order_value', 'supplier_rating', 'last_purchase_date',
-        'quality_rating', 'delivery_rating', 'service_rating', 'total_orders',
-        'website', 'fax', 'contact_person', 'contact_person_phone', 'contact_person_email',
-        'is_approved', 'notes', 'extra_attributes', 'created_by', 'updated_by',
+        'branch_id',
+        'code',
+        'name',
+        'name_ar',
+        'type',
+        // Contact info
+        'email',
+        'phone',
+        'mobile',
+        'fax',
+        'website',
+        // Address
+        'address',
+        'city',
+        'state',
+        'postal_code',
+        'country',
+        // Business info
+        'tax_number',
+        'commercial_register',
+        'contact_person',
+        'contact_position',
+        'bank_name',
+        'bank_account',
+        'bank_iban',
+        'bank_swift',
+        // Financial
+        'balance',
+        'payment_terms_days',
+        'currency',
+        'credit_limit',
+        // Rating & Status
+        'rating',
+        'is_active',
+        'is_preferred',
+        'is_blocked',
+        // Delivery
+        'lead_time_days',
+        'minimum_order_amount',
+        'shipping_cost',
+        // Additional
+        'notes',
+        'custom_fields',
+        'product_categories',
+        // For BaseModel compatibility
+        'extra_attributes',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
-        'is_active' => 'bool',
-        'is_approved' => 'bool',
-        'extra_attributes' => 'array',
         'balance' => 'decimal:4',
-        'total_purchases' => 'decimal:4',
-        'average_lead_time_days' => 'decimal:2',
-        'payment_due_days' => 'integer',
-        'minimum_order_value' => 'decimal:2',
-        'last_purchase_date' => 'datetime',
-        'quality_rating' => 'decimal:2',
-        'delivery_rating' => 'decimal:2',
-        'service_rating' => 'decimal:2',
-        'total_orders' => 'integer',
+        'credit_limit' => 'decimal:4',
+        'minimum_order_amount' => 'decimal:4',
+        'shipping_cost' => 'decimal:4',
+        'rating' => 'integer',
+        'payment_terms_days' => 'integer',
+        'lead_time_days' => 'integer',
+        'is_active' => 'boolean',
+        'is_preferred' => 'boolean',
+        'is_blocked' => 'boolean',
+        'custom_fields' => 'array',
+        'product_categories' => 'array',
+        'extra_attributes' => 'array',
     ];
 
     public function branch(): BelongsTo
@@ -62,54 +107,36 @@ class Supplier extends BaseModel
         return $q->where('is_active', true);
     }
 
-    public function scopeApproved($q)
+    public function scopePreferred($q)
     {
-        return $q->where('is_approved', true);
+        return $q->where('is_preferred', true);
     }
 
-    public function scopeActiveAndApproved($q)
+    public function scopeBlocked($q)
     {
-        return $q->where('is_active', true)->where('is_approved', true);
+        return $q->where('is_blocked', true);
+    }
+
+    public function scopeNotBlocked($q)
+    {
+        return $q->where('is_blocked', false);
     }
 
     // Business logic methods
     public function getOverallRatingAttribute(): float
     {
-        $ratings = [$this->quality_rating, $this->delivery_rating, $this->service_rating];
-        $ratings = array_filter($ratings, fn($r) => $r > 0);
-
-        if (empty($ratings)) {
-            return 0;
-        }
-
-        return array_sum($ratings) / count($ratings);
+        return (float) ($this->rating ?? 0);
     }
 
-    public function updateRating(string $type, float $rating): void
+    public function updateRating(float $newRating): void
     {
-        if (!in_array($type, ['quality', 'delivery', 'service'])) {
-            return;
-        }
-
-        $field = "{$type}_rating";
-        $currentRating = $this->{$field};
-        $totalOrders = $this->total_orders;
-
-        if ($totalOrders > 0) {
-            // Calculate weighted average
-            $newRating = (($currentRating * $totalOrders) + $rating) / ($totalOrders + 1);
-            $this->{$field} = round($newRating, 2);
-        } else {
-            $this->{$field} = $rating;
-        }
-
+        $this->rating = round($newRating);
         $this->save();
     }
 
     public function addBalance(float $amount): void
     {
         $this->increment('balance', $amount);
-        $this->increment('total_purchases', $amount);
     }
 
     public function subtractBalance(float $amount): void
@@ -119,13 +146,34 @@ class Supplier extends BaseModel
 
     public function canReceiveOrders(): bool
     {
-        return $this->is_active && $this->is_approved;
+        return $this->is_active && !$this->is_blocked;
+    }
+
+    // Backward compatibility accessors
+    public function getIsApprovedAttribute(): bool
+    {
+        return $this->is_active && !$this->is_blocked;
+    }
+
+    public function getPaymentDueDaysAttribute()
+    {
+        return $this->payment_terms_days;
+    }
+
+    public function getAverageLeadTimeDaysAttribute()
+    {
+        return $this->lead_time_days;
+    }
+
+    public function getMinimumOrderValueAttribute()
+    {
+        return $this->minimum_order_amount;
     }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'phone', 'is_active', 'is_approved', 'quality_rating', 'delivery_rating', 'service_rating'])
+            ->logOnly(['name', 'email', 'phone', 'is_active', 'is_preferred', 'is_blocked', 'rating'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn(string $eventName) => "Supplier {$this->name} was {$eventName}");

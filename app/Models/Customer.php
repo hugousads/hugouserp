@@ -15,28 +15,72 @@ class Customer extends BaseModel
 
     protected $table = 'customers';
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000004_create_crm_tables.php
+     */
     protected $fillable = [
-        'uuid', 'code', 'name', 'email', 'phone', 'tax_number',
-        'billing_address', 'shipping_address', 'price_group_id',
-        'status', 'notes', 'loyalty_points', 'customer_tier', 'tier_updated_at',
-        'balance', 'credit_limit', 'total_purchases', 'discount_percentage',
-        'payment_terms', 'payment_due_days', 'preferred_currency',
-        'website', 'fax', 'credit_hold', 'credit_hold_reason',
-        'extra_attributes', 'branch_id', 'created_by', 'updated_by',
+        'branch_id',
+        'code',
+        'name',
+        'name_ar',
+        'type',
+        // Contact info
+        'email',
+        'phone',
+        'mobile',
+        'fax',
+        'website',
+        // Address
+        'address',
+        'city',
+        'state',
+        'postal_code',
+        'country',
+        'shipping_address',
+        // Business info
+        'tax_number',
+        'commercial_register',
+        'national_id',
+        'contact_person',
+        'contact_position',
+        // Financial
+        'price_group_id',
+        'credit_limit',
+        'balance',
+        'payment_terms_days',
+        'discount_percent',
+        'currency',
+        // Loyalty
+        'loyalty_points',
+        'loyalty_tier',
+        // Status
+        'is_active',
+        'is_blocked',
+        'block_reason',
+        // Additional
+        'notes',
+        'custom_fields',
+        'source',
+        'birthday',
+        'gender',
+        // For BaseModel compatibility
+        'extra_attributes',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
-        'extra_attributes' => 'array',
-        'loyalty_points' => 'integer',
-        'tier_updated_at' => 'datetime',
-        'tax_number' => 'encrypted',
-        'phone' => 'encrypted',
-        'balance' => 'decimal:4',
         'credit_limit' => 'decimal:4',
-        'total_purchases' => 'decimal:4',
-        'discount_percentage' => 'decimal:4',
-        'payment_due_days' => 'integer',
-        'credit_hold' => 'boolean',
+        'balance' => 'decimal:4',
+        'discount_percent' => 'decimal:2',
+        'loyalty_points' => 'integer',
+        'payment_terms_days' => 'integer',
+        'is_active' => 'boolean',
+        'is_blocked' => 'boolean',
+        'birthday' => 'date',
+        'custom_fields' => 'array',
+        'extra_attributes' => 'array',
     ];
 
     public function branch(): BelongsTo
@@ -71,12 +115,12 @@ class Customer extends BaseModel
 
     public function scopeActive($q)
     {
-        return $q->where('status', 'active');
+        return $q->where('is_active', true);
     }
 
-    public function scopeOnCreditHold($q)
+    public function scopeBlocked($q)
     {
-        return $q->where('credit_hold', true);
+        return $q->where('is_blocked', true);
     }
 
     public function scopeWithinCreditLimit($q)
@@ -87,8 +131,12 @@ class Customer extends BaseModel
     // Business logic methods
     public function hasAvailableCredit(float $amount = 0): bool
     {
-        if ($this->credit_hold) {
+        if ($this->is_blocked) {
             return false;
+        }
+
+        if (!$this->credit_limit) {
+            return true;
         }
 
         $availableCredit = $this->credit_limit - $this->balance;
@@ -97,7 +145,7 @@ class Customer extends BaseModel
 
     public function getCreditUtilizationAttribute(): float
     {
-        if ($this->credit_limit <= 0) {
+        if (!$this->credit_limit || $this->credit_limit <= 0) {
             return 0;
         }
 
@@ -106,13 +154,12 @@ class Customer extends BaseModel
 
     public function canPurchase(float $amount): bool
     {
-        return $this->hasAvailableCredit($amount) && $this->status === 'active';
+        return $this->hasAvailableCredit($amount) && $this->is_active && !$this->is_blocked;
     }
 
     public function addBalance(float $amount): void
     {
         $this->increment('balance', $amount);
-        $this->increment('total_purchases', $amount);
     }
 
     public function subtractBalance(float $amount): void
@@ -120,10 +167,44 @@ class Customer extends BaseModel
         $this->decrement('balance', $amount);
     }
 
+    // Backward compatibility accessors
+    public function getStatusAttribute(): string
+    {
+        if ($this->is_blocked) {
+            return 'blocked';
+        }
+        return $this->is_active ? 'active' : 'inactive';
+    }
+
+    public function getCreditHoldAttribute(): bool
+    {
+        return $this->is_blocked;
+    }
+
+    public function getCustomerTierAttribute(): ?string
+    {
+        return $this->loyalty_tier;
+    }
+
+    public function getDiscountPercentageAttribute()
+    {
+        return $this->discount_percent;
+    }
+
+    public function getPaymentDueDaysAttribute()
+    {
+        return $this->payment_terms_days;
+    }
+
+    public function getBillingAddressAttribute()
+    {
+        return $this->address;
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'phone', 'status', 'loyalty_points', 'customer_tier'])
+            ->logOnly(['name', 'email', 'phone', 'is_active', 'is_blocked', 'loyalty_points', 'loyalty_tier'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn(string $eventName) => "Customer {$this->name} was {$eventName}");
