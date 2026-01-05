@@ -114,9 +114,14 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
     /**
      * Get the employee ID for self-service features
      * Returns the ID of the linked HREmployee record
+     * Note: For bulk operations, eager load 'hrEmployee' to avoid N+1 queries
      */
     public function getEmployeeIdAttribute(): ?int
     {
+        // Check if already loaded to avoid extra queries
+        if (!$this->relationLoaded('hrEmployee')) {
+            $this->load('hrEmployee');
+        }
         return $this->hrEmployee?->id;
     }
 
