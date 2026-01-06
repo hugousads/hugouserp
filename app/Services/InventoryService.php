@@ -172,19 +172,17 @@ class InventoryService implements InventoryServiceInterface
                     $payload = [
                         'product_id' => $data['product_id'] ?? null,
                         'warehouse_id' => $data['warehouse_id'] ?? null,
-                        'branch_id' => $data['branch_id'] ?? $this->currentBranchId(),
                         'direction' => $data['direction'] ?? $data['type'] ?? null,
                         'qty' => $data['qty'] ?? $data['quantity'] ?? null,
-                        'reason' => $data['reason'] ?? null,
+                        'movement_type' => $data['movement_type'] ?? $data['reason'] ?? 'adjustment',
                         'reference_type' => $data['reference_type'] ?? $data['source_type'] ?? null,
                         'reference_id' => $data['reference_id'] ?? $data['source_id'] ?? null,
-                        'extra_attributes' => $data['extra_attributes'] ?? $data['meta'] ?? [],
+                        'notes' => $data['notes'] ?? $data['reason'] ?? null,
                     ];
 
                     $validator = $this->validator->make($payload, [
                         'product_id' => ['required', 'integer', 'exists:products,id'],
                         'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
-                        'branch_id' => ['required', 'integer', 'exists:branches,id'],
                         'direction' => ['required', 'in:in,out'],
                         'qty' => ['required', 'numeric', 'not_in:0'],
                     ]);
@@ -193,14 +191,12 @@ class InventoryService implements InventoryServiceInterface
 
                     $payload['created_by'] = $this->currentUser()?->getAuthIdentifier();
 
-                    // Normalize quantity to positive (direction field captures the sign)
-                    $payload['qty'] = abs((float) $payload['qty']);
-
                     // Lock product and warehouse rows to prevent races
                     Product::whereKey($payload['product_id'])->lockForUpdate()->first();
                     \App\Models\Warehouse::whereKey($payload['warehouse_id'])->lockForUpdate()->first();
 
-                    return StockMovement::create($payload);
+                    // Use repository for proper schema mapping
+                    return $this->movements->create($payload);
                 });
             },
             operation: 'recordStockAdjustment',

@@ -58,15 +58,21 @@ class Index extends Component
         $user = auth()->user();
 
         $query = StockMovement::with(['product', 'warehouse', 'createdBy'])
-            ->when($user->branch_id, fn ($q) => $q->where('stock_movements.branch_id', $user->branch_id))
+            ->when($user->branch_id, fn ($q) => $q->whereHas('warehouse', fn ($wq) => $wq->where('branch_id', $user->branch_id)))
             ->when($this->search, function ($q) {
                 $q->where(function ($query) {
-                    $query->where('code', 'like', "%{$this->search}%")
-                        ->orWhere('notes', 'like', "%{$this->search}%")
+                    $query->where('notes', 'like', "%{$this->search}%")
                         ->orWhereHas('product', fn ($q) => $q->where('name', 'like', "%{$this->search}%"));
                 });
             })
-            ->when($this->directionFilter, fn ($q) => $q->where('direction', $this->directionFilter))
+            // Filter by direction using signed quantity (positive = in, negative = out)
+            ->when($this->directionFilter, function ($q) {
+                if ($this->directionFilter === 'in') {
+                    $q->where('quantity', '>', 0);
+                } elseif ($this->directionFilter === 'out') {
+                    $q->where('quantity', '<', 0);
+                }
+            })
             ->when($this->warehouseFilter, fn ($q) => $q->where('warehouse_id', $this->warehouseFilter))
             ->when($this->productFilter, fn ($q) => $q->where('product_id', $this->productFilter))
             ->orderBy($this->sortField, $this->sortDirection);
@@ -74,13 +80,14 @@ class Index extends Component
         $movements = $query->paginate(15);
 
         // Statistics
-        $baseQuery = StockMovement::when($user->branch_id, fn ($q) => $q->where('branch_id', $user->branch_id));
+        $baseQuery = StockMovement::when($user->branch_id, fn ($q) => $q->whereHas('warehouse', fn ($wq) => $wq->where('branch_id', $user->branch_id)));
         
         $stats = [
             'total' => (clone $baseQuery)->count(),
-            'in' => (clone $baseQuery)->where('direction', 'in')->count(),
-            'out' => (clone $baseQuery)->where('direction', 'out')->count(),
-            'total_value' => (clone $baseQuery)->sum('valuated_amount'),
+            // quantity > 0 = in, quantity < 0 = out
+            'in' => (clone $baseQuery)->where('quantity', '>', 0)->count(),
+            'out' => (clone $baseQuery)->where('quantity', '<', 0)->count(),
+            'total_value' => (clone $baseQuery)->selectRaw('SUM(quantity * COALESCE(unit_cost, 0)) as value')->value('value') ?? 0,
         ];
 
         // Get warehouses and products for filters

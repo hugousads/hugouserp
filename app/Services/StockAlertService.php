@@ -161,10 +161,8 @@ class StockAlertService
             $query->where('warehouse_id', $warehouseId);
         }
 
-        $inQty = (clone $query)->where('direction', 'in')->sum('qty');
-        $outQty = (clone $query)->where('direction', 'out')->sum('qty');
-
-        return (int) ($inQty - $outQty);
+        // quantity is signed: positive = in, negative = out
+        return (int) $query->sum('quantity');
     }
 
     protected function resolveExistingAlerts(Product $product, ?int $warehouseId = null): void

@@ -11,6 +11,10 @@ class StockService
     /**
      * Get current stock for a product from stock_movements table
      * Compatible with MySQL 8.4, PostgreSQL, and SQLite
+     * 
+     * Migration schema uses signed `quantity` column:
+     * - Positive values = stock in (purchases, returns, adjustments+)
+     * - Negative values = stock out (sales, adjustments-)
      */
     public static function getCurrentStock(int $productId, ?int $warehouseId = null): float
     {
@@ -21,7 +25,9 @@ class StockService
             $query->where('warehouse_id', $warehouseId);
         }
 
-        return (float) $query->selectRaw('COALESCE(SUM(CASE WHEN direction = ? THEN qty ELSE -qty END), 0) as stock', ['in'])
+        // quantity is signed: positive = in, negative = out
+        // Simply sum all quantities to get current stock
+        return (float) $query->selectRaw('COALESCE(SUM(quantity), 0) as stock')
             ->value('stock');
     }
 
@@ -38,9 +44,10 @@ class StockService
             $query->where('warehouse_id', $warehouseId);
         }
 
+        // quantity is signed: positive = in, negative = out
         $results = $query
             ->select('product_id')
-            ->selectRaw('COALESCE(SUM(CASE WHEN direction = ? THEN qty ELSE -qty END), 0) as stock', ['in'])
+            ->selectRaw('COALESCE(SUM(quantity), 0) as stock')
             ->groupBy('product_id')
             ->get();
 
@@ -49,6 +56,7 @@ class StockService
 
     /**
      * Get stock value for a product from stock_movements table
+     * Calculates value based on quantity * unit_cost
      */
     public static function getStockValue(int $productId, ?int $warehouseId = null): float
     {
@@ -59,7 +67,10 @@ class StockService
             $query->where('warehouse_id', $warehouseId);
         }
 
-        return (float) $query->sum('valuated_amount');
+        // Calculate value: SUM(quantity * unit_cost)
+        // IFNULL handles NULL unit_cost values
+        return (float) ($query->selectRaw('SUM(quantity * IFNULL(unit_cost, 0)) as value')
+            ->value('value') ?? 0);
     }
 
     /**
@@ -76,7 +87,8 @@ class StockService
             throw new \InvalidArgumentException('Invalid column name format');
         }
 
-        return "COALESCE((SELECT SUM(CASE WHEN direction = 'in' THEN qty ELSE -qty END) FROM stock_movements WHERE stock_movements.product_id = {$productIdColumn}), 0)";
+        // quantity is signed: positive = in, negative = out
+        return "COALESCE((SELECT SUM(quantity) FROM stock_movements WHERE stock_movements.product_id = {$productIdColumn}), 0)";
     }
 
     /**
@@ -96,6 +108,7 @@ class StockService
             throw new \InvalidArgumentException('Invalid warehouse column name format');
         }
 
-        return "COALESCE((SELECT SUM(CASE WHEN direction = 'in' THEN qty ELSE -qty END) FROM stock_movements WHERE stock_movements.product_id = {$productIdColumn} AND stock_movements.warehouse_id = {$warehouseIdColumn}), 0)";
+        // quantity is signed: positive = in, negative = out
+        return "COALESCE((SELECT SUM(quantity) FROM stock_movements WHERE stock_movements.product_id = {$productIdColumn} AND stock_movements.warehouse_id = {$warehouseIdColumn}), 0)";
     }
 }

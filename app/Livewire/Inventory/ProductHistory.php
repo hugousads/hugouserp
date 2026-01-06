@@ -99,9 +99,10 @@ class ProductHistory extends Component
                     ->get();
             }
 
+            // quantity is signed: positive = in, negative = out
             $currentStock = StockMovement::where('product_id', $this->product->id)
-                ->where('branch_id', $this->branchId)
-                ->selectRaw("SUM(CASE WHEN direction = 'in' THEN qty ELSE -qty END) as stock")
+                ->whereHas('warehouse', fn($q) => $q->where('branch_id', $this->branchId))
+                ->selectRaw("SUM(quantity) as stock")
                 ->value('stock') ?? 0;
         }
 

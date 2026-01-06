@@ -6,16 +6,20 @@ namespace App\Listeners;
 
 use App\Events\SaleCompleted;
 use App\Models\StockMovement;
+use App\Repositories\Contracts\StockMovementRepositoryInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class UpdateStockOnSale implements ShouldQueue
 {
+    public function __construct(
+        private readonly StockMovementRepositoryInterface $stockMovementRepo
+    ) {}
+
     public function handle(SaleCompleted $event): void
     {
         $sale = $event->sale;
-        $branchId = $sale->branch_id;
         $warehouseId = $sale->warehouse_id;
 
         foreach ($sale->items as $item) {
@@ -28,16 +32,19 @@ class UpdateStockOnSale implements ShouldQueue
                     $warehouseId
                 );
                 
-                if ($currentStock < $item->qty) {
+                // Use backward compatibility accessor (qty maps to quantity)
+                $requiredQty = (float) $item->quantity;
+                
+                if ($currentStock < $requiredQty) {
                     Log::warning('Insufficient stock for sale', [
                         'sale_id' => $sale->getKey(),
                         'product_id' => $item->product_id,
-                        'requested' => $item->qty,
+                        'requested' => $requiredQty,
                         'available' => $currentStock,
                     ]);
                     
                     throw new InvalidArgumentException(
-                        "Insufficient stock for product {$item->product_id}. Available: {$currentStock}, Required: {$item->qty}"
+                        "Insufficient stock for product {$item->product_id}. Available: {$currentStock}, Required: {$requiredQty}"
                     );
                 }
             }
@@ -46,7 +53,7 @@ class UpdateStockOnSale implements ShouldQueue
             $existing = StockMovement::where('reference_type', 'sale')
                 ->where('reference_id', $sale->getKey())
                 ->where('product_id', $item->product_id)
-                ->where('direction', 'out')
+                ->where('quantity', '<', 0) // Negative quantity = out movement
                 ->exists();
                 
             if ($existing) {
@@ -57,13 +64,14 @@ class UpdateStockOnSale implements ShouldQueue
                 continue;
             }
 
-            StockMovement::create([
-                'branch_id' => $branchId,
+            // Use repository for proper schema mapping
+            $this->stockMovementRepo->create([
                 'warehouse_id' => $warehouseId,
                 'product_id' => $item->product_id,
+                'movement_type' => 'sale',
                 'reference_type' => 'sale',
                 'reference_id' => $sale->getKey(),
-                'qty' => abs((float) $item->qty),
+                'qty' => abs((float) $item->quantity),
                 'direction' => 'out',
                 'notes' => 'Sale completed',
                 'created_by' => $sale->created_by,

@@ -31,11 +31,11 @@ class StockAlerts extends Component
     public function render()
     {
         // Using subquery approach to avoid column ambiguity issues with joins
+        // Note: stock_movements table has no status/deleted_at columns per migration
+        // All movements are valid - quantity is signed: positive = in, negative = out
         $stockSubquery = DB::table('stock_movements')
             ->select('stock_movements.product_id')
-            ->selectRaw('SUM(CASE WHEN stock_movements.direction = ? THEN stock_movements.qty ELSE -stock_movements.qty END) as total_stock', ['in'])
-            ->where('stock_movements.status', 'posted')
-            ->whereNull('stock_movements.deleted_at')
+            ->selectRaw('SUM(stock_movements.quantity) as total_stock')
             ->groupBy('stock_movements.product_id');
 
         $query = Product::query()

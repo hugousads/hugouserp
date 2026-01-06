@@ -93,8 +93,9 @@ class Index extends Component
             if ($user && $user->branch_id) {
                 $stockMovementQuery->whereHas('warehouse', fn ($q) => $q->where('branch_id', $user->branch_id));
             }
-            $totalStock = (clone $stockMovementQuery)->where('direction', 'in')->sum('qty') - (clone $stockMovementQuery)->where('direction', 'out')->sum('qty');
-            $totalValue = (clone $stockMovementQuery)->sum('valuated_amount') ?? 0;
+            // quantity is signed: positive = in, negative = out
+            $totalStock = (clone $stockMovementQuery)->sum('quantity');
+            $totalValue = (clone $stockMovementQuery)->selectRaw('SUM(quantity * COALESCE(unit_cost, 0)) as value')->value('value') ?? 0;
 
             return [
                 'total_warehouses' => $warehouseQuery->count(),

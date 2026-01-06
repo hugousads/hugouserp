@@ -12,17 +12,23 @@ use App\Models\Product;
 use App\Models\ProductStoreMapping;
 use App\Models\StockMovement;
 use App\Models\Warehouse;
+use App\Repositories\Contracts\StockMovementRepositoryInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class InventoryController extends BaseApiController
 {
+    public function __construct(
+        private readonly StockMovementRepositoryInterface $stockMovementRepo
+    ) {}
+
     public function getStock(GetStockRequest $request): JsonResponse
     {
         $store = $this->getStore($request);
         $validated = $request->validated();
 
+        // quantity is signed: positive = in, negative = out
         $query = Product::query()
             ->select([
                 'products.id',
@@ -30,9 +36,8 @@ class InventoryController extends BaseApiController
                 'products.sku',
                 'products.min_stock',
                 'products.branch_id',
-                DB::raw('COALESCE(SUM(CASE WHEN stock_movements.direction = ? THEN stock_movements.qty ELSE 0 END) - SUM(CASE WHEN stock_movements.direction = ? THEN stock_movements.qty ELSE 0 END), 0) as current_quantity'),
+                DB::raw('COALESCE(SUM(stock_movements.quantity), 0) as current_quantity'),
             ])
-            ->addBinding(['in', 'out'], 'select')
             ->leftJoin('stock_movements', 'products.id', '=', 'stock_movements.product_id')
             ->when($store?->branch_id, fn ($q) => $q->where('products.branch_id', $store->branch_id))
             ->when($request->filled('sku'), fn ($q) => $q->where('products.sku', $validated['sku']))
@@ -108,13 +113,14 @@ class InventoryController extends BaseApiController
 
         $newQuantityPersisted = DB::transaction(function () use ($product, $actualDirection, $actualQty, $validated, $warehouseId) {
             if ($actualQty > 0) {
-                StockMovement::create([
+                // Use repository for proper schema mapping
+                $this->stockMovementRepo->create([
                     'product_id' => $product->id,
                     'warehouse_id' => $warehouseId,
-                    'branch_id' => $product->branch_id,
                     'direction' => $actualDirection,
                     'qty' => $actualQty,
-                    'reason' => $validated['reason'] ?? 'API stock update',
+                    'movement_type' => 'api_sync',
+                    'notes' => $validated['reason'] ?? 'API stock update',
                     'reference_type' => 'api_sync',
                 ]);
             }
@@ -207,13 +213,14 @@ class InventoryController extends BaseApiController
 
                 $persistedQuantity = DB::transaction(function () use ($product, $actualDirection, $actualQty, $warehouseId) {
                     if ($actualQty > 0) {
-                        StockMovement::create([
+                        // Use repository for proper schema mapping
+                        $this->stockMovementRepo->create([
                             'product_id' => $product->id,
                             'warehouse_id' => $warehouseId,
-                            'branch_id' => $product->branch_id,
                             'direction' => $actualDirection,
                             'qty' => $actualQty,
-                            'reason' => 'API bulk stock update',
+                            'movement_type' => 'api_sync',
+                            'notes' => 'API bulk stock update',
                             'reference_type' => 'api_sync',
                         ]);
                     }
@@ -252,10 +259,17 @@ class InventoryController extends BaseApiController
 
         $query = StockMovement::query()
             ->with(['product:id,name,sku'])
-            ->when($store?->branch_id, fn ($q) => $q->where('branch_id', $store->branch_id))
+            ->when($store?->branch_id, fn ($q) => $q->whereHas('warehouse', fn ($wq) => $wq->where('branch_id', $store->branch_id)))
             ->when($request->filled('product_id'), fn ($q) => $q->where('product_id', $validated['product_id']))
             ->when($request->filled('warehouse_id'), fn ($q) => $q->where('warehouse_id', $validated['warehouse_id']))
-            ->when($request->filled('direction'), fn ($q) => $q->where('direction', $validated['direction']))
+            // Filter by direction using signed quantity (positive = in, negative = out)
+            ->when($request->filled('direction'), function ($q) use ($validated) {
+                if ($validated['direction'] === 'in') {
+                    $q->where('quantity', '>', 0);
+                } elseif ($validated['direction'] === 'out') {
+                    $q->where('quantity', '<', 0);
+                }
+            })
             ->when($request->filled('start_date'), fn ($q) => $q->whereDate('created_at', '>=', $validated['start_date']))
             ->when($request->filled('end_date'), fn ($q) => $q->whereDate('created_at', '<=', $validated['end_date']))
             ->orderBy('created_at', 'desc');
@@ -282,10 +296,11 @@ class InventoryController extends BaseApiController
         }
 
         if ($branchId !== null) {
-            $query->where('branch_id', $branchId);
+            $query->whereHas('warehouse', fn($q) => $q->where('branch_id', $branchId));
         }
 
-        return (float) ($query->selectRaw('SUM(CASE WHEN direction = "in" THEN qty ELSE 0 END) - SUM(CASE WHEN direction = "out" THEN qty ELSE 0 END) as balance')
+        // quantity is signed: positive = in, negative = out
+        return (float) ($query->selectRaw('SUM(quantity) as balance')
             ->value('balance') ?? 0);
     }
 
