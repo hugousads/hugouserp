@@ -11,26 +11,22 @@ class JournalEntryLine extends Model
 {
     protected $table = 'journal_entry_lines';
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000007_create_accounting_tables.php
+     */
     protected $fillable = [
         'journal_entry_id',
         'account_id',
         'debit',
         'credit',
         'description',
-        'dimension1',
-        'dimension2',
-        'currency_id',
-        'exchange_rate',
-        'debit_base',
-        'credit_base',
+        'reference',
     ];
 
     protected $casts = [
-        'debit' => 'decimal:2',
-        'credit' => 'decimal:2',
-        'exchange_rate' => 'decimal:6',
-        'debit_base' => 'decimal:2',
-        'credit_base' => 'decimal:2',
+        'debit' => 'decimal:4',
+        'credit' => 'decimal:4',
     ];
 
     public function journalEntry(): BelongsTo
@@ -43,8 +39,14 @@ class JournalEntryLine extends Model
         return $this->belongsTo(Account::class);
     }
 
-    public function currency(): BelongsTo
+    // Backward compatibility accessors
+    public function getDebitBaseAttribute()
     {
-        return $this->belongsTo(Currency::class);
+        return $this->debit;
+    }
+
+    public function getCreditBaseAttribute()
+    {
+        return $this->credit;
     }
 }

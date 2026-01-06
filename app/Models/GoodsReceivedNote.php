@@ -4,26 +4,39 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class GoodsReceivedNote extends BaseModel
 {
+    use SoftDeletes;
+
     protected ?string $moduleKey = 'purchases';
 
     protected $table = 'goods_received_notes';
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000005_create_sales_purchases_tables.php
+     */
     protected $fillable = [
-        'code', 'branch_id', 'warehouse_id', 'purchase_id', 'supplier_id',
-        'status', 'received_date', 'delivery_note_no', 'vehicle_no',
-        'received_by', 'inspected_by', 'inspected_at',
-        'inspection_status', 'inspection_notes', 'notes',
-        'extra_attributes', 'created_by', 'updated_by',
+        'branch_id',
+        'warehouse_id',
+        'purchase_id',
+        'supplier_id',
+        'reference_number',
+        'supplier_delivery_note',
+        'status',
+        'received_date',
+        'notes',
+        'received_by_name',
+        'received_by',
+        'inspected_by',
+        'inspected_at',
     ];
 
     protected $casts = [
         'received_date' => 'date',
         'inspected_at' => 'datetime',
-        'extra_attributes' => 'array',
     ];
 
     protected static function booted(): void
@@ -31,8 +44,8 @@ class GoodsReceivedNote extends BaseModel
         parent::booted();
 
         static::creating(function ($model) {
-            if (!$model->code) {
-                $model->code = 'GRN-' . date('Ymd') . '-' . str_pad((string) (static::whereDate('created_at', today())->count() + 1), 5, '0', STR_PAD_LEFT);
+            if (!$model->reference_number) {
+                $model->reference_number = 'GRN-' . date('Ymd') . '-' . str_pad((string) (static::whereDate('created_at', today())->count() + 1), 5, '0', STR_PAD_LEFT);
             }
         });
     }
@@ -73,35 +86,35 @@ class GoodsReceivedNote extends BaseModel
         return $this->hasMany(GRNItem::class, 'grn_id');
     }
 
-    public function createdBy(): BelongsTo
+    // Backward compatibility accessor
+    public function getCodeAttribute()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->reference_number;
     }
 
-    public function updatedBy(): BelongsTo
+    public function getDeliveryNoteNoAttribute()
     {
-        return $this->belongsTo(User::class, 'updated_by');
+        return $this->supplier_delivery_note;
     }
 
     // Scopes
     public function scopePendingInspection($query)
     {
-        return $query->where('status', 'pending_inspection');
+        return $query->where('status', 'inspecting');
     }
 
     public function scopeApproved($query)
     {
-        return $query->where('status', 'approved');
+        return $query->where('status', 'completed');
     }
 
     // Business Logic
     public function approve(int $approvedBy): void
     {
         $this->update([
-            'status' => 'approved',
+            'status' => 'completed',
             'inspected_by' => $approvedBy,
             'inspected_at' => now(),
-            'inspection_status' => 'passed',
         ]);
     }
 
@@ -111,35 +124,34 @@ class GoodsReceivedNote extends BaseModel
             'status' => 'rejected',
             'inspected_by' => $rejectedBy,
             'inspected_at' => now(),
-            'inspection_status' => 'failed',
-            'inspection_notes' => $reason,
+            'notes' => $reason,
         ]);
     }
 
     public function canBeApproved(): bool
     {
-        return in_array($this->status, ['draft', 'pending_inspection']);
+        return in_array($this->status, ['pending', 'inspecting']);
     }
 
     public function getTotalQuantityReceived(): float
     {
-        return $this->items->sum('qty_received');
+        return (float) $this->items->sum('received_quantity');
     }
 
     public function getTotalQuantityAccepted(): float
     {
-        return $this->items->sum('qty_accepted');
+        return (float) $this->items->sum('accepted_quantity');
     }
 
     public function getTotalQuantityRejected(): float
     {
-        return $this->items->sum('qty_rejected');
+        return (float) $this->items->sum('rejected_quantity');
     }
 
     public function hasDiscrepancies(): bool
     {
         return $this->items->contains(function ($item) {
-            return $item->qty_received != $item->qty_ordered || $item->qty_rejected > 0;
+            return $item->received_quantity != $item->expected_quantity || $item->rejected_quantity > 0;
         });
     }
 }

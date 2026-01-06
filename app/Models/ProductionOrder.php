@@ -13,41 +13,51 @@ class ProductionOrder extends BaseModel
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000009_create_manufacturing_tables.php
+     */
     protected $fillable = [
         'branch_id',
-        'order_number',
         'bom_id',
         'product_id',
         'warehouse_id',
-        'quantity_planned',
-        'quantity_produced',
-        'quantity_scrapped',
+        'reference_number',
         'status',
         'priority',
+        'planned_quantity',
+        'produced_quantity',
+        'rejected_quantity',
         'planned_start_date',
         'planned_end_date',
         'actual_start_date',
         'actual_end_date',
-        'created_by',
-        'approved_by',
-        'notes',
         'estimated_cost',
         'actual_cost',
+        'material_cost',
+        'labor_cost',
+        'overhead_cost',
         'sale_id',
-        'metadata',
+        'notes',
+        'custom_fields',
+        'created_by',
+        'approved_by',
     ];
 
     protected $casts = [
-        'quantity_planned' => 'decimal:2',
-        'quantity_produced' => 'decimal:2',
-        'quantity_scrapped' => 'decimal:2',
-        'estimated_cost' => 'decimal:2',
-        'actual_cost' => 'decimal:2',
+        'planned_quantity' => 'decimal:4',
+        'produced_quantity' => 'decimal:4',
+        'rejected_quantity' => 'decimal:4',
+        'estimated_cost' => 'decimal:4',
+        'actual_cost' => 'decimal:4',
+        'material_cost' => 'decimal:4',
+        'labor_cost' => 'decimal:4',
+        'overhead_cost' => 'decimal:4',
         'planned_start_date' => 'date',
         'planned_end_date' => 'date',
         'actual_start_date' => 'datetime',
         'actual_end_date' => 'datetime',
-        'metadata' => 'array',
+        'custom_fields' => 'array',
     ];
 
     /**
@@ -130,16 +140,42 @@ class ProductionOrder extends BaseModel
         return $this->hasMany(ManufacturingTransaction::class);
     }
 
+    // Backward compatibility accessors
+    public function getOrderNumberAttribute()
+    {
+        return $this->reference_number;
+    }
+
+    public function getQuantityPlannedAttribute()
+    {
+        return $this->planned_quantity;
+    }
+
+    public function getQuantityProducedAttribute()
+    {
+        return $this->produced_quantity;
+    }
+
+    public function getQuantityScrappedAttribute()
+    {
+        return $this->rejected_quantity;
+    }
+
+    public function getMetadataAttribute()
+    {
+        return $this->custom_fields;
+    }
+
     /**
      * Calculate completion percentage.
      */
     public function getCompletionPercentageAttribute(): float
     {
-        if ($this->quantity_planned == 0) {
+        if ($this->planned_quantity == 0) {
             return 0.0;
         }
 
-        return ($this->quantity_produced / $this->quantity_planned) * 100;
+        return ((float) $this->produced_quantity / (float) $this->planned_quantity) * 100;
     }
 
     /**
@@ -147,7 +183,7 @@ class ProductionOrder extends BaseModel
      */
     public function getRemainingQuantityAttribute(): float
     {
-        return $this->quantity_planned - $this->quantity_produced - $this->quantity_scrapped;
+        return (float) $this->planned_quantity - (float) $this->produced_quantity - (float) $this->rejected_quantity;
     }
 
     /**
@@ -163,7 +199,7 @@ class ProductionOrder extends BaseModel
      */
     public function scopeInProgress($query)
     {
-        return $query->whereIn('status', ['released', 'in_progress']);
+        return $query->whereIn('status', ['planned', 'in_progress']);
     }
 
     /**
@@ -191,12 +227,12 @@ class ProductionOrder extends BaseModel
         $date = now()->format('Ym');
 
         $lastOrder = static::where('branch_id', $branchId)
-            ->where('order_number', 'like', "{$prefix}-{$date}-%")
+            ->where('reference_number', 'like', "{$prefix}-{$date}-%")
             ->orderByDesc('id')
             ->first();
 
         if ($lastOrder) {
-            $lastNumber = (int) substr($lastOrder->order_number, -4);
+            $lastNumber = (int) substr($lastOrder->reference_number, -4);
             $newNumber = $lastNumber + 1;
         } else {
             $newNumber = 1;

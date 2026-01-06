@@ -6,30 +6,35 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BomItem extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000009_create_manufacturing_tables.php
+     */
     protected $fillable = [
         'bom_id',
         'product_id',
         'quantity',
         'unit_id',
         'scrap_percentage',
-        'sort_order',
+        'unit_cost',
+        'type',
+        'is_optional',
         'notes',
-        'is_alternative',
-        'alternative_group_id',
-        'metadata',
+        'sort_order',
     ];
 
     protected $casts = [
         'quantity' => 'decimal:4',
         'scrap_percentage' => 'decimal:2',
+        'unit_cost' => 'decimal:4',
         'sort_order' => 'integer',
-        'is_alternative' => 'boolean',
-        'metadata' => 'array',
+        'is_optional' => 'boolean',
     ];
 
     /**
@@ -62,8 +67,19 @@ class BomItem extends BaseModel
     public function getEffectiveQuantityAttribute(): float
     {
         $baseQuantity = (float) $this->quantity;
-        $scrapFactor = 1 + ((float) $this->scrap_percentage / 100);
+        $scrapFactor = 1 + ((float) ($this->scrap_percentage ?? 0) / 100);
 
         return $baseQuantity * $scrapFactor;
+    }
+
+    // Backward compatibility accessors
+    public function getIsAlternativeAttribute(): bool
+    {
+        return $this->type === 'alternative';
+    }
+
+    public function getMetadataAttribute()
+    {
+        return null;
     }
 }

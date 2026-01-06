@@ -10,21 +10,31 @@ class GRNItem extends BaseModel
 
     protected $table = 'grn_items';
 
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000005_create_sales_purchases_tables.php
+     */
     protected $fillable = [
-        'grn_id', 'product_id', 'purchase_item_id',
-        'qty_ordered', 'qty_received', 'qty_rejected', 'qty_accepted',
-        'uom', 'unit_cost', 'quality_status', 'rejection_reason',
-        'batch_id', 'serial_numbers', 'notes',
-        'extra_attributes', 'created_by', 'updated_by',
+        'grn_id',
+        'product_id',
+        'purchase_item_id',
+        'expected_quantity',
+        'received_quantity',
+        'accepted_quantity',
+        'rejected_quantity',
+        'rejection_reason',
+        'batch_number',
+        'expiry_date',
+        'quality_status',
+        'notes',
     ];
 
     protected $casts = [
-        'qty_ordered' => 'decimal:4',
-        'qty_received' => 'decimal:4',
-        'qty_rejected' => 'decimal:4',
-        'qty_accepted' => 'decimal:4',
-        'unit_cost' => 'decimal:4',
-        'extra_attributes' => 'array',
+        'expected_quantity' => 'decimal:4',
+        'received_quantity' => 'decimal:4',
+        'accepted_quantity' => 'decimal:4',
+        'rejected_quantity' => 'decimal:4',
+        'expiry_date' => 'date',
     ];
 
     // Relationships
@@ -43,45 +53,51 @@ class GRNItem extends BaseModel
         return $this->belongsTo(PurchaseItem::class, 'purchase_item_id');
     }
 
-    public function batch(): BelongsTo
+    // Backward compatibility accessors
+    public function getQtyOrderedAttribute()
     {
-        return $this->belongsTo(InventoryBatch::class, 'batch_id');
+        return $this->expected_quantity;
     }
 
-    public function createdBy(): BelongsTo
+    public function getQtyReceivedAttribute()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->received_quantity;
     }
 
-    public function updatedBy(): BelongsTo
+    public function getQtyAcceptedAttribute()
     {
-        return $this->belongsTo(User::class, 'updated_by');
+        return $this->accepted_quantity;
+    }
+
+    public function getQtyRejectedAttribute()
+    {
+        return $this->rejected_quantity;
     }
 
     // Business Logic
     public function hasDiscrepancy(): bool
     {
-        return $this->qty_received != $this->qty_ordered || $this->qty_rejected > 0;
+        return $this->received_quantity != $this->expected_quantity || $this->rejected_quantity > 0;
     }
 
     public function getDiscrepancyPercentage(): float
     {
-        if ($this->qty_ordered == 0) {
+        if ($this->expected_quantity == 0) {
             return 0;
         }
 
-        $acceptedQty = max(0, $this->qty_received - $this->qty_rejected);
+        $acceptedQty = $this->accepted_quantity ?? max(0, $this->received_quantity - $this->rejected_quantity);
 
-        return (abs($this->qty_ordered - $acceptedQty) / $this->qty_ordered) * 100;
+        return (abs($this->expected_quantity - $acceptedQty) / $this->expected_quantity) * 100;
     }
 
     public function isFullyReceived(): bool
     {
-        return $this->qty_received >= $this->qty_ordered && $this->qty_rejected == 0;
+        return $this->received_quantity >= $this->expected_quantity && $this->rejected_quantity == 0;
     }
 
     public function isPartiallyReceived(): bool
     {
-        return $this->qty_received > 0 && $this->qty_received < $this->qty_ordered;
+        return $this->received_quantity > 0 && $this->received_quantity < $this->expected_quantity;
     }
 }
