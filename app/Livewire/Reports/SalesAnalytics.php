@@ -240,7 +240,7 @@ class SalesAnalytics extends Component
                 'products.name',
                 'products.sku',
             ])
-            ->selectRaw('SUM(sale_items.qty) as total_qty')
+            ->selectRaw('SUM(sale_items.quantity) as total_qty')
             ->selectRaw('SUM(sale_items.line_total) as total_revenue')
             ->whereBetween('sales.created_at', [$this->dateFrom.' 00:00:00', $this->dateTo.' 23:59:59']);
 
@@ -356,7 +356,7 @@ class SalesAnalytics extends Component
             ->select([
                 'product_categories.name as category_name',
             ])
-            ->selectRaw('SUM(sale_items.qty) as total_qty')
+            ->selectRaw('SUM(sale_items.quantity) as total_qty')
             ->selectRaw('SUM(sale_items.line_total) as total_revenue')
             ->whereBetween('sales.created_at', [$this->dateFrom.' 00:00:00', $this->dateTo.' 23:59:59']);
 

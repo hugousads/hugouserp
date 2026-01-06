@@ -75,8 +75,8 @@ class ScheduledReportService
                 ->select([
                     DB::raw("{$dateExpr} as date"),
                     DB::raw('COUNT(*) as orders_count'),
-                    DB::raw('SUM(grand_total) as total_sales'),
-                    DB::raw('AVG(grand_total) as avg_order'),
+                    DB::raw('SUM(total_amount) as total_sales'),
+                    DB::raw('AVG(total_amount) as avg_order'),
                 ]);
 
             if (! empty($filters['date_from'])) {
@@ -139,7 +139,7 @@ class ScheduledReportService
                     'customers.email',
                     'customers.phone',
                     DB::raw('COUNT(sales.id) as total_orders'),
-                    DB::raw('COALESCE(SUM(sales.grand_total), 0) as total_spent'),
+                    DB::raw('COALESCE(SUM(sales.total_amount), 0) as total_spent'),
                 ])
                 ->groupBy('customers.id', 'customers.name', 'customers.email', 'customers.phone');
 

@@ -295,7 +295,7 @@ class KPIDashboardService
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->select(
                 'products.name',
-                DB::raw('SUM(sale_items.qty) as total_qty'),
+                DB::raw('SUM(sale_items.quantity) as total_qty'),
                 DB::raw('SUM(sale_items.line_total) as total_revenue')
             )
             ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))

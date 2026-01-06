@@ -227,7 +227,7 @@ class SalesForecastingService
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->select([
                 DB::raw("DATE_FORMAT(sales.created_at, '%Y-%m-%d') as period"),
-                DB::raw('COALESCE(SUM(sale_items.qty), 0) as quantity'),
+                DB::raw('COALESCE(SUM(sale_items.quantity), 0) as quantity'),
                 DB::raw('COALESCE(SUM(sale_items.line_total), 0) as revenue'),
             ])
             ->where('sale_items.product_id', $productId)

@@ -142,7 +142,7 @@ class DashboardDataService
             ->select(
                 'products.id',
                 'products.name',
-                DB::raw('COALESCE(SUM(sale_items.qty), 0) as total_quantity'),
+                DB::raw('COALESCE(SUM(sale_items.quantity), 0) as total_quantity'),
                 DB::raw('COALESCE(SUM(sale_items.line_total), 0) as total_revenue')
             )
             ->where('sales.status', '!=', 'cancelled')
@@ -172,7 +172,7 @@ class DashboardDataService
                 'customers.id',
                 'customers.name',
                 DB::raw('COUNT(sales.id) as total_orders'),
-                DB::raw('COALESCE(SUM(sales.grand_total), 0) as total_spent')
+                DB::raw('COALESCE(SUM(sales.total_amount), 0) as total_spent')
             )
             ->where('sales.status', '!=', 'cancelled')
             ->whereBetween('sales.created_at', [now()->subDays(30), now()])
