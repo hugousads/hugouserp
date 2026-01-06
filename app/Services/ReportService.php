@@ -37,14 +37,14 @@ class ReportService implements ReportServiceInterface
                     ->where('branch_id', $branchId)
                     ->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to)
-                    ->select(DB::raw('COALESCE(SUM(grand_total), 0) as total'), DB::raw('COALESCE(SUM(paid_total), 0) as paid'))
+                    ->select(DB::raw('COALESCE(SUM(total_amount), 0) as total'), DB::raw('COALESCE(SUM(paid_amount), 0) as paid'))
                     ->first();
 
                 $purchases = DB::table('purchases')
                     ->where('branch_id', $branchId)
                     ->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to)
-                    ->select(DB::raw('COALESCE(SUM(grand_total), 0) as total'), DB::raw('COALESCE(SUM(paid_total), 0) as paid'))
+                    ->select(DB::raw('COALESCE(SUM(total_amount), 0) as total'), DB::raw('COALESCE(SUM(paid_amount), 0) as paid'))
                     ->first();
 
                 return [
@@ -396,14 +396,14 @@ class ReportService implements ReportServiceInterface
                 $dateTo = $filters['date_to'] ?? Carbon::now()->endOfMonth();
 
                 $salesByBranch = DB::table('sales')
-                    ->select('branch_id', DB::raw('COUNT(*) as count'), DB::raw('SUM(grand_total) as total'))
+                    ->select('branch_id', DB::raw('COUNT(*) as count'), DB::raw('SUM(total_amount) as total'))
                     ->whereIn('branch_id', $branches->pluck('id'))
                     ->whereBetween('created_at', [$dateFrom, $dateTo])
                     ->groupBy('branch_id')
                     ->get()->keyBy('branch_id');
 
                 $purchasesByBranch = DB::table('purchases')
-                    ->select('branch_id', DB::raw('COUNT(*) as count'), DB::raw('SUM(grand_total) as total'))
+                    ->select('branch_id', DB::raw('COUNT(*) as count'), DB::raw('SUM(total_amount) as total'))
                     ->whereIn('branch_id', $branches->pluck('id'))
                     ->whereBetween('created_at', [$dateFrom, $dateTo])
                     ->groupBy('branch_id')

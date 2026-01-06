@@ -201,7 +201,7 @@ class SalesAnalytics extends Component
 
         $query = Sale::query()
             ->selectRaw("{$dateFormat} as period")
-            ->selectRaw('SUM(grand_total) as revenue')
+            ->selectRaw('SUM(total_amount) as revenue')
             ->selectRaw('COUNT(*) as orders')
             ->whereBetween('created_at', [$this->dateFrom.' 00:00:00', $this->dateTo.' 23:59:59']);
 

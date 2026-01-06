@@ -65,8 +65,8 @@ class SalesForecastingService
             ->select([
                 DB::raw("DATE_FORMAT(created_at, '{$dateFormat}') as period"),
                 DB::raw('COUNT(*) as order_count'),
-                DB::raw('COALESCE(SUM(grand_total), 0) as revenue'),
-                DB::raw('COALESCE(AVG(grand_total), 0) as avg_order_value'),
+                DB::raw('COALESCE(SUM(total_amount), 0) as revenue'),
+                DB::raw('COALESCE(AVG(total_amount), 0) as avg_order_value'),
             ])
             ->where('status', '!=', 'cancelled')
             ->where('created_at', '>=', $startDate)

@@ -123,7 +123,7 @@ class KPIDashboardService
         $inventoryValue = Product::query()
             ->where('is_active', true)
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->sum(DB::raw('qty * COALESCE(cost, 0)'));
+            ->sum(DB::raw('stock_quantity * COALESCE(cost, 0)'));
 
         return [
             'total_products' => [
@@ -310,7 +310,7 @@ class KPIDashboardService
         $dailySales = Sale::query()
             ->select(
                 DB::raw('DATE(created_at) as date'),
-                DB::raw('SUM(grand_total) as revenue'),
+                DB::raw('SUM(total_amount) as revenue'),
                 DB::raw('COUNT(*) as orders')
             )
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
