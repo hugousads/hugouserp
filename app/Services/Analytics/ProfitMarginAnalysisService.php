@@ -33,12 +33,12 @@ class ProfitMarginAnalysisService
                 'products.id',
                 'products.name',
                 'products.sku',
-                DB::raw('COALESCE(SUM(sale_items.qty), 0) as units_sold'),
+                DB::raw('COALESCE(SUM(sale_items.quantity), 0) as units_sold'),
                 DB::raw('COALESCE(SUM(sale_items.line_total), 0) as revenue'),
-                DB::raw('COALESCE(SUM(sale_items.qty * COALESCE(products.cost, 0)), 0) as cost'),
-                DB::raw('COALESCE(SUM(sale_items.line_total), 0) - COALESCE(SUM(sale_items.qty * COALESCE(products.cost, 0)), 0) as profit'),
+                DB::raw('COALESCE(SUM(sale_items.quantity * COALESCE(products.cost, 0)), 0) as cost'),
+                DB::raw('COALESCE(SUM(sale_items.line_total), 0) - COALESCE(SUM(sale_items.quantity * COALESCE(products.cost, 0)), 0) as profit'),
                 DB::raw('CASE WHEN SUM(sale_items.line_total) > 0 THEN 
-                    ((SUM(sale_items.line_total) - SUM(sale_items.qty * COALESCE(products.cost, 0))) / SUM(sale_items.line_total)) * 100 
+                    ((SUM(sale_items.line_total) - SUM(sale_items.quantity * COALESCE(products.cost, 0))) / SUM(sale_items.line_total)) * 100 
                     ELSE 0 END as margin_percent'),
             ])
             ->where('sales.status', '!=', 'cancelled')
@@ -92,12 +92,12 @@ class ProfitMarginAnalysisService
                 'product_categories.id',
                 DB::raw('COALESCE(product_categories.name, \'Uncategorized\') as name'),
                 DB::raw('COUNT(DISTINCT products.id) as product_count'),
-                DB::raw('COALESCE(SUM(sale_items.qty), 0) as units_sold'),
+                DB::raw('COALESCE(SUM(sale_items.quantity), 0) as units_sold'),
                 DB::raw('COALESCE(SUM(sale_items.line_total), 0) as revenue'),
-                DB::raw('COALESCE(SUM(sale_items.qty * COALESCE(products.cost, 0)), 0) as cost'),
-                DB::raw('COALESCE(SUM(sale_items.line_total), 0) - COALESCE(SUM(sale_items.qty * COALESCE(products.cost, 0)), 0) as profit'),
+                DB::raw('COALESCE(SUM(sale_items.quantity * COALESCE(products.cost, 0)), 0) as cost'),
+                DB::raw('COALESCE(SUM(sale_items.line_total), 0) - COALESCE(SUM(sale_items.quantity * COALESCE(products.cost, 0)), 0) as profit'),
                 DB::raw('CASE WHEN SUM(sale_items.line_total) > 0 THEN 
-                    ((SUM(sale_items.line_total) - SUM(sale_items.qty * COALESCE(products.cost, 0))) / SUM(sale_items.line_total)) * 100 
+                    ((SUM(sale_items.line_total) - SUM(sale_items.quantity * COALESCE(products.cost, 0))) / SUM(sale_items.line_total)) * 100 
                     ELSE 0 END as margin_percent'),
             ])
             ->where('sales.status', '!=', 'cancelled')
@@ -144,8 +144,8 @@ class ProfitMarginAnalysisService
             ->select([
                 DB::raw("DATE_FORMAT(sales.created_at, '{$dateFormat}') as period"),
                 DB::raw('COALESCE(SUM(sale_items.line_total), 0) as revenue'),
-                DB::raw('COALESCE(SUM(sale_items.qty * COALESCE(products.cost, 0)), 0) as cost'),
-                DB::raw('COALESCE(SUM(sale_items.line_total), 0) - COALESCE(SUM(sale_items.qty * COALESCE(products.cost, 0)), 0) as profit'),
+                DB::raw('COALESCE(SUM(sale_items.quantity * COALESCE(products.cost, 0)), 0) as cost'),
+                DB::raw('COALESCE(SUM(sale_items.line_total), 0) - COALESCE(SUM(sale_items.quantity * COALESCE(products.cost, 0)), 0) as profit'),
             ])
             ->where('sales.status', '!=', 'cancelled')
             ->where('sales.created_at', '>=', $startDate)
@@ -178,9 +178,9 @@ class ProfitMarginAnalysisService
                 'products.sku',
                 'products.cost',
                 'products.price',
-                DB::raw('COALESCE(SUM(sale_items.qty), 0) as units_sold'),
+                DB::raw('COALESCE(SUM(sale_items.quantity), 0) as units_sold'),
                 DB::raw('CASE WHEN SUM(sale_items.line_total) > 0 THEN 
-                    ((SUM(sale_items.line_total) - SUM(sale_items.qty * COALESCE(products.cost, 0))) / SUM(sale_items.line_total)) * 100 
+                    ((SUM(sale_items.line_total) - SUM(sale_items.quantity * COALESCE(products.cost, 0))) / SUM(sale_items.line_total)) * 100 
                     ELSE 0 END as margin_percent'),
             ])
             ->where('sales.status', '!=', 'cancelled')

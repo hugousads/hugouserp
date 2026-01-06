@@ -36,7 +36,7 @@ class InventoryTurnoverService
             $cogsQuery->where('sales.branch_id', $branchId);
         }
 
-        $cogs = $cogsQuery->sum(DB::raw('sale_items.qty * COALESCE(products.cost, 0)'));
+        $cogs = $cogsQuery->sum(DB::raw('sale_items.quantity * COALESCE(products.cost, 0)'));
 
         // Get average inventory value
         $inventoryQuery = DB::table('products')
@@ -74,8 +74,8 @@ class InventoryTurnoverService
             ->leftJoin(DB::raw('(
                 SELECT 
                     sale_items.product_id,
-                    SUM(sale_items.qty) as sold_qty,
-                    SUM(sale_items.qty * COALESCE(products.cost, 0)) as cogs
+                    SUM(sale_items.quantity) as sold_qty,
+                    SUM(sale_items.quantity * COALESCE(products.cost, 0)) as cogs
                 FROM sale_items
                 JOIN sales ON sale_items.sale_id = sales.id
                 JOIN products ON sale_items.product_id = products.id
@@ -171,7 +171,7 @@ class InventoryTurnoverService
             ->leftJoin(DB::raw('(
                 SELECT 
                     sale_items.product_id,
-                    SUM(sale_items.qty) as monthly_sales
+                    SUM(sale_items.quantity) as monthly_sales
                 FROM sale_items
                 JOIN sales ON sale_items.sale_id = sales.id
                 WHERE sales.status != \'cancelled\'
@@ -221,7 +221,7 @@ class InventoryTurnoverService
             ->leftJoin(DB::raw('(
                 SELECT 
                     sale_items.product_id,
-                    SUM(sale_items.qty * COALESCE(p.cost, 0)) as cogs
+                    SUM(sale_items.quantity * COALESCE(p.cost, 0)) as cogs
                 FROM sale_items
                 JOIN sales ON sale_items.sale_id = sales.id
                 JOIN products p ON sale_items.product_id = p.id

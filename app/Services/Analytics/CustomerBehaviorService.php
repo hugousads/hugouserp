@@ -38,8 +38,8 @@ class CustomerBehaviorService
                         'customer_id',
                         DB::raw('MAX(created_at) as last_purchase'),
                         DB::raw('COUNT(*) as purchase_count'),
-                        DB::raw('SUM(grand_total) as total_spent'),
-                        DB::raw('AVG(grand_total) as avg_order_value')
+                        DB::raw('SUM(total_amount) as total_spent'),
+                        DB::raw('AVG(total_amount) as avg_order_value')
                     )
                     ->whereNotNull('customer_id')
                     ->where('status', '!=', 'cancelled')

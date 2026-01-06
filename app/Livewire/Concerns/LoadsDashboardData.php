@@ -106,11 +106,11 @@ trait LoadsDashboardData
 
             return [
                 'today_sales' => number_format(
-                    (clone $salesQuery)->whereDate('created_at', $today)->sum('grand_total') ?? 0, 
+                    (clone $salesQuery)->whereDate('created_at', $today)->sum('total_amount') ?? 0, 
                     2
                 ),
                 'month_sales' => number_format(
-                    (clone $salesQuery)->where('created_at', '>=', $startOfMonth)->sum('grand_total') ?? 0, 
+                    (clone $salesQuery)->where('created_at', '>=', $startOfMonth)->sum('total_amount') ?? 0, 
                     2
                 ),
                 'open_invoices' => (clone $salesQuery)->where('status', 'pending')->count(),
@@ -180,7 +180,7 @@ trait LoadsDashboardData
             $labels[] = $date->format('D');
             $data[] = (float) $this->scopeQueryToBranch(Sale::query())
                 ->whereDate('created_at', $date)
-                ->sum('grand_total');
+                ->sum('total_amount');
         }
 
         return ['labels' => $labels, 'data' => $data];
@@ -284,7 +284,7 @@ trait LoadsDashboardData
                     'id' => $s->id,
                     'reference' => $s->reference_no ?? "#{$s->id}",
                     'customer' => $s->customer?->name ?? __('Walk-in'),
-                    'total' => number_format($s->grand_total ?? 0, 2),
+                    'total' => number_format($s->total_amount ?? 0, 2),
                     'status' => $s->status,
                     'date' => $s->created_at->format('Y-m-d H:i'),
                 ])
@@ -304,11 +304,11 @@ trait LoadsDashboardData
 
             $currentWeekSales = (clone $salesQuery)
                 ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
-                ->sum('grand_total') ?? 0;
+                ->sum('total_amount') ?? 0;
 
             $previousWeekSales = (clone $salesQuery)
                 ->whereBetween('created_at', [now()->subWeek()->startOfWeek(), now()->subWeek()->endOfWeek()])
-                ->sum('grand_total') ?? 0;
+                ->sum('total_amount') ?? 0;
 
             $invoiceTotal = (clone $salesQuery)->count();
             $invoiceCleared = (clone $salesQuery)->where('status', 'completed')->count();

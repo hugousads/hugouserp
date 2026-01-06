@@ -108,7 +108,7 @@ class StockReorderService
             ->where('sale_items.product_id', $productId)
             ->where('sales.status', '!=', 'cancelled')
             ->where('sales.created_at', '>=', now()->subDays($days))
-            ->sum('sale_items.qty');
+            ->sum('sale_items.quantity');
 
         return $totalSold ? ((float) $totalSold / $days) : 0;
     }

@@ -268,8 +268,8 @@ class FinancialReportService
     {
         $asOfDate = $asOfDate ?? now()->toDateString();
 
-        // Get sales where there's still outstanding amount (due_total > 0 or paid_total < grand_total)
-        $query = Sale::whereRaw('paid_total < grand_total');
+        // Get sales where there's still outstanding amount (due_total > 0 or paid_amount < total_amount)
+        $query = Sale::whereRaw('paid_amount < total_amount');
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -286,7 +286,7 @@ class FinancialReportService
             $referenceDate = $sale->payment_due_date ?? $saleDate->copy()->addDays($paymentTermsDays);
             $asOf = \Carbon\Carbon::parse($asOfDate);
             $daysOverdue = $asOf->diffInDays($referenceDate, false);
-            $outstandingAmount = $sale->grand_total - ($sale->paid_total ?? 0);
+            $outstandingAmount = $sale->total_amount - ($sale->paid_amount ?? 0);
 
             if ($outstandingAmount <= 0) {
                 continue;
@@ -327,8 +327,8 @@ class FinancialReportService
     {
         $asOfDate = $asOfDate ?? now()->toDateString();
 
-        // Get purchases where there's still outstanding amount (paid_total < grand_total)
-        $query = Purchase::whereRaw('paid_total < grand_total');
+        // Get purchases where there's still outstanding amount (paid_amount < total_amount)
+        $query = Purchase::whereRaw('paid_amount < total_amount');
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -345,7 +345,7 @@ class FinancialReportService
             $referenceDate = $purchase->payment_due_date ?? $purchaseDate->copy()->addDays($paymentTermsDays);
             $asOf = \Carbon\Carbon::parse($asOfDate);
             $daysOverdue = $asOf->diffInDays($referenceDate, false);
-            $outstandingAmount = $purchase->grand_total - ($purchase->paid_total ?? 0);
+            $outstandingAmount = $purchase->total_amount - ($purchase->paid_amount ?? 0);
 
             if ($outstandingAmount <= 0) {
                 continue;

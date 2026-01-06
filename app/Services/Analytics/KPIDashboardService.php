@@ -123,7 +123,7 @@ class KPIDashboardService
         $inventoryValue = Product::query()
             ->where('is_active', true)
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->sum(DB::raw('qty * COALESCE(cost, 0)'));
+            ->sum(DB::raw('stock_quantity * COALESCE(cost, 0)'));
 
         return [
             'total_products' => [
@@ -295,7 +295,7 @@ class KPIDashboardService
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->select(
                 'products.name',
-                DB::raw('SUM(sale_items.qty) as total_qty'),
+                DB::raw('SUM(sale_items.quantity) as total_qty'),
                 DB::raw('SUM(sale_items.line_total) as total_revenue')
             )
             ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
@@ -310,7 +310,7 @@ class KPIDashboardService
         $dailySales = Sale::query()
             ->select(
                 DB::raw('DATE(created_at) as date'),
-                DB::raw('SUM(grand_total) as revenue'),
+                DB::raw('SUM(total_amount) as revenue'),
                 DB::raw('COUNT(*) as orders')
             )
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))

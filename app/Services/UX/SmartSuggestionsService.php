@@ -264,7 +264,7 @@ class SmartSuggestionsService
             ->where('sale_items.product_id', $productId)
             ->where('sales.status', '!=', 'cancelled')
             ->where('sales.created_at', '>=', now()->subDays($days))
-            ->sum('sale_items.qty');
+            ->sum('sale_items.quantity');
 
         return (float) bcdiv((string) ($totalSold ?? 0), (string) $days, 2);
     }

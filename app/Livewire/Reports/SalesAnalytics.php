@@ -201,7 +201,7 @@ class SalesAnalytics extends Component
 
         $query = Sale::query()
             ->selectRaw("{$dateFormat} as period")
-            ->selectRaw('SUM(grand_total) as revenue')
+            ->selectRaw('SUM(total_amount) as revenue')
             ->selectRaw('COUNT(*) as orders')
             ->whereBetween('created_at', [$this->dateFrom.' 00:00:00', $this->dateTo.' 23:59:59']);
 
@@ -240,7 +240,7 @@ class SalesAnalytics extends Component
                 'products.name',
                 'products.sku',
             ])
-            ->selectRaw('SUM(sale_items.qty) as total_qty')
+            ->selectRaw('SUM(sale_items.quantity) as total_qty')
             ->selectRaw('SUM(sale_items.line_total) as total_revenue')
             ->whereBetween('sales.created_at', [$this->dateFrom.' 00:00:00', $this->dateTo.' 23:59:59']);
 
@@ -273,7 +273,7 @@ class SalesAnalytics extends Component
                 'customers.email',
             ])
             ->selectRaw('COUNT(sales.id) as total_orders')
-            ->selectRaw('SUM(sales.grand_total) as total_spent')
+            ->selectRaw('SUM(sales.total_amount) as total_spent')
             ->whereBetween('sales.created_at', [$this->dateFrom.' 00:00:00', $this->dateTo.' 23:59:59'])
             ->whereNotNull('sales.customer_id');
 
@@ -356,7 +356,7 @@ class SalesAnalytics extends Component
             ->select([
                 'product_categories.name as category_name',
             ])
-            ->selectRaw('SUM(sale_items.qty) as total_qty')
+            ->selectRaw('SUM(sale_items.quantity) as total_qty')
             ->selectRaw('SUM(sale_items.line_total) as total_revenue')
             ->whereBetween('sales.created_at', [$this->dateFrom.' 00:00:00', $this->dateTo.' 23:59:59']);
 
