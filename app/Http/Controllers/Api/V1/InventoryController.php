@@ -259,10 +259,17 @@ class InventoryController extends BaseApiController
 
         $query = StockMovement::query()
             ->with(['product:id,name,sku'])
-            ->when($store?->branch_id, fn ($q) => $q->where('branch_id', $store->branch_id))
+            ->when($store?->branch_id, fn ($q) => $q->whereHas('warehouse', fn ($wq) => $wq->where('branch_id', $store->branch_id)))
             ->when($request->filled('product_id'), fn ($q) => $q->where('product_id', $validated['product_id']))
             ->when($request->filled('warehouse_id'), fn ($q) => $q->where('warehouse_id', $validated['warehouse_id']))
-            ->when($request->filled('direction'), fn ($q) => $q->where('direction', $validated['direction']))
+            // Filter by direction using signed quantity (positive = in, negative = out)
+            ->when($request->filled('direction'), function ($q) use ($validated) {
+                if ($validated['direction'] === 'in') {
+                    $q->where('quantity', '>', 0);
+                } elseif ($validated['direction'] === 'out') {
+                    $q->where('quantity', '<', 0);
+                }
+            })
             ->when($request->filled('start_date'), fn ($q) => $q->whereDate('created_at', '>=', $validated['start_date']))
             ->when($request->filled('end_date'), fn ($q) => $q->whereDate('created_at', '<=', $validated['end_date']))
             ->orderBy('created_at', 'desc');

@@ -120,7 +120,7 @@ class Form extends Component
             TransferItem::create([
                 'transfer_id' => $this->transfer->id,
                 'product_id' => $item['product_id'],
-                'qty' => $item['qty'],
+                'quantity' => $item['qty'], // Use quantity column per migration
             ]);
         }
 

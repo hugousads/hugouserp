@@ -277,17 +277,12 @@ class SmartSuggestionsService
      */
     protected function getCurrentStock(int $productId): float
     {
-        $inQty = DB::table('stock_movements')
+        // quantity is signed: positive = in, negative = out
+        $totalStock = DB::table('stock_movements')
             ->where('product_id', $productId)
-            ->where('direction', 'in')
-            ->sum('qty');
+            ->sum('quantity');
 
-        $outQty = DB::table('stock_movements')
-            ->where('product_id', $productId)
-            ->where('direction', 'out')
-            ->sum('qty');
-
-        return (float) bcsub((string) ($inQty ?? 0), (string) ($outQty ?? 0), 2);
+        return (float) ($totalStock ?? 0);
     }
 
     /**
