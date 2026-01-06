@@ -153,10 +153,16 @@ trait CommonQueryScopes
     /**
      * Check if model has an attribute
      */
-    public function hasAttribute(string $attribute): bool
+    public function hasAttribute($key): bool
     {
-        return in_array($attribute, $this->fillable ?? []) ||
-               array_key_exists($attribute, $this->casts ?? []);
+        $parentClass = get_parent_class($this);
+
+        if ($parentClass && is_callable([$parentClass, 'hasAttribute']) && parent::hasAttribute($key)) {
+            return true;
+        }
+
+        return in_array($key, $this->fillable ?? []) ||
+               array_key_exists($key, $this->casts ?? []);
     }
 
     /**
