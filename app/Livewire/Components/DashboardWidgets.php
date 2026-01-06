@@ -96,6 +96,7 @@ class DashboardWidgets extends Component
                 'total_customers' => (clone $customersQuery)->count(),
                 'new_customers_month' => (clone $customersQuery)->whereMonth('created_at', now()->month)->count(),
                 // Use indexed query with proper joins for better performance
+                // quantity is signed: positive = in, negative = out
                 'low_stock_count' => DB::table('products')
                     ->leftJoin('stock_movements', 'stock_movements.product_id', '=', 'products.id')
                     ->whereNull('products.deleted_at')
@@ -103,7 +104,7 @@ class DashboardWidgets extends Component
                     ->where('products.min_stock', '>', 0)
                     ->when(!$isAdmin && $branchId, fn($q) => $q->where('products.branch_id', $branchId))
                     ->select('products.id')
-                    ->selectRaw('COALESCE(SUM(CASE WHEN stock_movements.direction = \'in\' THEN stock_movements.qty ELSE -stock_movements.qty END), 0) as current_stock')
+                    ->selectRaw('COALESCE(SUM(stock_movements.quantity), 0) as current_stock')
                     ->groupBy('products.id', 'products.min_stock')
                     ->havingRaw('current_stock <= products.min_stock')
                     ->count(),

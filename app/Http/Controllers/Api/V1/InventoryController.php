@@ -23,6 +23,7 @@ class InventoryController extends BaseApiController
         $store = $this->getStore($request);
         $validated = $request->validated();
 
+        // quantity is signed: positive = in, negative = out
         $query = Product::query()
             ->select([
                 'products.id',
@@ -30,9 +31,8 @@ class InventoryController extends BaseApiController
                 'products.sku',
                 'products.min_stock',
                 'products.branch_id',
-                DB::raw('COALESCE(SUM(CASE WHEN stock_movements.direction = ? THEN stock_movements.qty ELSE 0 END) - SUM(CASE WHEN stock_movements.direction = ? THEN stock_movements.qty ELSE 0 END), 0) as current_quantity'),
+                DB::raw('COALESCE(SUM(stock_movements.quantity), 0) as current_quantity'),
             ])
-            ->addBinding(['in', 'out'], 'select')
             ->leftJoin('stock_movements', 'products.id', '=', 'stock_movements.product_id')
             ->when($store?->branch_id, fn ($q) => $q->where('products.branch_id', $store->branch_id))
             ->when($request->filled('sku'), fn ($q) => $q->where('products.sku', $validated['sku']))
@@ -282,10 +282,11 @@ class InventoryController extends BaseApiController
         }
 
         if ($branchId !== null) {
-            $query->where('branch_id', $branchId);
+            $query->whereHas('warehouse', fn($q) => $q->where('branch_id', $branchId));
         }
 
-        return (float) ($query->selectRaw('SUM(CASE WHEN direction = "in" THEN qty ELSE 0 END) - SUM(CASE WHEN direction = "out" THEN qty ELSE 0 END) as balance')
+        // quantity is signed: positive = in, negative = out
+        return (float) ($query->selectRaw('SUM(quantity) as balance')
             ->value('balance') ?? 0);
     }
 

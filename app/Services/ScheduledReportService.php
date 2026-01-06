@@ -113,7 +113,8 @@ class ScheduledReportService
                 $query->where('category_id', (int) $filters['category_id']);
             }
             if (! empty($filters['low_stock'])) {
-                $query->whereRaw('COALESCE((SELECT SUM(CASE WHEN direction = "in" THEN qty ELSE -qty END) FROM stock_movements WHERE stock_movements.product_id = products.id), 0) <= products.reorder_point');
+                // quantity is signed: positive = in, negative = out
+                $query->whereRaw('COALESCE((SELECT SUM(quantity) FROM stock_movements WHERE stock_movements.product_id = products.id), 0) <= products.reorder_point');
             }
 
             return $query->orderBy('name')
@@ -206,7 +207,8 @@ class ScheduledReportService
                     'products.price',
                     'products.cost',
                 ])
-                ->selectRaw('COALESCE((SELECT SUM(CASE WHEN direction = \'in\' THEN qty ELSE -qty END) FROM stock_movements WHERE stock_movements.product_id = products.id), 0) as quantity');
+                // quantity is signed: positive = in, negative = out
+                ->selectRaw('COALESCE((SELECT SUM(quantity) FROM stock_movements WHERE stock_movements.product_id = products.id), 0) as quantity');
 
             if (! empty($filters['category_id'])) {
                 $query->where('products.category_id', (int) $filters['category_id']);
