@@ -16,9 +16,14 @@ final class SaleItemRepository extends EloquentBaseRepository implements SaleIte
         parent::__construct($model);
     }
 
+    /**
+     * Filter sale items by branch through the sale relationship.
+     * Note: sale_items table doesn't have branch_id - filter via sale.
+     */
     protected function baseBranchQuery(int $branchId): Builder
     {
-        return $this->query()->where('branch_id', $branchId);
+        return $this->query()
+            ->whereHas('sale', fn($q) => $q->where('branch_id', $branchId));
     }
 
     public function paginateForBranch(int $branchId, int $perPage = 20): LengthAwarePaginator
@@ -26,5 +31,13 @@ final class SaleItemRepository extends EloquentBaseRepository implements SaleIte
         return $this->baseBranchQuery($branchId)
             ->orderByDesc('id')
             ->paginate($perPage);
+    }
+
+    public function forSale(int $saleId): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->query()
+            ->where('sale_id', $saleId)
+            ->with('product')
+            ->get();
     }
 }

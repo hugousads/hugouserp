@@ -63,7 +63,8 @@ class SaleService implements SaleServiceInterface
                         if (! $si) {
                             continue;
                         }
-                        $qty = min((float) $it['qty'], (float) $si->qty);
+                        // Use quantity column (not qty)
+                        $qty = min((float) $it['qty'], (float) $si->quantity);
                         
                         // Skip if qty is zero or negative
                         if ($qty <= 0) {
@@ -75,12 +76,18 @@ class SaleService implements SaleServiceInterface
                         $refund = bcadd($refund, $line, 2);
                     }
 
-                    // Create return note with total included
+                    // Create return note with correct column name (total_amount)
                     $note = ReturnNote::create([
                         'branch_id' => $sale->branch_id,
                         'sale_id' => $sale->getKey(),
+                        'reference_number' => 'RET-' . date('Ymd') . '-' . str_pad((string) (ReturnNote::whereDate('created_at', today())->count() + 1), 5, '0', STR_PAD_LEFT),
+                        'type' => 'sale_return',
+                        'warehouse_id' => $sale->warehouse_id,
+                        'customer_id' => $sale->customer_id,
+                        'status' => 'pending',
+                        'return_date' => now()->toDateString(),
                         'reason' => $reason,
-                        'total' => (float) $refund,
+                        'total_amount' => (float) $refund,
                     ]);
 
                     $sale->status = 'returned';

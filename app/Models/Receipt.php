@@ -10,17 +10,49 @@ class Receipt extends BaseModel
 {
     protected ?string $moduleKey = 'finance';
 
-    protected $fillable = ['branch_id', 'purchase_id', 'sale_id', 'method', 'amount', 'reference', 'paid_at', 'created_by', 'extra_attributes'];
+    /**
+     * Fillable fields aligned with migration:
+     * 2026_01_04_000005_create_sales_purchases_tables.php
+     */
+    protected $fillable = [
+        'sale_id',
+        'payment_id',
+        'receipt_number',
+        'amount',
+        'type',
+        'printed_at',
+        'print_data',
+    ];
 
-    protected $casts = ['amount' => 'decimal:2', 'paid_at' => 'datetime'];
-
-    public function purchase(): BelongsTo
-    {
-        return $this->belongsTo(Purchase::class);
-    }
+    protected $casts = [
+        'amount' => 'decimal:4',
+        'printed_at' => 'datetime',
+        'print_data' => 'array',
+    ];
 
     public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);
+    }
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(SalePayment::class, 'payment_id');
+    }
+
+    // Backward compatibility accessors
+    public function getReferenceAttribute()
+    {
+        return $this->receipt_number;
+    }
+
+    public function getMethodAttribute()
+    {
+        return $this->payment?->payment_method;
+    }
+
+    public function getPaidAtAttribute()
+    {
+        return $this->payment?->payment_date ?? $this->created_at;
     }
 }
