@@ -31,19 +31,23 @@ return new class extends Migration
     public function up(): void
     {
         // Cache tables (Laravel default)
-        Schema::create('cache', function (Blueprint $table) {
-            $this->setTableOptions($table);
-            $table->string('key', 255)->primary();
-            $table->mediumText('value');
-            $table->integer('expiration');
-        });
+        if (! Schema::hasTable('cache')) {
+            Schema::create('cache', function (Blueprint $table) {
+                $this->setTableOptions($table);
+                $table->string('key', 255)->primary();
+                $table->mediumText('value');
+                $table->integer('expiration');
+            });
+        }
 
-        Schema::create('cache_locks', function (Blueprint $table) {
-            $this->setTableOptions($table);
-            $table->string('key', 255)->primary();
-            $table->string('owner', 255);
-            $table->integer('expiration');
-        });
+        if (! Schema::hasTable('cache_locks')) {
+            Schema::create('cache_locks', function (Blueprint $table) {
+                $this->setTableOptions($table);
+                $table->string('key', 255)->primary();
+                $table->string('owner', 255);
+                $table->integer('expiration');
+            });
+        }
 
         // Jobs tables
         Schema::create('jobs', function (Blueprint $table) {
