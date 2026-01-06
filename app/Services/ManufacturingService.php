@@ -6,14 +6,15 @@ namespace App\Services;
 
 use App\Models\BillOfMaterial;
 use App\Models\ProductionOrder;
-use App\Models\StockMovement;
+use App\Repositories\Contracts\StockMovementRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
 class ManufacturingService
 {
     public function __construct(
         private readonly InventoryService $inventoryService,
-        private readonly AccountingService $accountingService
+        private readonly AccountingService $accountingService,
+        private readonly StockMovementRepositoryInterface $stockMovementRepo
     ) {}
 
     /**
@@ -187,13 +188,13 @@ class ManufacturingService
                     continue;
                 }
 
-                // Create stock movement for material issue
-                StockMovement::create([
-                    'branch_id' => $order->branch_id,
+                // Create stock movement for material issue using repository
+                $this->stockMovementRepo->create([
                     'product_id' => $item->product_id,
                     'warehouse_id' => $order->warehouse_id,
                     'direction' => 'out',
                     'qty' => $item->quantity_required,
+                    'movement_type' => 'production',
                     'reference_type' => ProductionOrder::class,
                     'reference_id' => $order->id,
                     'notes' => "Material issued for production order {$order->order_number}",
@@ -225,13 +226,13 @@ class ManufacturingService
             $order->increment('quantity_produced', $quantity);
             $order->increment('quantity_scrapped', $scrapQuantity);
 
-            // Create stock movement for finished goods
-            StockMovement::create([
-                'branch_id' => $order->branch_id,
+            // Create stock movement for finished goods using repository
+            $this->stockMovementRepo->create([
                 'product_id' => $order->product_id,
                 'warehouse_id' => $order->warehouse_id,
                 'direction' => 'in',
                 'qty' => $quantity,
+                'movement_type' => 'production',
                 'reference_type' => ProductionOrder::class,
                 'reference_id' => $order->id,
                 'notes' => "Production output for order {$order->order_number}",
@@ -293,12 +294,13 @@ class ManufacturingService
             foreach ($order->items->where('is_issued', true) as $item) {
                 $unconsumed = $item->remaining_quantity;
                 if ($unconsumed > 0) {
-                    StockMovement::create([
-                        'branch_id' => $order->branch_id,
+                    // Create stock movement using repository
+                    $this->stockMovementRepo->create([
                         'product_id' => $item->product_id,
                         'warehouse_id' => $order->warehouse_id,
                         'direction' => 'in',
                         'qty' => $unconsumed,
+                        'movement_type' => 'production_return',
                         'reference_type' => ProductionOrder::class,
                         'reference_id' => $order->id,
                         'notes' => "Material return from cancelled order: {$reason}",

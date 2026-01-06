@@ -6,16 +6,20 @@ namespace App\Listeners;
 
 use App\Events\PurchaseReceived;
 use App\Models\StockMovement;
+use App\Repositories\Contracts\StockMovementRepositoryInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class UpdateStockOnPurchase implements ShouldQueue
 {
+    public function __construct(
+        private readonly StockMovementRepositoryInterface $stockMovementRepo
+    ) {}
+
     public function handle(PurchaseReceived $event): void
     {
         $purchase = $event->purchase;
-        $branchId = $purchase->branch_id;
         $warehouseId = $purchase->warehouse_id;
 
         foreach ($purchase->items as $item) {
@@ -23,7 +27,7 @@ class UpdateStockOnPurchase implements ShouldQueue
             $existing = StockMovement::where('reference_type', 'purchase')
                 ->where('reference_id', $purchase->getKey())
                 ->where('product_id', $item->product_id)
-                ->where('direction', 'in')
+                ->where('quantity', '>', 0) // Positive quantity = in movement
                 ->exists();
                 
             if ($existing) {
@@ -34,24 +38,27 @@ class UpdateStockOnPurchase implements ShouldQueue
                 continue;
             }
             
-            // Validate quantity is positive
-            if ($item->qty <= 0) {
+            // Validate quantity is positive (use quantity column)
+            $itemQty = (float) $item->quantity;
+            if ($itemQty <= 0) {
                 Log::error('Invalid purchase quantity', [
                     'purchase_id' => $purchase->getKey(),
                     'product_id' => $item->product_id,
-                    'qty' => $item->qty,
+                    'qty' => $itemQty,
                 ]);
                 throw new InvalidArgumentException("Purchase quantity must be positive for product {$item->product_id}");
             }
 
-            StockMovement::create([
-                'branch_id' => $branchId,
+            // Use repository for proper schema mapping
+            $this->stockMovementRepo->create([
                 'warehouse_id' => $warehouseId,
                 'product_id' => $item->product_id,
+                'movement_type' => 'purchase',
                 'reference_type' => 'purchase',
                 'reference_id' => $purchase->getKey(),
-                'qty' => $item->qty,
+                'qty' => $itemQty,
                 'direction' => 'in',
+                'unit_cost' => $item->unit_price ?? null,
                 'notes' => 'Purchase received',
                 'created_by' => $purchase->created_by,
             ]);

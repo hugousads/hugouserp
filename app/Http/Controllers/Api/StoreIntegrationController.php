@@ -7,8 +7,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductVariation;
-use App\Models\StockMovement;
 use App\Models\StoreOrder;
+use App\Repositories\Contracts\StockMovementRepositoryInterface;
 use App\Services\StockService;
 use App\Services\Store\StoreOrderToSaleService;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Log;
 
 class StoreIntegrationController extends Controller
 {
+    public function __construct(
+        private readonly StockMovementRepositoryInterface $stockMovementRepo
+    ) {}
+
     public function products(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -138,12 +142,13 @@ class StoreIntegrationController extends Controller
                 // This sync is no longer updating stock directly
                 // Create stock movement record for tracking
                 if ($saleItem->product && $sale->warehouse_id) {
-                    StockMovement::create([
+                    // Use repository for proper schema mapping
+                    $this->stockMovementRepo->create([
                         'product_id' => $saleItem->product_id,
                         'warehouse_id' => $sale->warehouse_id,
-                        'branch_id' => $sale->branch_id,
-                        'quantity' => -$saleItem->quantity,
-                        'type' => 'sale',
+                        'qty' => abs((float) $saleItem->quantity),
+                        'direction' => 'out',
+                        'movement_type' => 'sale',
                         'reference_type' => 'sale',
                         'reference_id' => $sale->id,
                         'notes' => "Sale from store order #{$storeOrder->store_order_number}",

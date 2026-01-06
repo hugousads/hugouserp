@@ -12,12 +12,17 @@ use App\Models\Product;
 use App\Models\ProductStoreMapping;
 use App\Models\StockMovement;
 use App\Models\Warehouse;
+use App\Repositories\Contracts\StockMovementRepositoryInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class InventoryController extends BaseApiController
 {
+    public function __construct(
+        private readonly StockMovementRepositoryInterface $stockMovementRepo
+    ) {}
+
     public function getStock(GetStockRequest $request): JsonResponse
     {
         $store = $this->getStore($request);
@@ -108,13 +113,14 @@ class InventoryController extends BaseApiController
 
         $newQuantityPersisted = DB::transaction(function () use ($product, $actualDirection, $actualQty, $validated, $warehouseId) {
             if ($actualQty > 0) {
-                StockMovement::create([
+                // Use repository for proper schema mapping
+                $this->stockMovementRepo->create([
                     'product_id' => $product->id,
                     'warehouse_id' => $warehouseId,
-                    'branch_id' => $product->branch_id,
                     'direction' => $actualDirection,
                     'qty' => $actualQty,
-                    'reason' => $validated['reason'] ?? 'API stock update',
+                    'movement_type' => 'api_sync',
+                    'notes' => $validated['reason'] ?? 'API stock update',
                     'reference_type' => 'api_sync',
                 ]);
             }
@@ -207,13 +213,14 @@ class InventoryController extends BaseApiController
 
                 $persistedQuantity = DB::transaction(function () use ($product, $actualDirection, $actualQty, $warehouseId) {
                     if ($actualQty > 0) {
-                        StockMovement::create([
+                        // Use repository for proper schema mapping
+                        $this->stockMovementRepo->create([
                             'product_id' => $product->id,
                             'warehouse_id' => $warehouseId,
-                            'branch_id' => $product->branch_id,
                             'direction' => $actualDirection,
                             'qty' => $actualQty,
-                            'reason' => 'API bulk stock update',
+                            'movement_type' => 'api_sync',
+                            'notes' => 'API bulk stock update',
                             'reference_type' => 'api_sync',
                         ]);
                     }
