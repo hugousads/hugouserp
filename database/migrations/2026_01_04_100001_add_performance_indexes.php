@@ -47,7 +47,7 @@ return new class extends Migration
                 
                 // Index for low stock queries
                 if (Schema::hasColumn('products', 'alert_quantity')) {
-                    $this->addIndexIfNotExists($table, 'products', ['is_active', 'track_quantity'], 'idx_products_active_track');
+                    $this->addIndexIfNotExists($table, 'products', ['is_active', 'track_stock_alerts'], 'idx_products_active_track');
                 }
             });
         }

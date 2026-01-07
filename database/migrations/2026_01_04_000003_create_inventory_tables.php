@@ -169,6 +169,7 @@ return new class extends Migration
             $table->boolean('has_variants')->default(false);
             $table->boolean('is_serialized')->default(false);
             $table->boolean('is_batch_tracked')->default(false);
+            $table->boolean('track_stock_alerts')->default(true);
             $table->boolean('is_taxable')->default(true);
             
             // Media
@@ -391,6 +392,9 @@ return new class extends Migration
         Schema::create('low_stock_alerts', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
+            $table->foreignId('branch_id')->nullable()
+                ->constrained('branches')
+                ->nullOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
             $table->decimal('current_stock', 18, 4);
@@ -400,9 +404,14 @@ return new class extends Migration
                 ->constrained('users')
                 ->nullOnDelete();
             $table->timestamp('acknowledged_at')->nullable();
+            $table->foreignId('resolved_by')->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+            $table->timestamp('resolved_at')->nullable();
             $table->timestamps();
             
             $table->index(['status', 'created_at']);
+            $table->index(['branch_id', 'status', 'created_at'], 'idx_alerts_branch_status_created');
         });
     }
 
