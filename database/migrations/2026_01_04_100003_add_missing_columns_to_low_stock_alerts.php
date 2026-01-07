@@ -48,8 +48,8 @@ return new class extends Migration
                 $table->index(['branch_id', 'status', 'created_at'], 'idx_alerts_branch_status_created');
             });
         } catch (QueryException $e) {
-            // Index already exists (duplicate key error), ignore
-            if ($e->getCode() !== '42000' && !str_contains($e->getMessage(), 'Duplicate key name')) {
+            // Index already exists - ignore only duplicate key errors
+            if (!str_contains($e->getMessage(), 'Duplicate key name')) {
                 throw $e;
             }
         }
@@ -63,8 +63,8 @@ return new class extends Migration
                 $table->dropIndex('idx_alerts_branch_status_created');
             });
         } catch (QueryException $e) {
-            // Index doesn't exist, ignore
-            if ($e->getCode() !== '42000' && !str_contains($e->getMessage(), "doesn't exist")) {
+            // Index doesn't exist - ignore only "doesn't exist" errors
+            if (!str_contains($e->getMessage(), "doesn't exist") && !str_contains($e->getMessage(), 'not found')) {
                 throw $e;
             }
         }

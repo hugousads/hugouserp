@@ -79,6 +79,6 @@ class PurchaseRequisitionItem extends BaseModel
     // Calculated field for backward compatibility
     public function getEstimatedTotalAttribute()
     {
-        return $this->quantity * ($this->estimated_price ?? 0);
+        return ($this->quantity ?? 0) * ($this->estimated_price ?? 0);
     }
 }
