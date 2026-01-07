@@ -126,6 +126,8 @@ return new class extends Migration
             $table->json('amenities')->nullable();
             $table->json('images')->nullable();
             $table->text('description')->nullable();
+            $table->text('notes')->nullable(); // Notes field
+            $table->json('extra_attributes')->nullable(); // Extra attributes
             
             $table->foreignId('manager_id')->nullable()
                 ->constrained('users')
