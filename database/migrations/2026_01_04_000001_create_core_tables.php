@@ -132,6 +132,7 @@ return new class extends Migration
             $this->setTableOptions($table);
             $table->id();
             $table->string('name', 255);
+            $table->string('username', 100)->nullable()->unique(); // Username field
             $table->string('email', 255)->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password', 255);
@@ -146,6 +147,11 @@ return new class extends Migration
             $table->json('preferences')->nullable();
             $table->rememberToken();
             
+            // Discount and pricing permissions
+            $table->decimal('max_discount_percent', 5, 2)->nullable(); // Max discount percent
+            $table->decimal('daily_discount_limit', 15, 2)->nullable(); // Daily discount limit
+            $table->boolean('can_modify_price')->default(false); // Can modify price flag
+            
             // 2FA fields
             $table->boolean('two_factor_enabled')->default(false);
             $table->string('two_factor_secret', 255)->nullable();
@@ -158,6 +164,7 @@ return new class extends Migration
             $table->string('last_login_ip', 45)->nullable();
             $table->integer('failed_login_attempts')->default(0);
             $table->timestamp('locked_until')->nullable();
+            $table->integer('max_sessions')->default(5); // Max concurrent sessions
             
             $table->timestamps();
             $table->softDeletes();
@@ -190,7 +197,9 @@ return new class extends Migration
             $table->string('device_type', 50)->nullable();
             $table->string('browser', 100)->nullable();
             $table->string('platform', 100)->nullable();
+            $table->string('location', 255)->nullable(); // Location field
             $table->boolean('is_current')->default(false);
+            $table->timestamp('last_activity')->nullable(); // Last activity timestamp
             $table->timestamp('last_activity_at')->nullable();
             $table->timestamps();
             
@@ -203,8 +212,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('email', 255)->nullable();
+            $table->string('event', 100)->nullable(); // Event type (login, logout, etc.)
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent', 500)->nullable();
+            $table->string('browser', 100)->nullable(); // Browser name
+            $table->string('platform', 100)->nullable(); // Platform/OS
+            $table->string('device_type', 50)->nullable(); // Device type
             $table->string('status', 50); // success, failed, blocked
             $table->string('failure_reason', 255)->nullable();
             $table->json('metadata')->nullable();
@@ -222,9 +235,12 @@ return new class extends Migration
             $table->string('key', 255)->unique();
             $table->text('value')->nullable();
             $table->string('group', 100)->nullable()->index();
+            $table->string('category', 100)->nullable(); // Category field
             $table->boolean('is_public')->default(false);
             $table->boolean('is_encrypted')->default(false);
             $table->string('type', 50)->default('string');
+            $table->text('description')->nullable(); // Description field
+            $table->integer('sort_order')->default(0); // Sort order
             $table->timestamps();
             
             $table->index(['group', 'key']);

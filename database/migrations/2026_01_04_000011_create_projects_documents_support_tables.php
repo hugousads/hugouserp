@@ -347,13 +347,19 @@ return new class extends Migration
             $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name', 255);
             $table->string('name_ar', 255)->nullable();
+            $table->string('slug', 255)->unique(); // Slug field
             $table->text('description')->nullable();
+            $table->foreignId('parent_id')->nullable()->constrained('ticket_categories')->nullOnDelete(); // Parent category
             $table->string('color', 20)->nullable();
             $table->foreignId('default_assignee_id')->nullable()
                 ->constrained('users')
                 ->nullOnDelete();
+            $table->foreignId('sla_policy_id')->nullable()->constrained('ticket_sla_policies')->nullOnDelete(); // SLA policy
+            $table->string('icon', 100)->nullable(); // Icon field
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
             $table->timestamps();
             $table->softDeletes();
         });
@@ -364,10 +370,13 @@ return new class extends Migration
             $table->id();
             $table->string('name', 100);
             $table->string('name_ar', 100)->nullable();
+            $table->string('slug', 255)->unique(); // Slug field
             $table->string('color', 20)->nullable();
             $table->integer('level')->default(0);
             $table->integer('response_time_hours')->nullable();
+            $table->integer('response_time_minutes')->nullable(); // Response time in minutes
             $table->integer('resolution_time_hours')->nullable();
+            $table->integer('resolution_time_minutes')->nullable(); // Resolution time in minutes
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->timestamps();
@@ -380,12 +389,26 @@ return new class extends Migration
             $table->string('name', 255);
             $table->string('name_ar', 255)->nullable();
             $table->text('description')->nullable();
+            $table->integer('first_response_time_hours')->nullable(); // First response time hours
+            $table->integer('resolution_time_hours')->nullable(); // Resolution time hours
+            $table->integer('response_time_minutes')->nullable(); // Response time minutes
+            $table->integer('resolution_time_minutes')->nullable(); // Resolution time minutes
             $table->integer('first_response_hours')->nullable();
             $table->integer('resolution_hours')->nullable();
+            $table->json('business_hours')->nullable(); // Business hours JSON
             $table->boolean('business_hours_only')->default(true);
+            $table->time('business_hours_start')->nullable(); // Business hours start
+            $table->time('business_hours_end')->nullable(); // Business hours end
+            $table->json('working_days')->nullable(); // Working days
+            $table->boolean('exclude_weekends')->default(false); // Exclude weekends
+            $table->json('excluded_dates')->nullable(); // Excluded dates
             $table->json('escalation_rules')->nullable();
+            $table->boolean('auto_escalate')->default(false); // Auto escalate flag
+            $table->foreignId('escalate_to_user_id')->nullable()->constrained('users')->nullOnDelete(); // Escalate to user
             $table->boolean('is_default')->default(false);
             $table->boolean('is_active')->default(true);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
             $table->timestamps();
             $table->softDeletes();
         });
@@ -463,10 +486,17 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()
                 ->constrained()
                 ->nullOnDelete();
-            $table->text('content');
+            $table->text('message'); // Primary message field
             $table->boolean('is_internal')->default(false);
             $table->boolean('is_customer_visible')->default(true);
             $table->string('reply_type', 50)->default('reply'); // reply, note, status_change
+            $table->timestamp('read_at')->nullable(); // Read at timestamp
+            $table->string('customer_email', 255)->nullable(); // Customer email
+            $table->string('customer_name', 255)->nullable(); // Customer name
+            $table->string('ip_address', 45)->nullable(); // IP address
+            $table->json('metadata')->nullable(); // Metadata
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
             $table->timestamps();
             $table->softDeletes();
             

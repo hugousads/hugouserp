@@ -30,6 +30,7 @@ return new class extends Migration
         Schema::create('product_categories', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
+            $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete(); // Branch field
             $table->string('name', 255);
             $table->string('name_ar', 255)->nullable();
             $table->string('slug', 255)->unique();
@@ -40,6 +41,8 @@ return new class extends Migration
             $table->string('image', 500)->nullable();
             $table->boolean('is_active')->default(true)->index();
             $table->integer('sort_order')->default(0);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
             $table->timestamps();
             $table->softDeletes();
             
@@ -62,6 +65,8 @@ return new class extends Migration
             $table->boolean('is_base_unit')->default(false);
             $table->boolean('is_active')->default(true)->index();
             $table->integer('sort_order')->default(0);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
             $table->timestamps();
             $table->softDeletes();
         });
@@ -83,13 +88,17 @@ return new class extends Migration
         Schema::create('taxes', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
+            $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete(); // Branch field
+            $table->string('code', 50)->nullable(); // Tax code
             $table->string('name', 255);
             $table->string('name_ar', 255)->nullable();
+            $table->text('description')->nullable(); // Description
             $table->decimal('rate', 8, 4);
             $table->string('type', 50)->default('percentage'); // percentage, fixed
             $table->boolean('is_compound')->default(false);
             $table->boolean('is_active')->default(true)->index();
             $table->boolean('is_inclusive')->default(false);
+            $table->json('extra_attributes')->nullable(); // Extra attributes
             $table->timestamps();
             $table->softDeletes();
         });
@@ -112,6 +121,7 @@ return new class extends Migration
             $table->boolean('is_default')->default(false);
             $table->boolean('allow_negative_stock')->default(false);
             $table->json('settings')->nullable();
+            $table->json('extra_attributes')->nullable(); // Extra attributes
             $table->timestamps();
             $table->softDeletes();
             
@@ -308,14 +318,21 @@ return new class extends Migration
         Schema::create('inventory_batches', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
+            $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete(); // Branch field
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
             $table->string('batch_number', 100);
             $table->decimal('quantity', 18, 4)->default(0);
+            $table->decimal('unit_cost', 18, 4)->nullable(); // Unit cost field
             $table->decimal('cost_price', 18, 4)->nullable();
             $table->date('manufacturing_date')->nullable();
             $table->date('expiry_date')->nullable()->index();
+            $table->string('supplier_batch_ref', 100)->nullable(); // Supplier batch reference
             $table->string('supplier_batch', 100)->nullable();
+            $table->foreignId('purchase_id')->nullable()->constrained()->nullOnDelete(); // Purchase reference
+            $table->string('status', 50)->default('active'); // Status field
+            $table->text('notes')->nullable(); // Notes field
+            $table->json('meta')->nullable(); // Meta field
             $table->json('metadata')->nullable();
             $table->timestamps();
             

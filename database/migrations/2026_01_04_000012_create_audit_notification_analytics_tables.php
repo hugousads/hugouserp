@@ -249,12 +249,15 @@ return new class extends Migration
         Schema::create('widget_data_cache', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete(); // User field
+            $table->foreignId('dashboard_widget_id')->nullable()->constrained()->nullOnDelete(); // Dashboard widget field
             $table->foreignId('widget_id')
                 ->constrained('dashboard_widgets')
                 ->cascadeOnDelete();
             $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
             $table->string('cache_key', 255);
             $table->json('data')->nullable();
+            $table->timestamp('cached_at')->nullable(); // Cached at timestamp
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
             
@@ -293,8 +296,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('query', 500);
+            $table->string('module', 100)->nullable(); // Module field
             $table->string('context', 100)->nullable(); // products, customers, etc.
-            $table->integer('result_count')->nullable();
+            $table->integer('results_count')->nullable(); // Results count field (primary)
             $table->timestamp('created_at')->useCurrent();
             
             $table->index(['user_id', 'created_at']);
@@ -309,6 +313,9 @@ return new class extends Migration
             $table->unsignedBigInteger('searchable_id');
             $table->string('title', 500);
             $table->text('content')->nullable();
+            $table->string('module', 100)->nullable(); // Module field
+            $table->string('icon', 100)->nullable(); // Icon field
+            $table->string('url', 500)->nullable(); // URL field
             $table->json('metadata')->nullable();
             $table->timestamp('indexed_at')->useCurrent();
             
@@ -558,15 +565,25 @@ return new class extends Migration
             $table->string('model_type', 255);
             $table->unsignedBigInteger('model_id');
             $table->uuid('uuid')->nullable()->unique();
-            $table->string('collection_name', 255);
-            $table->string('name', 255);
+            $table->string('name', 255); // Name field
+            $table->string('original_name', 255)->nullable(); // Original name
+            $table->string('file_path', 500)->nullable(); // File path
+            $table->string('thumbnail_path', 500)->nullable(); // Thumbnail path
+            $table->string('collection', 255); // Primary collection field (used by model)
             $table->string('file_name', 255);
             $table->string('mime_type', 255)->nullable();
+            $table->string('extension', 50)->nullable(); // Extension
             $table->string('disk', 255);
             $table->string('conversions_disk', 255)->nullable();
             $table->unsignedBigInteger('size');
+            $table->unsignedBigInteger('optimized_size')->nullable(); // Optimized size
+            $table->integer('width')->nullable(); // Width
+            $table->integer('height')->nullable(); // Height
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete(); // User ID
+            $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete(); // Branch ID
             $table->json('manipulations');
             $table->json('custom_properties');
+            $table->json('metadata')->nullable(); // Metadata
             $table->json('generated_conversions');
             $table->json('responsive_images');
             $table->unsignedInteger('order_column')->nullable()->index();
@@ -580,6 +597,7 @@ return new class extends Migration
             $this->setTableOptions($table);
             $table->id();
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('vehicle_id')->nullable()->constrained()->nullOnDelete(); // Vehicle ID
             $table->foreignId('product_id')->constrained();
             $table->foreignId('sale_id')->nullable()
                 ->constrained()
@@ -589,11 +607,13 @@ return new class extends Migration
                 ->nullOnDelete();
             $table->string('serial_number', 100)->nullable();
             $table->string('warranty_number', 100)->unique();
+            $table->string('provider', 255)->nullable(); // Provider
             $table->date('start_date');
             $table->date('end_date');
             $table->string('status', 50)->default('active'); // active, expired, claimed, void
             $table->text('terms')->nullable();
             $table->text('notes')->nullable();
+            $table->json('extra_attributes')->nullable(); // Extra attributes
             $table->timestamps();
             $table->softDeletes();
             
@@ -606,11 +626,15 @@ return new class extends Migration
             $this->setTableOptions($table);
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('vehicle_model_id')->nullable()->constrained('vehicle_models')->nullOnDelete(); // Vehicle model
             $table->foreignId('compatible_product_id')
                 ->constrained('products')
                 ->cascadeOnDelete();
             $table->string('compatibility_type', 50)->default('compatible');
+            $table->string('oem_number', 100)->nullable(); // OEM number
+            $table->string('position', 100)->nullable(); // Position
             $table->text('notes')->nullable();
+            $table->boolean('is_verified')->default(false); // Verified flag
             $table->timestamps();
             
             $table->unique(['product_id', 'compatible_product_id']);

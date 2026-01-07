@@ -67,6 +67,7 @@ return new class extends Migration
             $table->text('internal_notes')->nullable();
             $table->text('terms_conditions')->nullable();
             $table->json('custom_fields')->nullable();
+            $table->json('extra_attributes')->nullable(); // Extra attributes
             
             // References
             $table->foreignId('store_order_id')->nullable();
@@ -191,6 +192,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->text('terms_conditions')->nullable();
             $table->json('custom_fields')->nullable();
+            $table->json('extra_attributes')->nullable(); // Extra attributes
             
             $table->foreignId('created_by')->nullable()
                 ->constrained('users')
@@ -244,14 +246,18 @@ return new class extends Migration
         Schema::create('purchase_requisitions', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
+            $table->string('code', 50)->unique(); // Code field
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('department_id')->nullable()->constrained()->nullOnDelete(); // Department
             $table->foreignId('warehouse_id')->nullable()->constrained();
             $table->string('reference_number', 100)->unique();
             $table->string('status', 50)->default('draft'); // draft, pending, approved, rejected, converted
             $table->string('priority', 50)->default('normal'); // low, normal, high, urgent
             $table->date('required_date')->nullable();
+            $table->text('justification')->nullable(); // Justification field
             $table->text('purpose')->nullable();
             $table->text('notes')->nullable();
+            $table->decimal('estimated_total', 18, 4)->nullable(); // Estimated total
             
             $table->foreignId('requested_by')->constrained('users');
             $table->foreignId('approved_by')->nullable()
@@ -259,6 +265,11 @@ return new class extends Migration
                 ->nullOnDelete();
             $table->timestamp('approved_at')->nullable();
             $table->text('rejection_reason')->nullable();
+            $table->boolean('is_converted')->default(false); // Conversion flag
+            $table->foreignId('converted_to_po_id')->nullable()->constrained('purchases')->nullOnDelete(); // Converted PO
+            $table->json('extra_attributes')->nullable(); // Extra attributes
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
             
             $table->timestamps();
             $table->softDeletes();
@@ -283,6 +294,9 @@ return new class extends Migration
             $table->foreignId('preferred_supplier_id')->nullable()
                 ->constrained('suppliers')
                 ->nullOnDelete();
+            $table->json('extra_attributes')->nullable(); // Extra attributes
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
             $table->timestamps();
         });
 
@@ -290,6 +304,7 @@ return new class extends Migration
         Schema::create('supplier_quotations', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
+            $table->string('code', 50)->unique(); // Code field
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
             $table->foreignId('supplier_id')->constrained();
             $table->foreignId('requisition_id')->nullable()
@@ -301,17 +316,28 @@ return new class extends Migration
             $table->date('quotation_date');
             $table->date('valid_until')->nullable();
             
+            $table->string('currency', 3)->default('EGP');
+            $table->decimal('sub_total', 18, 4)->default(0); // Sub total
+            $table->decimal('discount_total', 18, 4)->default(0); // Discount total
+            $table->decimal('tax_total', 18, 4)->default(0); // Tax total
+            $table->decimal('shipping_total', 18, 4)->default(0); // Shipping total
+            $table->decimal('grand_total', 18, 4)->default(0); // Grand total
             $table->decimal('subtotal', 18, 4)->default(0);
             $table->decimal('tax_amount', 18, 4)->default(0);
             $table->decimal('total_amount', 18, 4)->default(0);
-            $table->string('currency', 3)->default('EGP');
+            $table->text('payment_terms')->nullable(); // Payment terms
+            $table->text('delivery_terms')->nullable(); // Delivery terms
             $table->integer('delivery_days')->nullable();
+            $table->text('terms_and_conditions')->nullable(); // Terms and conditions
             $table->text('terms_conditions')->nullable();
             $table->text('notes')->nullable();
+            $table->text('rejection_reason')->nullable(); // Rejection reason
+            $table->json('extra_attributes')->nullable(); // Extra attributes
             
             $table->foreignId('created_by')->nullable()
                 ->constrained('users')
                 ->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
             
             $table->timestamps();
             $table->softDeletes();
@@ -332,6 +358,9 @@ return new class extends Migration
             $table->decimal('tax_percent', 5, 2)->default(0);
             $table->decimal('line_total', 18, 4);
             $table->text('notes')->nullable();
+            $table->json('extra_attributes')->nullable(); // Extra attributes
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
             $table->timestamps();
         });
 
