@@ -172,7 +172,7 @@ class Form extends Component
             ->get();
 
         $products = Product::when($user->branch_id, fn ($q) => $q->where('branch_id', $user->branch_id))
-            ->where('is_active', true)
+            ->where('status', 'active')
             ->orderBy('name')
             ->get();
 
