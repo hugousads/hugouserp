@@ -163,14 +163,12 @@ class GlobalSearch extends Component
             $sales = $this->scopedQuery(Sale::query(), $user)
                 ->whereNull('deleted_at')
                 ->where(function ($q) use ($searchTerm, $searchTermLower) {
-                    $q->where('code', 'like', $searchTerm)
-                        ->orWhereRaw('LOWER(code) LIKE ?', [$searchTermLower])
-                        ->orWhere('reference_no', 'like', $searchTerm)
-                        ->orWhereRaw('LOWER(reference_no) LIKE ?', [$searchTermLower]);
+                    $q->where('reference_number', 'like', $searchTerm)
+                        ->orWhereRaw('LOWER(reference_number) LIKE ?', [$searchTermLower]);
                 })
                 ->orderByDesc('created_at')
                 ->limit(5)
-                ->get(['id', 'code', 'status', 'reference_no']);
+                ->get(['id', 'status', 'reference_number']);
 
             if ($sales->isNotEmpty()) {
                 $this->results['sales'] = [
@@ -179,7 +177,7 @@ class GlobalSearch extends Component
                     'route' => 'app.sales.index',
                     'items' => $sales->map(fn ($s) => [
                         'id' => $s->id,
-                        'title' => $s->reference_no ?: ($s->code ?: '#'.$s->id),
+                        'title' => $s->reference_number ?: '#'.$s->id,
                         'subtitle' => ucfirst($s->status ?? 'pending'),
                         'route' => route('app.sales.show', $s->id),
                     ])->toArray(),
@@ -192,12 +190,12 @@ class GlobalSearch extends Component
             $purchases = $this->scopedQuery(Purchase::query(), $user)
                 ->whereNull('deleted_at')
                 ->where(function ($q) use ($searchTerm, $searchTermLower) {
-                    $q->where('reference_no', 'like', $searchTerm)
-                        ->orWhereRaw('LOWER(reference_no) LIKE ?', [$searchTermLower]);
+                    $q->where('reference_number', 'like', $searchTerm)
+                        ->orWhereRaw('LOWER(reference_number) LIKE ?', [$searchTermLower]);
                 })
                 ->orderByDesc('created_at')
                 ->limit(5)
-                ->get(['id', 'reference_no', 'status']);
+                ->get(['id', 'reference_number', 'status']);
 
             if ($purchases->isNotEmpty()) {
                 $this->results['purchases'] = [
@@ -206,11 +204,11 @@ class GlobalSearch extends Component
                     'route' => 'app.purchases.index',
                     'items' => $purchases->map(fn ($p) => [
                         'id' => $p->id,
-                        'title' => $p->reference_no ?: '#'.$p->id,
+                        'title' => $p->reference_number ?: '#'.$p->id,
                         'subtitle' => ucfirst($p->status ?? 'pending'),
                         'route' => $canEdit
                             ? route('app.purchases.edit', $p->id)
-                            : route('app.purchases.index', ['search' => $p->reference_no]),
+                            : route('app.purchases.index', ['search' => $p->reference_number]),
                     ])->toArray(),
                 ];
             }

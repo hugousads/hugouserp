@@ -167,7 +167,7 @@ class Form extends Component
             $this->editMode = true;
             $this->customer_id = (string) ($sale->customer_id ?? '');
             $this->warehouse_id = (string) ($sale->warehouse_id ?? '');
-            $this->reference_no = $sale->reference_no ?? '';
+            $this->reference_no = $sale->reference_number ?? '';
             $this->status = $sale->status ?? 'completed';
             $this->currency = $sale->currency ?? 'EGP';
             $this->notes = $sale->notes ?? '';

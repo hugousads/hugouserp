@@ -224,7 +224,7 @@ class Index extends Component
             ->when($this->search, function ($query) {
                 $query->whereHas('sale', function ($q) {
                     $q->where('code', 'like', '%'.$this->search.'%')
-                        ->orWhere('reference_no', 'like', '%'.$this->search.'%');
+                        ->orWhere('reference_number', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $this->dateFrom))
