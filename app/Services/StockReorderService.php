@@ -208,11 +208,11 @@ class StockReorderService
 
                 foreach ($items as $item) {
                     PurchaseRequisitionItem::create([
-                        'purchase_requisition_id' => $requisition->id,
+                        'requisition_id' => $requisition->id,
                         'product_id' => $item['product_id'],
-                        'qty' => $item['suggested_quantity'],
-                        'estimated_unit_cost' => $item['estimated_cost'] / $item['suggested_quantity'],
-                        'notes' => "Current stock: {$item['current_stock']}, Reorder point: {$item['reorder_point']}",
+                        'quantity' => $item['suggested_quantity'],
+                        'estimated_price' => $item['estimated_cost'] / $item['suggested_quantity'],
+                        'specifications' => "Current stock: {$item['current_stock']}, Reorder point: {$item['reorder_point']}",
                         'created_by' => $userId,
                     ]);
                 }

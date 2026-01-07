@@ -35,7 +35,7 @@ class StockAlertService
                     ->first();
 
                 if ($existingAlert) {
-                    $existingAlert->update(['current_qty' => $currentQty]);
+                    $existingAlert->update(['current_stock' => $currentQty]);
 
                     return $existingAlert;
                 }
@@ -44,8 +44,8 @@ class StockAlertService
                     'product_id' => $product->id,
                     'branch_id' => $product->branch_id,
                     'warehouse_id' => $warehouseId,
-                    'current_qty' => $currentQty,
-                    'min_qty' => $product->min_stock,
+                    'current_stock' => $currentQty,
+                    'alert_threshold' => $product->min_stock,
                     'status' => 'active',
                 ]);
             },
@@ -144,7 +144,7 @@ class StockAlertService
                         ->count(),
                     'critical_count' => (clone $query)
                         ->where('status', 'active')
-                        ->whereRaw('current_qty <= min_qty * 0.25')
+                        ->whereRaw('current_stock <= alert_threshold * 0.25')
                         ->count(),
                 ];
             },
