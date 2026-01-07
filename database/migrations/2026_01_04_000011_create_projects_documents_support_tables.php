@@ -486,8 +486,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()
                 ->constrained()
                 ->nullOnDelete();
-            $table->text('message'); // Message field
-            $table->text('content')->nullable();
+            $table->text('message'); // Primary message field
             $table->boolean('is_internal')->default(false);
             $table->boolean('is_customer_visible')->default(true);
             $table->string('reply_type', 50)->default('reply'); // reply, note, status_change

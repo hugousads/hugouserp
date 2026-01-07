@@ -298,8 +298,7 @@ return new class extends Migration
             $table->string('query', 500);
             $table->string('module', 100)->nullable(); // Module field
             $table->string('context', 100)->nullable(); // products, customers, etc.
-            $table->integer('results_count')->nullable(); // Results count field
-            $table->integer('result_count')->nullable();
+            $table->integer('results_count')->nullable(); // Results count field (primary)
             $table->timestamp('created_at')->useCurrent();
             
             $table->index(['user_id', 'created_at']);
@@ -570,8 +569,7 @@ return new class extends Migration
             $table->string('original_name', 255)->nullable(); // Original name
             $table->string('file_path', 500)->nullable(); // File path
             $table->string('thumbnail_path', 500)->nullable(); // Thumbnail path
-            $table->string('collection_name', 255);
-            $table->string('collection', 255)->nullable(); // Collection field
+            $table->string('collection', 255); // Primary collection field (used by model)
             $table->string('file_name', 255);
             $table->string('mime_type', 255)->nullable();
             $table->string('extension', 50)->nullable(); // Extension
