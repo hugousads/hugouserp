@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -78,17 +79,17 @@ class Account extends Model
         return app()->getLocale() === 'ar' && $this->name_ar ? $this->name_ar : $this->name;
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeType($query, string $type)
+    public function scopeType(Builder $query, string $type): Builder
     {
         return $query->where('type', $type);
     }
 
-    public function scopeCategory($query, string $category)
+    public function scopeCategory(Builder $query, string $category): Builder
     {
         return $query->where('account_category', $category);
     }

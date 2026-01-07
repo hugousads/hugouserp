@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProjectTask extends Model
 {
@@ -93,28 +94,28 @@ class ProjectTask extends Model
     }
 
     // Scopes
-    public function scopePending($query)
+    public function scopePending(Builder $query): Builder
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeInProgress($query)
+    public function scopeInProgress(Builder $query): Builder
     {
         return $query->where('status', 'in_progress');
     }
 
-    public function scopeCompleted($query)
+    public function scopeCompleted(Builder $query): Builder
     {
         return $query->where('status', 'completed');
     }
 
-    public function scopeOverdue($query)
+    public function scopeOverdue(Builder $query): Builder
     {
         return $query->where('due_date', '<', now())
                     ->whereNotIn('status', ['completed', 'cancelled']);
     }
 
-    public function scopeHighPriority($query)
+    public function scopeHighPriority(Builder $query): Builder
     {
         return $query->whereIn('priority', ['high', 'critical']);
     }

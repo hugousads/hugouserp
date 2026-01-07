@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Database\Eloquent\Builder;
 
 class CurrencyRate extends Model
 {
@@ -31,18 +32,18 @@ class CurrencyRate extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeForPair($query, string $from, string $to)
+    public function scopeForPair(Builder $query, string $from, string $to): Builder
     {
         return $query->where('from_currency', strtoupper($from))
             ->where('to_currency', strtoupper($to));
     }
 
-    public function scopeEffectiveOn($query, $date = null)
+    public function scopeEffectiveOn(Builder $query, $date = null): Builder
     {
         $date = $date ?? now()->toDateString();
 

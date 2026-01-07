@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProjectExpense extends Model
 {
@@ -87,17 +88,17 @@ class ProjectExpense extends Model
     }
 
     // Scopes
-    public function scopeApproved($query)
+    public function scopeApproved(Builder $query): Builder
     {
         return $query->where('status', 'approved');
     }
 
-    public function scopePending($query)
+    public function scopePending(Builder $query): Builder
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeNeedsReimbursement($query)
+    public function scopeNeedsReimbursement(Builder $query): Builder
     {
         return $query->where('is_reimbursable', true)
                     ->where('status', 'approved')

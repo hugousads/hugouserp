@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class SavedReportView extends Model
 {
@@ -35,7 +36,7 @@ class SavedReportView extends Model
     /**
      * Scope to get views for specific report type
      */
-    public function scopeForReportType($query, string $reportType)
+    public function scopeForReportType(Builder $query, string $reportType): Builder
     {
         return $query->where('report_type', $reportType);
     }
@@ -43,7 +44,7 @@ class SavedReportView extends Model
     /**
      * Scope to get default view for a report type
      */
-    public function scopeDefault($query, string $reportType)
+    public function scopeDefault(Builder $query, string $reportType): Builder
     {
         return $query->where('report_type', $reportType)->where('is_default', true);
     }

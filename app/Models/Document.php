@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Builder;
 
 class Document extends Model
 {
@@ -110,12 +111,12 @@ class Document extends Model
     }
 
     // Scopes
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
     }
 
-    public function scopePublic($query)
+    public function scopePublic(Builder $query): Builder
     {
         return $query->where(function ($q) {
             $q->where('is_public', true)
@@ -123,12 +124,12 @@ class Document extends Model
         });
     }
 
-    public function scopeInFolder($query, string $folder)
+    public function scopeInFolder(Builder $query, string $folder): Builder
     {
         return $query->where('folder', $folder);
     }
 
-    public function scopeByCategory($query, string $category)
+    public function scopeByCategory(Builder $query, string $category): Builder
     {
         return $query->where('category', $category);
     }

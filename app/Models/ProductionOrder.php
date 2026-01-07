@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductionOrder extends BaseModel
 {
@@ -191,7 +192,7 @@ class ProductionOrder extends BaseModel
     /**
      * Scope: By status.
      */
-    public function scopeStatus($query, string $status)
+    public function scopeStatus(Builder $query, string $status): Builder
     {
         return $query->where('status', $status);
     }
@@ -199,7 +200,7 @@ class ProductionOrder extends BaseModel
     /**
      * Scope: In progress.
      */
-    public function scopeInProgress(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeInProgress(Builder $query): Builder
     {
         return $query->whereIn('status', ['planned', 'in_progress']);
     }
@@ -207,7 +208,7 @@ class ProductionOrder extends BaseModel
     /**
      * Scope: Completed.
      */
-    public function scopeCompleted(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeCompleted(Builder $query): Builder
     {
         return $query->where('status', 'completed');
     }
@@ -215,7 +216,7 @@ class ProductionOrder extends BaseModel
     /**
      * Scope: By priority.
      */
-    public function scopePriority(\Illuminate\Database\Eloquent\Builder $query, string $priority): \Illuminate\Database\Eloquent\Builder
+    public function scopePriority(Builder $query, string $priority): Builder
     {
         return $query->where('priority', $priority);
     }

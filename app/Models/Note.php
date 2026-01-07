@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 
 class Note extends Model
 {
@@ -50,12 +51,12 @@ class Note extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public function scopePinned($query)
+    public function scopePinned(Builder $query): Builder
     {
         return $query->where('is_pinned', true);
     }
 
-    public function scopeOfType($query, string $type)
+    public function scopeOfType(Builder $query, string $type): Builder
     {
         return $query->where('type', $type);
     }

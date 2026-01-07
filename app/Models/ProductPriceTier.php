@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductPriceTier extends Model
 {
@@ -49,12 +50,12 @@ class ProductPriceTier extends Model
         return $locale === 'ar' && $this->tier_name_ar ? $this->tier_name_ar : $this->tier_name;
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeForBranch($query, $branchId)
+    public function scopeForBranch(Builder $query, $branchId): Builder
     {
         return $query->where(function ($q) use ($branchId) {
             $q->where('branch_id', $branchId)
@@ -62,7 +63,7 @@ class ProductPriceTier extends Model
         });
     }
 
-    public function scopeForQuantity($query, $quantity)
+    public function scopeForQuantity(Builder $query, $quantity): Builder
     {
         return $query->where('min_quantity', '<=', $quantity)
             ->where(function ($q) use ($quantity) {

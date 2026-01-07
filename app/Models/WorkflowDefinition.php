@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class WorkflowDefinition extends BaseModel
 {
@@ -50,17 +51,17 @@ class WorkflowDefinition extends BaseModel
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeForModule($query, string $moduleName)
+    public function scopeForModule(Builder $query, string $moduleName): Builder
     {
         return $query->where('module_name', $moduleName);
     }
 
-    public function scopeForEntity($query, string $entityType)
+    public function scopeForEntity(Builder $query, string $entityType): Builder
     {
         return $query->where('entity_type', $entityType);
     }

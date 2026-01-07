@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class IncomeCategory extends Model
 {
@@ -39,7 +40,7 @@ class IncomeCategory extends Model
         return app()->getLocale() === 'ar' && $this->name_ar ? $this->name_ar : $this->name;
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }

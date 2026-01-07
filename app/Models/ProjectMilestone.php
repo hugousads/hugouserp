@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProjectMilestone extends Model
 {
@@ -48,17 +49,17 @@ class ProjectMilestone extends Model
     }
 
     // Scopes
-    public function scopePending($query)
+    public function scopePending(Builder $query): Builder
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeAchieved($query)
+    public function scopeAchieved(Builder $query): Builder
     {
         return $query->where('status', 'achieved');
     }
 
-    public function scopeOverdue($query)
+    public function scopeOverdue(Builder $query): Builder
     {
         return $query->where('due_date', '<', now())
                     ->where('status', 'pending');

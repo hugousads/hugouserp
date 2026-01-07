@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class PosSession extends Model
 {
@@ -56,12 +57,12 @@ class PosSession extends Model
         return $this->belongsTo(User::class, 'closed_by');
     }
 
-    public function scopeOpen($query)
+    public function scopeOpen(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_OPEN);
     }
 
-    public function scopeForBranch($query, int $branchId)
+    public function scopeForBranch(Builder $query, int $branchId): Builder
     {
         return $query->where('branch_id', $branchId);
     }

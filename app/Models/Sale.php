@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Builder;
 
 class Sale extends BaseModel
 {
@@ -165,24 +166,24 @@ class Sale extends BaseModel
         return $this->hasMany(SalePayment::class);
     }
 
-    public function scopePosted($q)
+    public function scopePosted(Builder $query): Builder
     {
-        return $q->where('status', 'posted');
+        return $query->where('status', 'posted');
     }
 
-    public function scopePaid($q)
+    public function scopePaid(Builder $query): Builder
     {
-        return $q->where('payment_status', 'paid');
+        return $query->where('payment_status', 'paid');
     }
 
-    public function scopeUnpaid($q)
+    public function scopeUnpaid(Builder $query): Builder
     {
-        return $q->where('payment_status', 'unpaid');
+        return $query->where('payment_status', 'unpaid');
     }
 
-    public function scopeOverdue($q)
+    public function scopeOverdue(Builder $query): Builder
     {
-        return $q->where('payment_status', '!=', 'paid')
+        return $query->where('payment_status', '!=', 'paid')
             ->whereNotNull('payment_due_date')
             ->where('payment_due_date', '<', now());
     }

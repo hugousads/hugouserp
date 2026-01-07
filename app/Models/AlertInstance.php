@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -90,7 +91,7 @@ class AlertInstance extends BaseModel
     /**
      * Scope: By status.
      */
-    public function scopeStatus($query, string $status)
+    public function scopeStatus(Builder $query, string $status): Builder
     {
         return $query->where('status', $status);
     }
@@ -98,7 +99,7 @@ class AlertInstance extends BaseModel
     /**
      * Scope: New alerts.
      */
-    public function scopeNew(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeNew(Builder $query): Builder
     {
         return $query->where('status', 'new');
     }
@@ -106,7 +107,7 @@ class AlertInstance extends BaseModel
     /**
      * Scope: By severity.
      */
-    public function scopeSeverity(\Illuminate\Database\Eloquent\Builder $query, string $severity): \Illuminate\Database\Eloquent\Builder
+    public function scopeSeverity(Builder $query, string $severity): Builder
     {
         return $query->where('severity', $severity);
     }
@@ -114,7 +115,7 @@ class AlertInstance extends BaseModel
     /**
      * Scope: Critical alerts.
      */
-    public function scopeCritical(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeCritical(Builder $query): Builder
     {
         return $query->where('severity', 'critical');
     }

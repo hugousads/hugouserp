@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -61,7 +62,7 @@ class AssetDepreciation extends Model
     /**
      * Scope for posted depreciations
      */
-    public function scopePosted($query)
+    public function scopePosted(Builder $query): Builder
     {
         return $query->where('status', 'posted');
     }
@@ -69,7 +70,7 @@ class AssetDepreciation extends Model
     /**
      * Scope for a specific period
      */
-    public function scopeForPeriod($query, string $period)
+    public function scopeForPeriod(Builder $query, string $period): Builder
     {
         return $query->where('period', $period);
     }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class WorkflowInstance extends Model
 {
@@ -68,17 +69,17 @@ class WorkflowInstance extends Model
         return $this->morphTo('entity', 'entity_type', 'entity_id');
     }
 
-    public function scopePending($query)
+    public function scopePending(Builder $query): Builder
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeApproved($query)
+    public function scopeApproved(Builder $query): Builder
     {
         return $query->where('status', 'approved');
     }
 
-    public function scopeRejected($query)
+    public function scopeRejected(Builder $query): Builder
     {
         return $query->where('status', 'rejected');
     }

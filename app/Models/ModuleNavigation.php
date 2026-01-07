@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class ModuleNavigation extends Model
 {
@@ -64,7 +65,7 @@ class ModuleNavigation extends Model
     /**
      * Scope query to active navigation items
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
@@ -72,7 +73,7 @@ class ModuleNavigation extends Model
     /**
      * Scope query to specific module
      */
-    public function scopeForModule($query, int $moduleId)
+    public function scopeForModule(Builder $query, int $moduleId): Builder
     {
         return $query->where('module_id', $moduleId);
     }
@@ -80,7 +81,7 @@ class ModuleNavigation extends Model
     /**
      * Scope query to root navigation items
      */
-    public function scopeRootItems($query)
+    public function scopeRootItems(Builder $query): Builder
     {
         return $query->whereNull('parent_id');
     }
@@ -88,7 +89,7 @@ class ModuleNavigation extends Model
     /**
      * Scope query ordered by sort order
      */
-    public function scopeOrdered($query)
+    public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('sort_order')->orderBy('nav_label');
     }

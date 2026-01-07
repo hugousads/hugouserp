@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class WorkflowNotification extends Model
 {
@@ -48,17 +49,17 @@ class WorkflowNotification extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function scopePending($query)
+    public function scopePending(Builder $query): Builder
     {
         return $query->where('is_sent', false);
     }
 
-    public function scopeSent($query)
+    public function scopeSent(Builder $query): Builder
     {
         return $query->where('is_sent', true);
     }
 
-    public function scopeUnread($query)
+    public function scopeUnread(Builder $query): Builder
     {
         return $query->whereNull('read_at');
     }

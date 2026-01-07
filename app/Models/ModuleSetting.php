@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Builder;
 
 class ModuleSetting extends Model
 {
@@ -60,12 +61,12 @@ class ModuleSetting extends Model
         $this->setting_value = is_array($value) ? json_encode($value) : (string) $value;
     }
 
-    public function scopeForModule($query, $moduleId)
+    public function scopeForModule(Builder $query, $moduleId): Builder
     {
         return $query->where('module_id', $moduleId);
     }
 
-    public function scopeForBranch($query, $branchId)
+    public function scopeForBranch(Builder $query, $branchId): Builder
     {
         return $query->where(function ($q) use ($branchId) {
             $q->where('branch_id', $branchId)
@@ -73,27 +74,27 @@ class ModuleSetting extends Model
         });
     }
 
-    public function scopeGlobal($query)
+    public function scopeGlobal(Builder $query): Builder
     {
         return $query->whereNull('branch_id');
     }
 
-    public function scopeByScope($query, string $scope)
+    public function scopeByScope(Builder $query, string $scope): Builder
     {
         return $query->where('scope', $scope);
     }
 
-    public function scopeSystem($query)
+    public function scopeSystem(Builder $query): Builder
     {
         return $query->where('is_system', true);
     }
 
-    public function scopeNonSystem($query)
+    public function scopeNonSystem(Builder $query): Builder
     {
         return $query->where('is_system', false);
     }
 
-    public function scopeOrdered($query)
+    public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('priority')->orderBy('setting_key');
     }

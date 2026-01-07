@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class DocumentActivity extends Model
 {
@@ -43,12 +44,12 @@ class DocumentActivity extends Model
     }
 
     // Scopes
-    public function scopeAction($query, string $action)
+    public function scopeAction(Builder $query, string $action): Builder
     {
         return $query->where('action', $action);
     }
 
-    public function scopeByUser($query, int $userId)
+    public function scopeByUser(Builder $query, int $userId): Builder
     {
         return $query->where('user_id', $userId);
     }

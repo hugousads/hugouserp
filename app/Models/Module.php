@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -160,77 +161,77 @@ class Module extends Model
         return ModuleSetting::setValue($this->id, $key, $value, $branchId, $type);
     }
 
-    public function scopeCore($q)
+    public function scopeCore(Builder $query): Builder
     {
-        return $q->where('is_core', true);
+        return $query->where('is_core', true);
     }
 
-    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeKey($q, string $key)
+    public function scopeKey(Builder $query, string $key): Builder
     {
-        return $q->where('key', $key);
+        return $query->where('key', $key);
     }
 
-    public function scopeSlug($q, string $slug)
+    public function scopeSlug(Builder $query, string $slug): Builder
     {
-        return $q->where('slug', $slug);
+        return $query->where('slug', $slug);
     }
 
-    public function scopeRental($q)
+    public function scopeRental(Builder $query): Builder
     {
-        return $q->where('is_rental', true);
+        return $query->where('is_rental', true);
     }
 
-    public function scopeService($q)
+    public function scopeService(Builder $query): Builder
     {
-        return $q->where('is_service', true);
+        return $query->where('is_service', true);
     }
 
-    public function scopeWithInventory($q)
+    public function scopeWithInventory(Builder $query): Builder
     {
-        return $q->where('has_inventory', true);
+        return $query->where('has_inventory', true);
     }
 
-    public function scopeCategory($q, string $category)
+    public function scopeCategory(Builder $query, string $category): Builder
     {
-        return $q->where('category', $category);
+        return $query->where('category', $category);
     }
 
-    public function scopeByType($q, string $type)
+    public function scopeByType(Builder $query, string $type): Builder
     {
-        return $q->where('module_type', $type);
+        return $query->where('module_type', $type);
     }
 
-    public function scopeDataOriented($q)
+    public function scopeDataOriented(Builder $query): Builder
     {
-        return $q->where('module_type', 'data');
+        return $query->where('module_type', 'data');
     }
 
-    public function scopeFunctional($q)
+    public function scopeFunctional(Builder $query): Builder
     {
-        return $q->where('module_type', 'functional');
+        return $query->where('module_type', 'functional');
     }
 
-    public function scopeSupportsReporting($q)
+    public function scopeSupportsReporting(Builder $query): Builder
     {
-        return $q->where('supports_reporting', true);
+        return $query->where('supports_reporting', true);
     }
 
-    public function scopeSupportsCustomFields($q)
+    public function scopeSupportsCustomFields(Builder $query): Builder
     {
-        return $q->where('supports_custom_fields', true);
+        return $query->where('supports_custom_fields', true);
     }
 
     /**
      * Scope to get modules that support items/products
      */
-    public function scopeSupportsItems($q)
+    public function scopeSupportsItems(Builder $query): Builder
     {
-        return $q->where('supports_items', true);
+        return $query->where('supports_items', true);
     }
 
     /**

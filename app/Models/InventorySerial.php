@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class InventorySerial extends Model
 {
@@ -100,7 +101,7 @@ class InventorySerial extends Model
     /**
      * Scope to get available serials
      */
-    public function scopeAvailable($query)
+    public function scopeAvailable(Builder $query): Builder
     {
         return $query->where('status', 'in_stock')
             ->whereNotNull('warehouse_id');
@@ -109,7 +110,7 @@ class InventorySerial extends Model
     /**
      * Scope to get sold serials
      */
-    public function scopeSold($query)
+    public function scopeSold(Builder $query): Builder
     {
         return $query->where('status', 'sold');
     }

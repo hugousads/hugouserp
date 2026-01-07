@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Builder;
 
 class Customer extends BaseModel
 {
@@ -113,19 +114,19 @@ class Customer extends BaseModel
         return $this->hasMany(SalePayment::class);
     }
 
-    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeBlocked($q)
+    public function scopeBlocked(Builder $query): Builder
     {
-        return $q->where('is_blocked', true);
+        return $query->where('is_blocked', true);
     }
 
-    public function scopeWithinCreditLimit($q)
+    public function scopeWithinCreditLimit(Builder $query): Builder
     {
-        return $q->whereRaw('balance <= credit_limit');
+        return $query->whereRaw('balance <= credit_limit');
     }
 
     // Business logic methods

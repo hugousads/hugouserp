@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class AssetMaintenanceLog extends Model
 {
@@ -46,7 +47,7 @@ class AssetMaintenanceLog extends Model
     /**
      * Scope for maintenance by type
      */
-    public function scopeByType($query, string $type)
+    public function scopeByType(Builder $query, string $type): Builder
     {
         return $query->where('maintenance_type', $type);
     }
@@ -54,7 +55,7 @@ class AssetMaintenanceLog extends Model
     /**
      * Scope for upcoming maintenance
      */
-    public function scopeUpcoming($query, int $days = 30)
+    public function scopeUpcoming(Builder $query, int $days = 30): Builder
     {
         return $query->whereNotNull('next_maintenance_date')
             ->whereBetween('next_maintenance_date', [now(), now()->addDays($days)]);

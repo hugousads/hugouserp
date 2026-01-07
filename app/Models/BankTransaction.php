@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class BankTransaction extends Model
 {
@@ -114,7 +115,7 @@ class BankTransaction extends Model
     /**
      * Scope for unreconciled transactions
      */
-    public function scopeUnreconciled($query)
+    public function scopeUnreconciled(Builder $query): Builder
     {
         return $query->whereIn('status', ['pending', 'cleared'])
             ->whereNull('reconciliation_id');
@@ -123,7 +124,7 @@ class BankTransaction extends Model
     /**
      * Scope for a date range
      */
-    public function scopeDateRange($query, $startDate, $endDate)
+    public function scopeDateRange(Builder $query, $startDate, $endDate): Builder
     {
         return $query->whereBetween('transaction_date', [$startDate, $endDate]);
     }

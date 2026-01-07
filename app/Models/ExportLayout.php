@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class ExportLayout extends Model
 {
@@ -45,7 +46,7 @@ class ExportLayout extends Model
         return $this->belongsTo(ReportDefinition::class);
     }
 
-    public function scopeForUser($query, $userId)
+    public function scopeForUser(Builder $query, $userId): Builder
     {
         return $query->where(function ($q) use ($userId) {
             $q->where('user_id', $userId)
@@ -53,12 +54,12 @@ class ExportLayout extends Model
         });
     }
 
-    public function scopeDefault($query)
+    public function scopeDefault(Builder $query): Builder
     {
         return $query->where('is_default', true);
     }
 
-    public function scopeForEntity($query, $entityType)
+    public function scopeForEntity(Builder $query, $entityType): Builder
     {
         return $query->where('entity_type', $entityType);
     }

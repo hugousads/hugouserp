@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class ModuleCustomField extends Model
 {
@@ -42,7 +43,7 @@ class ModuleCustomField extends Model
         return app()->getLocale() === 'ar' && $this->field_label_ar ? $this->field_label_ar : $this->field_label;
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }

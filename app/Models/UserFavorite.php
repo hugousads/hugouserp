@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserFavorite extends Model
 {
@@ -36,7 +37,7 @@ class UserFavorite extends Model
     /**
      * Scope to get favorites for current user
      */
-    public function scopeForUser($query, ?int $userId = null)
+    public function scopeForUser(Builder $query, ?int $userId = null): Builder
     {
         $userId = $userId ?? auth()->id();
         return $query->where('user_id', $userId);
@@ -45,7 +46,7 @@ class UserFavorite extends Model
     /**
      * Scope to order favorites by sort order
      */
-    public function scopeOrdered($query)
+    public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('sort_order')->orderBy('created_at', 'desc');
     }

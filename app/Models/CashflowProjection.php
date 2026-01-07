@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class CashflowProjection extends Model
 {
@@ -70,7 +71,7 @@ class CashflowProjection extends Model
     /**
      * Scope for a date range
      */
-    public function scopeDateRange($query, $startDate, $endDate)
+    public function scopeDateRange(Builder $query, $startDate, $endDate): Builder
     {
         return $query->whereBetween('projection_date', [$startDate, $endDate]);
     }
@@ -78,7 +79,7 @@ class CashflowProjection extends Model
     /**
      * Scope by period type
      */
-    public function scopeByPeriodType($query, string $type)
+    public function scopeByPeriodType(Builder $query, string $type): Builder
     {
         return $query->where('period_type', $type);
     }

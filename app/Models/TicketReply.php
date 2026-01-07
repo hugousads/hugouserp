@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 
 class TicketReply extends Model
 {
@@ -49,17 +50,17 @@ class TicketReply extends Model
     }
 
     // Scopes
-    public function scopeCustomerReplies($query)
+    public function scopeCustomerReplies(Builder $query): Builder
     {
         return $query->where('is_internal', false);
     }
 
-    public function scopeInternalNotes($query)
+    public function scopeInternalNotes(Builder $query): Builder
     {
         return $query->where('is_internal', true);
     }
 
-    public function scopeUnread($query)
+    public function scopeUnread(Builder $query): Builder
     {
         return $query->whereNull('read_at');
     }

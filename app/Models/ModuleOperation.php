@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class ModuleOperation extends Model
 {
@@ -39,7 +40,7 @@ class ModuleOperation extends Model
     /**
      * Scope query to active operations
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
@@ -47,7 +48,7 @@ class ModuleOperation extends Model
     /**
      * Scope query to specific module
      */
-    public function scopeForModule($query, int $moduleId)
+    public function scopeForModule(Builder $query, int $moduleId): Builder
     {
         return $query->where('module_id', $moduleId);
     }
@@ -55,7 +56,7 @@ class ModuleOperation extends Model
     /**
      * Scope query by operation type
      */
-    public function scopeByType($query, string $type)
+    public function scopeByType(Builder $query, string $type): Builder
     {
         return $query->where('operation_type', $type);
     }
@@ -63,7 +64,7 @@ class ModuleOperation extends Model
     /**
      * Scope query ordered by sort order
      */
-    public function scopeOrdered($query)
+    public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('sort_order')->orderBy('operation_name');
     }

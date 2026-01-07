@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class BranchAdmin extends BaseModel
 {
@@ -38,17 +39,17 @@ class BranchAdmin extends BaseModel
         return $this->belongsTo(User::class);
     }
 
-    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopePrimary(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopePrimary(Builder $query): Builder
     {
         return $query->where('is_primary', true);
     }
 
-    public function scopeForBranch($query, $branchId)
+    public function scopeForBranch(Builder $query, $branchId): Builder
     {
         return $query->where('branch_id', $branchId);
     }
