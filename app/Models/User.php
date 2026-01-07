@@ -135,9 +135,9 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
         return 'private-App.Models.User.'.$this->id;
     }
 
-    public function scopeActive($q)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
-        return $q->where('is_active', true);
+        return $query->where('is_active', true);
     }
 
     public function shouldReceiveBroadcastNotifications(): bool

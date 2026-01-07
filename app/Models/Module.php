@@ -165,9 +165,9 @@ class Module extends Model
         return $q->where('is_core', true);
     }
 
-    public function scopeActive($q)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
-        return $q->where('is_active', true);
+        return $query->where('is_active', true);
     }
 
     public function scopeKey($q, string $key)

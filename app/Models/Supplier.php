@@ -102,9 +102,9 @@ class Supplier extends BaseModel
         return $this->hasMany(SupplierQuotation::class);
     }
 
-    public function scopeActive($q)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
-        return $q->where('is_active', true);
+        return $query->where('is_active', true);
     }
 
     public function scopePreferred($q)

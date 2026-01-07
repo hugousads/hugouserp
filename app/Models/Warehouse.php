@@ -81,9 +81,9 @@ class Warehouse extends BaseModel
         return $this->belongsTo(User::class, 'manager_id');
     }
 
-    public function scopeActive($q)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
-        return $q->where('is_active', true);
+        return $query->where('is_active', true);
     }
 
     public function scopeDefault($q)

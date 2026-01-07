@@ -139,9 +139,9 @@ class Branch extends BaseModel
         return $this->hasMany(Branch::class, 'parent_id');
     }
 
-    public function scopeActive($q)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
-        return $q->where('is_active', true);
+        return $query->where('is_active', true);
     }
 
     public function enabledModules()
