@@ -257,9 +257,6 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
             
-            $table->timestamps();
-            $table->softDeletes();
-            
             // Indexes
             $table->index(['branch_id', 'is_active']);
             $table->index(['category_id', 'is_active']);
