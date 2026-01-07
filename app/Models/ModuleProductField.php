@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class ModuleProductField extends Model
 {
@@ -66,27 +67,27 @@ class ModuleProductField extends Model
         return $locale === 'ar' && $this->placeholder_ar ? $this->placeholder_ar : $this->placeholder;
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeForList($query)
+    public function scopeForList(Builder $query): Builder
     {
         return $query->where('show_in_list', true);
     }
 
-    public function scopeForForm($query)
+    public function scopeForForm(Builder $query): Builder
     {
         return $query->where('show_in_form', true);
     }
 
-    public function scopeSearchable($query)
+    public function scopeSearchable(Builder $query): Builder
     {
         return $query->where('is_searchable', true);
     }
 
-    public function scopeFilterable($query)
+    public function scopeFilterable(Builder $query): Builder
     {
         return $query->where('is_filterable', true);
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
@@ -42,14 +43,14 @@ class SystemSetting extends Model
     ];
 
     /** Scopes */
-    public function scopeKey($q, string $key)
+    public function scopeKey(Builder $query, string $key): Builder
     {
-        return $q->where('key', $key);
+        return $query->where('key', $key);
     }
 
-    public function scopeGroup($q, string $group)
+    public function scopeGroup(Builder $query, string $group): Builder
     {
-        return $q->where('group', $group);
+        return $query->where('group', $group);
     }
 
     /**

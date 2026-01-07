@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class ModuleField extends Model
 {
@@ -63,42 +64,42 @@ class ModuleField extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function scopeForModule($query, string $moduleKey)
+    public function scopeForModule(Builder $query, string $moduleKey): Builder
     {
         return $query->where('module_key', $moduleKey);
     }
 
-    public function scopeForEntity($query, string $entity)
+    public function scopeForEntity(Builder $query, string $entity): Builder
     {
         return $query->where('entity', $entity);
     }
 
-    public function scopeVisible($query)
+    public function scopeVisible(Builder $query): Builder
     {
         return $query->where('is_visible', true)->orderBy('order');
     }
 
-    public function scopeByCategory($query, string $category)
+    public function scopeByCategory(Builder $query, string $category): Builder
     {
         return $query->where('field_category', $category);
     }
 
-    public function scopeSystem($query)
+    public function scopeSystem(Builder $query): Builder
     {
         return $query->where('is_system', true);
     }
 
-    public function scopeCustom($query)
+    public function scopeCustom(Builder $query): Builder
     {
         return $query->where('is_system', false);
     }
 
-    public function scopeSearchable($query)
+    public function scopeSearchable(Builder $query): Builder
     {
         return $query->where('is_searchable', true);
     }
 
-    public function scopeBulkEditable($query)
+    public function scopeBulkEditable(Builder $query): Builder
     {
         return $query->where('supports_bulk_edit', true);
     }

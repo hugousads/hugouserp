@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
@@ -83,39 +84,39 @@ class StockMovement extends BaseModel
     }
 
     // Scopes
-    public function scopeIn($q)
+    public function scopeIn(Builder $query): Builder
     {
-        return $q->where('quantity', '>', 0);
+        return $query->where('quantity', '>', 0);
     }
 
-    public function scopeOut($q)
+    public function scopeOut(Builder $query): Builder
     {
-        return $q->where('quantity', '<', 0);
+        return $query->where('quantity', '<', 0);
     }
 
-    public function scopeForProduct($q, $id)
+    public function scopeForProduct(Builder $query, $id): Builder
     {
-        return $q->where('product_id', $id);
+        return $query->where('product_id', $id);
     }
 
-    public function scopePurchase($q)
+    public function scopePurchase(Builder $query): Builder
     {
-        return $q->where('movement_type', 'purchase');
+        return $query->where('movement_type', 'purchase');
     }
 
-    public function scopeSale($q)
+    public function scopeSale(Builder $query): Builder
     {
-        return $q->where('movement_type', 'sale');
+        return $query->where('movement_type', 'sale');
     }
 
-    public function scopeTransfer($q)
+    public function scopeTransfer(Builder $query): Builder
     {
-        return $q->where('movement_type', 'transfer');
+        return $query->where('movement_type', 'transfer');
     }
 
-    public function scopeAdjustment($q)
+    public function scopeAdjustment(Builder $query): Builder
     {
-        return $q->where('movement_type', 'adjustment');
+        return $query->where('movement_type', 'adjustment');
     }
 
     // Backward compatibility accessors

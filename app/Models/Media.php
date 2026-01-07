@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Builder;
 
 class Media extends Model
 {
@@ -115,12 +116,12 @@ class Media extends Model
         return $bytes . ' bytes';
     }
 
-    public function scopeImages($query)
+    public function scopeImages(Builder $query): Builder
     {
         return $query->where('mime_type', 'like', 'image/%');
     }
 
-    public function scopeDocuments($query)
+    public function scopeDocuments(Builder $query): Builder
     {
         $documentTypes = [
             'application/pdf',
@@ -134,17 +135,17 @@ class Media extends Model
         return $query->whereIn('mime_type', $documentTypes);
     }
 
-    public function scopeForUser($query, int $userId)
+    public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('user_id', $userId);
     }
 
-    public function scopeForBranch($query, int $branchId)
+    public function scopeForBranch(Builder $query, int $branchId): Builder
     {
         return $query->where('branch_id', $branchId);
     }
 
-    public function scopeCollection($query, string $collection)
+    public function scopeCollection(Builder $query, string $collection): Builder
     {
         return $query->where('collection', $collection);
     }

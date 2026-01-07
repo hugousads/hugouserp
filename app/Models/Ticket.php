@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class Ticket extends Model
 {
@@ -110,43 +111,43 @@ class Ticket extends Model
     }
 
     // Scopes
-    public function scopeNew($query)
+    public function scopeNew(Builder $query): Builder
     {
         return $query->where('status', 'new');
     }
 
-    public function scopeOpen($query)
+    public function scopeOpen(Builder $query): Builder
     {
         return $query->where('status', 'open');
     }
 
-    public function scopePending($query)
+    public function scopePending(Builder $query): Builder
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeResolved($query)
+    public function scopeResolved(Builder $query): Builder
     {
         return $query->where('status', 'resolved');
     }
 
-    public function scopeClosed($query)
+    public function scopeClosed(Builder $query): Builder
     {
         return $query->where('status', 'closed');
     }
 
-    public function scopeOverdue($query)
+    public function scopeOverdue(Builder $query): Builder
     {
         return $query->where('due_date', '<', now())
             ->whereNotIn('status', ['resolved', 'closed']);
     }
 
-    public function scopeUnassigned($query)
+    public function scopeUnassigned(Builder $query): Builder
     {
         return $query->whereNull('assigned_to');
     }
 
-    public function scopeAssignedTo($query, $userId)
+    public function scopeAssignedTo(Builder $query, $userId): Builder
     {
         return $query->where('assigned_to', $userId);
     }

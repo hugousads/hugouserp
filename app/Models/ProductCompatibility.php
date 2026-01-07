@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductCompatibility extends Model
 {
@@ -34,22 +35,22 @@ class ProductCompatibility extends Model
         return $this->belongsTo(VehicleModel::class);
     }
 
-    public function scopeVerified($query)
+    public function scopeVerified(Builder $query): Builder
     {
         return $query->where('is_verified', true);
     }
 
-    public function scopeForProduct($query, int $productId)
+    public function scopeForProduct(Builder $query, int $productId): Builder
     {
         return $query->where('product_id', $productId);
     }
 
-    public function scopeForVehicle($query, int $vehicleModelId)
+    public function scopeForVehicle(Builder $query, int $vehicleModelId): Builder
     {
         return $query->where('vehicle_model_id', $vehicleModelId);
     }
 
-    public function scopeByOem($query, string $oemNumber)
+    public function scopeByOem(Builder $query, string $oemNumber): Builder
     {
         return $query->where('oem_number', 'like', "%{$oemNumber}%");
     }

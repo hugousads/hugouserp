@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class InventoryBatch extends Model
 {
@@ -74,7 +75,7 @@ class InventoryBatch extends Model
     /**
      * Scope to get active batches
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active')
             ->where('quantity', '>', 0)
@@ -87,7 +88,7 @@ class InventoryBatch extends Model
     /**
      * Scope to get batches expiring soon
      */
-    public function scopeExpiringSoon($query, int $days = 30)
+    public function scopeExpiringSoon(Builder $query, int $days = 30): Builder
     {
         return $query->where('status', 'active')
             ->where('quantity', '>', 0)

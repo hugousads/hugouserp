@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 
 class AuditLog extends Model
 {
@@ -72,22 +73,22 @@ class AuditLog extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function scopeForUser($query, int $userId)
+    public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('user_id', $userId);
     }
 
-    public function scopeForBranch($query, int $branchId)
+    public function scopeForBranch(Builder $query, int $branchId): Builder
     {
         return $query->where('branch_id', $branchId);
     }
 
-    public function scopeForModule($query, string $moduleKey)
+    public function scopeForModule(Builder $query, string $moduleKey): Builder
     {
         return $query->where('module_key', $moduleKey);
     }
 
-    public function scopeForSubject($query, string $type, int $id)
+    public function scopeForSubject(Builder $query, string $type, int $id): Builder
     {
         return $query->where(function ($q) use ($type) {
             $q->where('subject_type', $type)
@@ -98,12 +99,12 @@ class AuditLog extends Model
         });
     }
 
-    public function scopeAction($query, string $action)
+    public function scopeAction(Builder $query, string $action): Builder
     {
         return $query->where('action', 'like', "%{$action}%");
     }
 
-    public function scopeCreatedBetween($query, $from, $to)
+    public function scopeCreatedBetween(Builder $query, $from, $to): Builder
     {
         return $query->whereBetween('created_at', [$from, $to]);
     }

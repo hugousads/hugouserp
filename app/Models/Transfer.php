@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Transfer extends BaseModel
 {
@@ -63,19 +64,19 @@ class Transfer extends BaseModel
         return $this->belongsTo(User::class, 'received_by');
     }
 
-    public function scopePending($q)
+    public function scopePending(Builder $query): Builder
     {
-        return $q->where('status', 'pending');
+        return $query->where('status', 'pending');
     }
 
-    public function scopeInTransit($q)
+    public function scopeInTransit(Builder $query): Builder
     {
-        return $q->where('status', 'in_transit');
+        return $query->where('status', 'in_transit');
     }
 
-    public function scopeCompleted($q)
+    public function scopeCompleted(Builder $query): Builder
     {
-        return $q->where('status', 'completed');
+        return $query->where('status', 'completed');
     }
 
     // Backward compatibility accessor

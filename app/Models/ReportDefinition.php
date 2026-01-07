@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class ReportDefinition extends Model
 {
@@ -75,32 +76,32 @@ class ReportDefinition extends Model
         return $locale === 'ar' && $this->description_ar ? $this->description_ar : $this->description;
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeSystem($query)
+    public function scopeSystem(Builder $query): Builder
     {
         return $query->where('is_system', true);
     }
 
-    public function scopeForModule($query, $moduleId)
+    public function scopeForModule(Builder $query, $moduleId): Builder
     {
         return $query->where('module_id', $moduleId);
     }
 
-    public function scopeBranchSpecific($query)
+    public function scopeBranchSpecific(Builder $query): Builder
     {
         return $query->where('is_branch_specific', true);
     }
 
-    public function scopeGlobal($query)
+    public function scopeGlobal(Builder $query): Builder
     {
         return $query->where('is_branch_specific', false);
     }
 
-    public function scopeOrdered($query)
+    public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('sort_order')->orderBy('report_name');
     }

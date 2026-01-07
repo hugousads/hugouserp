@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class FiscalPeriod extends Model
 {
@@ -29,17 +30,17 @@ class FiscalPeriod extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function scopeOpen($query)
+    public function scopeOpen(Builder $query): Builder
     {
         return $query->where('status', 'open');
     }
 
-    public function scopeClosed($query)
+    public function scopeClosed(Builder $query): Builder
     {
         return $query->where('status', 'closed');
     }
 
-    public function scopeLocked($query)
+    public function scopeLocked(Builder $query): Builder
     {
         return $query->where('status', 'locked');
     }

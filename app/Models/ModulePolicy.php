@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class ModulePolicy extends Model
 {
@@ -45,7 +46,7 @@ class ModulePolicy extends Model
     /**
      * Scope query to active policies
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
@@ -53,7 +54,7 @@ class ModulePolicy extends Model
     /**
      * Scope query to specific module
      */
-    public function scopeForModule($query, int $moduleId)
+    public function scopeForModule(Builder $query, int $moduleId): Builder
     {
         return $query->where('module_id', $moduleId);
     }
@@ -61,7 +62,7 @@ class ModulePolicy extends Model
     /**
      * Scope query to specific branch
      */
-    public function scopeForBranch($query, ?int $branchId)
+    public function scopeForBranch(Builder $query, ?int $branchId): Builder
     {
         return $query->where(function ($q) use ($branchId) {
             $q->where('branch_id', $branchId)
@@ -72,7 +73,7 @@ class ModulePolicy extends Model
     /**
      * Scope query by scope type
      */
-    public function scopeByScope($query, string $scope)
+    public function scopeByScope(Builder $query, string $scope): Builder
     {
         return $query->where('scope', $scope);
     }
@@ -80,7 +81,7 @@ class ModulePolicy extends Model
     /**
      * Scope query ordered by priority
      */
-    public function scopeOrdered($query)
+    public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('priority')->orderBy('policy_name');
     }

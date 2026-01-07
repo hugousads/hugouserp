@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Database\Eloquent\Builder;
 
 class Attachment extends Model
 {
@@ -83,17 +84,17 @@ class Attachment extends Model
         return $this->mime_type === 'application/pdf';
     }
 
-    public function scopeOfType($query, string $type)
+    public function scopeOfType(Builder $query, string $type): Builder
     {
         return $query->where('type', $type);
     }
 
-    public function scopeImages($query)
+    public function scopeImages(Builder $query): Builder
     {
         return $query->where('mime_type', 'like', 'image/%');
     }
 
-    public function scopeDocuments($query)
+    public function scopeDocuments(Builder $query): Builder
     {
         return $query->whereIn('mime_type', [
             'application/pdf',

@@ -253,30 +253,64 @@ class Product extends BaseModel
         return $query->where('has_variations', true);
     }
 
+    /**
+     * Scope to filter products with low stock levels
+     * Returns products where current stock is at or below the alert threshold
+     * 
+     * @param Builder $query
+     * @return Builder
+     * 
+     * @example Product::lowStock()->get()
+     */
     public function scopeLowStock(Builder $query): Builder
     {
         return $query->whereNotNull('stock_alert_threshold')
             ->whereRaw('stock_quantity <= stock_alert_threshold');
     }
 
-    public function scopeOutOfStock(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    /**
+     * Scope to filter products that are out of stock
+     * 
+     * @param Builder $query
+     * @return Builder
+     * 
+     * @example Product::outOfStock()->count()
+     */
+    public function scopeOutOfStock(Builder $query): Builder
     {
         return $query->where('stock_quantity', '<=', 0);
     }
 
-    public function scopeInStock(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    /**
+     * Scope to filter products that are in stock
+     * 
+     * @param Builder $query
+     * @return Builder
+     * 
+     * @example Product::inStock()->get()
+     */
+    public function scopeInStock(Builder $query): Builder
     {
         return $query->where('stock_quantity', '>', 0);
     }
 
-    public function scopeExpiringSoon(\Illuminate\Database\Eloquent\Builder $query, int $days = 30): \Illuminate\Database\Eloquent\Builder
+    /**
+     * Scope to filter perishable products expiring within a specified number of days
+     * 
+     * @param Builder $query
+     * @param int $days Number of days to look ahead (default: 30)
+     * @return Builder
+     * 
+     * @example Product::expiringSoon(7)->get() // Products expiring in 7 days
+     */
+    public function scopeExpiringSoon(Builder $query, int $days = 30): Builder
     {
         return $query->where('is_perishable', true)
             ->whereNotNull('expiry_date')
             ->whereBetween('expiry_date', [now(), now()->addDays($days)]);
     }
 
-    public function scopeExpired(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeExpired(Builder $query): Builder
     {
         return $query->where('is_perishable', true)
             ->whereNotNull('expiry_date')

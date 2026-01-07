@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class FixedAsset extends Model
+class FixedAsset extends BaseModel
 {
-    use SoftDeletes;
 
     /**
      * Fillable fields aligned with migration:
@@ -188,7 +186,7 @@ class FixedAsset extends Model
     /**
      * Scope for active assets
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
     }
@@ -196,7 +194,7 @@ class FixedAsset extends Model
     /**
      * Scope for disposed assets
      */
-    public function scopeDisposed($query)
+    public function scopeDisposed(Builder $query): Builder
     {
         return $query->where('status', 'disposed');
     }
@@ -204,7 +202,7 @@ class FixedAsset extends Model
     /**
      * Scope for fully depreciated assets
      */
-    public function scopeFullyDepreciated($query)
+    public function scopeFullyDepreciated(Builder $query): Builder
     {
         return $query->where('status', 'fully_depreciated');
     }
@@ -212,7 +210,7 @@ class FixedAsset extends Model
     /**
      * Scope for assets by category
      */
-    public function scopeByCategory($query, string $category)
+    public function scopeByCategory(Builder $query, string $category): Builder
     {
         return $query->where('category', $category);
     }

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProjectTimeLog extends Model
 {
@@ -71,7 +72,7 @@ class ProjectTimeLog extends Model
     }
 
     // Scopes
-    public function scopeBillable($query)
+    public function scopeBillable(Builder $query): Builder
     {
         return $query->where(function ($q) {
             $q->where('is_billable', true)
@@ -82,7 +83,7 @@ class ProjectTimeLog extends Model
         });
     }
 
-    public function scopeNonBillable($query)
+    public function scopeNonBillable(Builder $query): Builder
     {
         return $query->where(function ($q) {
             $q->where('is_billable', false)
@@ -93,12 +94,12 @@ class ProjectTimeLog extends Model
         });
     }
 
-    public function scopeForDate($query, $date)
+    public function scopeForDate(Builder $query, $date): Builder
     {
         return $query->whereDate('date', $date);
     }
 
-    public function scopeForEmployee($query, $employeeId)
+    public function scopeForEmployee(Builder $query, $employeeId): Builder
     {
         return $query->where('employee_id', $employeeId);
     }

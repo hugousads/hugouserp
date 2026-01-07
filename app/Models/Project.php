@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 use App\Traits\HasBranch;
+use Illuminate\Database\Eloquent\Builder;
 
 class Project extends Model
 {
@@ -142,22 +143,22 @@ class Project extends Model
     }
 
     // Scopes
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
     }
 
-    public function scopeCompleted($query)
+    public function scopeCompleted(Builder $query): Builder
     {
         return $query->where('status', 'completed');
     }
 
-    public function scopeOverBudget($query)
+    public function scopeOverBudget(Builder $query): Builder
     {
         return $query->whereRaw('actual_cost > budget');
     }
 
-    public function scopeOverdue($query)
+    public function scopeOverdue(Builder $query): Builder
     {
         return $query->where('end_date', '<', Carbon::now())
                     ->whereNotIn('status', ['completed', 'cancelled']);

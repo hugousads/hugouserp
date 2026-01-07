@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -81,19 +82,19 @@ class Warehouse extends BaseModel
         return $this->belongsTo(User::class, 'manager_id');
     }
 
-    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeDefault($q)
+    public function scopeDefault(Builder $query): Builder
     {
-        return $q->where('is_default', true);
+        return $query->where('is_default', true);
     }
 
-    public function scopeSearch($q, $t)
+    public function scopeSearch(Builder $query, $t): Builder
     {
-        return $q->where('name', 'like', "%$t%")->orWhere('code', 'like', "%$t%");
+        return $query->where('name', 'like', "%$t%")->orWhere('code', 'like', "%$t%");
     }
 
     // Backward compatibility accessor

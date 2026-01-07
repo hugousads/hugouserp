@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Account extends Model
+class Account extends BaseModel
 {
     protected $table = 'accounts';
 
@@ -78,17 +78,43 @@ class Account extends Model
         return app()->getLocale() === 'ar' && $this->name_ar ? $this->name_ar : $this->name;
     }
 
-    public function scopeActive($query)
+    /**
+     * Scope to filter active accounts
+     * 
+     * @param Builder $query
+     * @return Builder
+     * 
+     * @example Account::active()->get()
+     */
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeType($query, string $type)
+    /**
+     * Scope to filter accounts by type
+     * 
+     * @param Builder $query
+     * @param string $type Account type (asset, liability, equity, revenue, expense)
+     * @return Builder
+     * 
+     * @example Account::type('asset')->get()
+     */
+    public function scopeType(Builder $query, string $type): Builder
     {
         return $query->where('type', $type);
     }
 
-    public function scopeCategory($query, string $category)
+    /**
+     * Scope to filter accounts by category
+     * 
+     * @param Builder $query
+     * @param string $category Account category
+     * @return Builder
+     * 
+     * @example Account::category('current_assets')->get()
+     */
+    public function scopeCategory(Builder $query, string $category): Builder
     {
         return $query->where('account_category', $category);
     }

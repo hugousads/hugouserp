@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class UnitOfMeasure extends Model
 {
@@ -60,12 +61,12 @@ class UnitOfMeasure extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeBaseUnits($query)
+    public function scopeBaseUnits(Builder $query): Builder
     {
         return $query->where('is_base_unit', true);
     }

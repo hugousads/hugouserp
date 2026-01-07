@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Builder;
 
 class Purchase extends BaseModel
 {
@@ -140,19 +141,19 @@ class Purchase extends BaseModel
     }
 
     // Scopes
-    public function scopeApproved($q)
+    public function scopeApproved(Builder $query): Builder
     {
-        return $q->whereNotNull('approved_at');
+        return $query->whereNotNull('approved_at');
     }
 
-    public function scopePending($q)
+    public function scopePending(Builder $query): Builder
     {
-        return $q->where('status', 'pending');
+        return $query->where('status', 'pending');
     }
 
-    public function scopeOverdue($q)
+    public function scopeOverdue(Builder $query): Builder
     {
-        return $q->where('payment_status', '!=', 'paid')
+        return $query->where('payment_status', '!=', 'paid')
             ->whereNotNull('due_date')
             ->where('due_date', '<', now());
     }

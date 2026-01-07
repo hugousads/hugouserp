@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Builder;
 
 class Supplier extends BaseModel
 {
@@ -102,24 +103,24 @@ class Supplier extends BaseModel
         return $this->hasMany(SupplierQuotation::class);
     }
 
-    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopePreferred($q)
+    public function scopePreferred(Builder $query): Builder
     {
-        return $q->where('is_preferred', true);
+        return $query->where('is_preferred', true);
     }
 
-    public function scopeBlocked($q)
+    public function scopeBlocked(Builder $query): Builder
     {
-        return $q->where('is_blocked', true);
+        return $query->where('is_blocked', true);
     }
 
-    public function scopeNotBlocked($q)
+    public function scopeNotBlocked(Builder $query): Builder
     {
-        return $q->where('is_blocked', false);
+        return $query->where('is_blocked', false);
     }
 
     // Business logic methods

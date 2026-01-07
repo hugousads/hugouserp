@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class VehicleModel extends Model
 {
@@ -50,17 +51,17 @@ class VehicleModel extends Model
         return $name;
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeForBrand($query, string $brand)
+    public function scopeForBrand(Builder $query, string $brand): Builder
     {
         return $query->where('brand', $brand);
     }
 
-    public function scopeForYear($query, int $year)
+    public function scopeForYear(Builder $query, int $year): Builder
     {
         return $query->where(function ($q) use ($year) {
             $q->whereNull('year_from')
