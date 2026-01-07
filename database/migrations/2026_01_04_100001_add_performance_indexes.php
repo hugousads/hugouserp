@@ -114,8 +114,8 @@ return new class extends Migration
         // Journal entries indexes - for accounting reports
         if (Schema::hasTable('journal_entries') && Schema::hasColumn('journal_entries', 'entry_date')) {
             Schema::table('journal_entries', function (Blueprint $table) {
-                // Index for date range queries
-                $this->addIndexIfNotExists($table, 'journal_entries', ['entry_date', 'is_posted'], 'idx_journal_date_posted');
+                // Index for date range queries - fixed to use 'status' instead of non-existent 'is_posted'
+                $this->addIndexIfNotExists($table, 'journal_entries', ['entry_date', 'status'], 'idx_journal_date_posted');
                 
                 // Index for account queries
                 if (Schema::hasColumn('journal_entries', 'branch_id')) {
