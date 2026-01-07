@@ -46,22 +46,22 @@ return new class extends Migration
             $this->setTableOptions($table);
             $table->id();
             $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('code', 50)->unique();
+            $table->string('account_number', 50)->unique();
             $table->string('name', 255);
             $table->string('name_ar', 255)->nullable();
             $table->string('type', 50); // asset, liability, equity, revenue, expense
-            $table->string('sub_type', 50)->nullable();
+            $table->string('sub_category', 50)->nullable();
+            $table->string('account_category', 100)->nullable();
             $table->foreignId('parent_id')->nullable()
                 ->constrained('accounts')
                 ->nullOnDelete();
             $table->text('description')->nullable();
-            $table->decimal('opening_balance', 18, 4)->default(0);
-            $table->decimal('current_balance', 18, 4)->default(0);
-            $table->string('currency', 3)->default('EGP');
+            $table->decimal('balance', 18, 4)->default(0);
+            $table->string('currency_code', 3)->default('EGP');
+            $table->boolean('requires_currency')->default(false);
             $table->boolean('is_active')->default(true)->index();
-            $table->boolean('is_system')->default(false);
-            $table->boolean('allow_manual_entries')->default(true);
-            $table->integer('level')->default(1);
+            $table->boolean('is_system_account')->default(false);
+            $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();
             
