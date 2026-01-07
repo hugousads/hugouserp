@@ -136,7 +136,7 @@ class OrdersController extends BaseApiController
                 if (! empty($validated['external_id'])) {
                     $existing = Sale::query()
                         ->where('branch_id', $branchId)
-                        ->where('reference_no', $validated['external_id'])
+                        ->where('reference_number', $validated['external_id'])
                         ->first();
 
                     if ($existing) {
@@ -201,21 +201,17 @@ class OrdersController extends BaseApiController
                     'warehouse_id' => $warehouseId,
                     'customer_id' => $customerId,
                     'status' => 'draft',
-                    'channel' => 'api',
-                    'sub_total' => $subTotal,
-                    'discount_total' => $itemDiscountTotal + $orderDiscount,
+                    'subtotal' => $subTotal,
+                    'discount_amount' => $itemDiscountTotal + $orderDiscount,
                     'discount_type' => 'fixed',
-                    'discount_value' => $orderDiscount,
-                    'tax_total' => $tax,
-                    'shipping_total' => $shipping,
-                    'grand_total' => $grandTotal,
-                    'paid_total' => 0,
-                    'amount_paid' => 0,
-                    'due_total' => $grandTotal,
-                    'amount_due' => $grandTotal,
+                    'tax_amount' => $tax,
+                    'shipping_amount' => $shipping,
+                    'total_amount' => $grandTotal,
+                    'paid_amount' => 0,
                     'payment_status' => 'unpaid',
                     'notes' => $validated['notes'] ?? null,
-                    'reference_no' => $validated['external_id'] ?? null,
+                    'reference_number' => $validated['external_id'] ?? null,
+                    'sale_date' => now()->toDateString(),
                     'created_by' => auth()->id(),
                 ]);
 
@@ -272,19 +268,16 @@ class OrdersController extends BaseApiController
             return $this->errorResponse(__('Invalid status transition'), 422);
         }
 
-        if ($next === 'completed' && bccomp((string) $order->due_total, '0', 4) === 1) {
+        if ($next === 'completed' && $order->remaining_amount > 0) {
             return $this->errorResponse(__('Cannot complete unpaid order'), 422);
         }
 
         DB::transaction(function () use ($order, $next) {
             $order->status = $next;
-            // Align payment tracking fields
-            $order->payment_status = $order->paid_total >= $order->grand_total
+            // Update payment status based on paid amount
+            $order->payment_status = $order->paid_amount >= $order->total_amount
                 ? 'paid'
-                : ($order->paid_total > 0 ? 'partial' : 'unpaid');
-            $order->amount_paid = $order->paid_total;
-            $order->amount_due = max(0, (float) $order->grand_total - (float) $order->paid_total);
-            $order->due_total = $order->amount_due;
+                : ($order->paid_amount > 0 ? 'partial' : 'unpaid');
             $order->save();
         });
 
@@ -295,11 +288,11 @@ class OrdersController extends BaseApiController
     {
         $store = $this->getStore($request);
 
-        // BUG-007 FIX: Use reference_no instead of external_reference to match order creation
+        // BUG-007 FIX: Use reference_number instead of external_reference to match order creation
         $order = Sale::query()
             ->with(['customer', 'items.product'])
             ->when($store?->branch_id, fn ($q) => $q->where('branch_id', $store->branch_id))
-            ->where('reference_no', $externalId)
+            ->where('reference_number', $externalId)
             ->first();
 
         if (! $order) {
