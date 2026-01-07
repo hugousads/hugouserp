@@ -66,12 +66,12 @@
                             {{ $alert->warehouse?->name ?? __('All') }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="font-bold {{ $alert->current_qty <= $alert->min_qty * 0.25 ? 'text-red-600' : 'text-yellow-600' }}">
-                                {{ $alert->current_qty }}
+                            <span class="font-bold {{ $alert->current_stock <= $alert->alert_threshold * 0.25 ? 'text-red-600' : 'text-yellow-600' }}">
+                                {{ $alert->current_stock }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">
-                            {{ $alert->min_qty }}
+                            {{ $alert->alert_threshold }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($alert->status === 'active')

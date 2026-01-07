@@ -11,14 +11,14 @@ class SupplierQuotationItem extends BaseModel
     protected $table = 'supplier_quotation_items';
 
     protected $fillable = [
-        'quotation_id', 'product_id', 'qty', 'uom',
+        'quotation_id', 'product_id', 'quantity', 'uom',
         'unit_cost', 'discount', 'tax_rate', 'line_total',
         'specifications', 'notes', 'extra_attributes',
         'created_by', 'updated_by',
     ];
 
     protected $casts = [
-        'qty' => 'decimal:4',
+        'quantity' => 'decimal:4',
         'unit_cost' => 'decimal:4',
         'discount' => 'decimal:4',
         'tax_rate' => 'decimal:4',
@@ -45,5 +45,16 @@ class SupplierQuotationItem extends BaseModel
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    // Backward compatibility accessors for qty
+    public function getQtyAttribute()
+    {
+        return $this->quantity;
+    }
+
+    public function setQtyAttribute($value): void
+    {
+        $this->attributes['quantity'] = $value;
     }
 }

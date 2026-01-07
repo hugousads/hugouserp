@@ -11,13 +11,13 @@ class PurchaseRequisitionItem extends BaseModel
     protected $table = 'purchase_requisition_items';
 
     protected $fillable = [
-        'requisition_id', 'product_id', 'qty', 'uom',
+        'requisition_id', 'product_id', 'quantity', 'uom',
         'estimated_unit_cost', 'estimated_total', 'specifications', 'notes',
         'extra_attributes', 'created_by', 'updated_by',
     ];
 
     protected $casts = [
-        'qty' => 'decimal:4',
+        'quantity' => 'decimal:4',
         'estimated_unit_cost' => 'decimal:4',
         'estimated_total' => 'decimal:4',
         'extra_attributes' => 'array',
@@ -42,5 +42,16 @@ class PurchaseRequisitionItem extends BaseModel
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    // Backward compatibility accessors for qty
+    public function getQtyAttribute()
+    {
+        return $this->quantity;
+    }
+
+    public function setQtyAttribute($value): void
+    {
+        $this->attributes['quantity'] = $value;
     }
 }
