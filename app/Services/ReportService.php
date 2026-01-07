@@ -23,7 +23,8 @@ class ReportService implements ReportServiceInterface
 
     public function __construct(?BranchAccessService $branchAccessService = null)
     {
-        $this->branchAccessService = $branchAccessService ?? new BranchAccessService;
+        // Use provided instance or resolve from container
+        $this->branchAccessService = $branchAccessService ?? app(BranchAccessService::class);
     }
 
     public function financeSummary(int $branchId, ?string $from = null, ?string $to = null): array

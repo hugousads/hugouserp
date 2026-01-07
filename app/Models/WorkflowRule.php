@@ -30,7 +30,7 @@ class WorkflowRule extends Model
         return $this->belongsTo(WorkflowDefinition::class, 'workflow_definition_id');
     }
 
-    public function scopeActive($query)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('is_active', true);
     }

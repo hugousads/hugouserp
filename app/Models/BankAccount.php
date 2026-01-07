@@ -81,7 +81,7 @@ class BankAccount extends BaseModel
     /**
      * Scope for active accounts
      */
-    public function scopeActive($query)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('status', 'active');
     }
@@ -89,7 +89,7 @@ class BankAccount extends BaseModel
     /**
      * Scope by currency
      */
-    public function scopeByCurrency($query, string $currency)
+    public function scopeByCurrency(\Illuminate\Database\Eloquent\Builder $query, string $currency): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('currency', $currency);
     }
