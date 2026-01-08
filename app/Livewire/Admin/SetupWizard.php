@@ -216,15 +216,16 @@ class SetupWizard extends Component
                 }
             }
 
-            // Create admin user with password using forceCreate to bypass mass assignment protection
-            $user = User::forceCreate([
+            // Create admin user (password is set separately as it's guarded)
+            $user = new User([
                 'name' => $this->adminName,
                 'email' => $this->adminEmail,
-                'password' => Hash::make($this->adminPassword),
                 'branch_id' => $branch->id,
                 'locale' => $this->locale,
                 'is_active' => true,
             ]);
+            $user->password = Hash::make($this->adminPassword);
+            $user->save();
 
             // Get or create super-admin role (using firstOrCreate is safe within transaction)
             $superAdminRole = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
