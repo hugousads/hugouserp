@@ -291,7 +291,7 @@ return new class extends Migration
             $table->decimal('min_quantity', 18, 4)->nullable();
             $table->timestamps();
 
-            $table->unique(['product_id', 'price_group_id', 'min_quantity']);
+            $table->unique(['product_id', 'price_group_id', 'min_quantity'], 'price_tiers_prod_group_qty_unq');
         });
 
         // Product variations

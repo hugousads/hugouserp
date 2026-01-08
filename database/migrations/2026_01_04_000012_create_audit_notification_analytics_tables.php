@@ -424,7 +424,7 @@ return new class extends Migration
             $table->integer('sample_count')->default(0);
             $table->timestamp('calculated_at')->useCurrent();
 
-            $table->unique(['branch_id', 'metric_name', 'period', 'period_value']);
+            $table->unique(['branch_id', 'metric_name', 'period', 'period_value'], 'anomaly_branch_metric_period_unq');
         });
 
         // Cashflow projections
