@@ -12,6 +12,18 @@ use Illuminate\Database\Seeder;
 class ChartOfAccountsSeeder extends Seeder
 {
     /**
+     * Helper method to get account ID by account number
+     * Uses DB::table to avoid Eloquent attribute access issues during seeding
+     */
+    protected function getAccountId(int $branchId, string $accountNumber): ?int
+    {
+        return \DB::table('accounts')
+            ->where('branch_id', $branchId)
+            ->where('account_number', $accountNumber)
+            ->value('id');
+    }
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
@@ -48,7 +60,7 @@ class ChartOfAccountsSeeder extends Seeder
     protected function createAssetAccounts(int $branchId): void
     {
         // Current Assets
-        $currentAssets = Account::updateOrCreate(
+        Account::updateOrCreate(
             [
                 'branch_id' => $branchId,
                 'account_number' => '1000',
@@ -63,10 +75,7 @@ class ChartOfAccountsSeeder extends Seeder
         );
         
         // Get ID from database to avoid Eloquent attribute issues
-        $currentAssetsId = \DB::table('accounts')
-            ->where('branch_id', $branchId)
-            ->where('account_number', '1000')
-            ->value('id');
+        $currentAssetsId = $this->getAccountId($branchId, '1000');
 
         Account::updateOrCreate(
             [
@@ -108,7 +117,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name_ar' => 'العملاء (المدينون)',
                 'type' => 'asset',
                 'account_category' => 'current',
-                'parent_id' => $currentAssets->id,
+                'parent_id' => $currentAssetsId,
                 'is_active' => true,
             ]
         );
@@ -123,13 +132,13 @@ class ChartOfAccountsSeeder extends Seeder
                 'name_ar' => 'المخزون',
                 'type' => 'asset',
                 'account_category' => 'current',
-                'parent_id' => $currentAssets->id,
+                'parent_id' => $currentAssetsId,
                 'is_active' => true,
             ]
         );
 
         // Fixed Assets
-        $fixedAssets = Account::updateOrCreate(
+        Account::updateOrCreate(
             [
                 'branch_id' => $branchId,
                 'account_number' => '1500',
@@ -142,6 +151,8 @@ class ChartOfAccountsSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+        
+        $fixedAssetsId = $this->getAccountId($branchId, '1500');
 
         Account::updateOrCreate(
             [
@@ -153,7 +164,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name_ar' => 'الممتلكات والمعدات',
                 'type' => 'asset',
                 'account_category' => 'fixed',
-                'parent_id' => $fixedAssets->id,
+                'parent_id' => $fixedAssetsId,
                 'is_active' => true,
             ]
         );
@@ -165,7 +176,7 @@ class ChartOfAccountsSeeder extends Seeder
     protected function createLiabilityAccounts(int $branchId): void
     {
         // Current Liabilities
-        $currentLiabilities = Account::updateOrCreate(
+        Account::updateOrCreate(
             [
                 'branch_id' => $branchId,
                 'account_number' => '2000',
@@ -178,6 +189,8 @@ class ChartOfAccountsSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+        
+        $currentLiabilitiesId = $this->getAccountId($branchId, '2000');
 
         Account::updateOrCreate(
             [
@@ -189,7 +202,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name_ar' => 'الموردون (الدائنون)',
                 'type' => 'liability',
                 'account_category' => 'current',
-                'parent_id' => $currentLiabilities->id,
+                'parent_id' => $currentLiabilitiesId,
                 'is_active' => true,
             ]
         );
@@ -204,18 +217,16 @@ class ChartOfAccountsSeeder extends Seeder
                 'name_ar' => 'الضرائب المستحقة',
                 'type' => 'liability',
                 'account_category' => 'current',
-                'parent_id' => $currentLiabilities->id,
+                'parent_id' => $currentLiabilitiesId,
                 'is_active' => true,
             ]
         );
 
         // Tax Recoverable is an asset (receivable from government)
         // Find the Current Assets parent account
-        $currentAssets = Account::where('branch_id', $branchId)
-            ->where('account_number', '1000')
-            ->first();
+        $currentAssetsId = $this->getAccountId($branchId, '1000');
 
-        if ($currentAssets) {
+        if ($currentAssetsId) {
             Account::updateOrCreate(
                 [
                     'branch_id' => $branchId,
@@ -226,7 +237,7 @@ class ChartOfAccountsSeeder extends Seeder
                     'name_ar' => 'الضرائب القابلة للاسترداد',
                     'type' => 'asset',
                     'account_category' => 'current',
-                    'parent_id' => $currentAssets->id,
+                    'parent_id' => $currentAssetsId,
                     'is_active' => true,
                 ]
             );
@@ -244,7 +255,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name_ar' => 'الرواتب المستحقة',
                 'type' => 'liability',
                 'account_category' => 'current',
-                'parent_id' => $currentLiabilities->id,
+                'parent_id' => $currentLiabilitiesId,
                 'is_active' => true,
             ]
         );
@@ -255,7 +266,7 @@ class ChartOfAccountsSeeder extends Seeder
      */
     protected function createEquityAccounts(int $branchId): void
     {
-        $equity = Account::updateOrCreate(
+        Account::updateOrCreate(
             [
                 'branch_id' => $branchId,
                 'account_number' => '3000',
@@ -267,6 +278,8 @@ class ChartOfAccountsSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+        
+        $equityId = $this->getAccountId($branchId, '3000');
 
         Account::updateOrCreate(
             [
@@ -277,7 +290,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name' => 'Capital',
                 'name_ar' => 'رأس المال',
                 'type' => 'equity',
-                'parent_id' => $equity->id,
+                'parent_id' => $equityId,
                 'is_active' => true,
             ]
         );
@@ -291,7 +304,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name' => 'Retained Earnings',
                 'name_ar' => 'الأرباح المحتجزة',
                 'type' => 'equity',
-                'parent_id' => $equity->id,
+                'parent_id' => $equityId,
                 'is_active' => true,
             ]
         );
@@ -302,7 +315,7 @@ class ChartOfAccountsSeeder extends Seeder
      */
     protected function createRevenueAccounts(int $branchId): void
     {
-        $revenue = Account::updateOrCreate(
+        Account::updateOrCreate(
             [
                 'branch_id' => $branchId,
                 'account_number' => '4000',
@@ -314,6 +327,8 @@ class ChartOfAccountsSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+        
+        $revenueId = $this->getAccountId($branchId, '4000');
 
         Account::updateOrCreate(
             [
@@ -324,7 +339,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name' => 'Sales Revenue',
                 'name_ar' => 'إيرادات المبيعات',
                 'type' => 'revenue',
-                'parent_id' => $revenue->id,
+                'parent_id' => $revenueId,
                 'is_active' => true,
             ]
         );
@@ -338,7 +353,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name' => 'Rental Revenue',
                 'name_ar' => 'إيرادات الإيجار',
                 'type' => 'revenue',
-                'parent_id' => $revenue->id,
+                'parent_id' => $revenueId,
                 'is_active' => true,
             ]
         );
@@ -352,7 +367,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name' => 'Service Revenue',
                 'name_ar' => 'إيرادات الخدمات',
                 'type' => 'revenue',
-                'parent_id' => $revenue->id,
+                'parent_id' => $revenueId,
                 'is_active' => true,
             ]
         );
@@ -363,7 +378,7 @@ class ChartOfAccountsSeeder extends Seeder
      */
     protected function createExpenseAccounts(int $branchId): void
     {
-        $expenses = Account::updateOrCreate(
+        Account::updateOrCreate(
             [
                 'branch_id' => $branchId,
                 'account_number' => '5000',
@@ -375,6 +390,8 @@ class ChartOfAccountsSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+        
+        $expensesId = $this->getAccountId($branchId, '5000');
 
         Account::updateOrCreate(
             [
@@ -385,7 +402,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name' => 'Cost of Goods Sold',
                 'name_ar' => 'تكلفة البضاعة المباعة',
                 'type' => 'expense',
-                'parent_id' => $expenses->id,
+                'parent_id' => $expensesId,
                 'is_active' => true,
             ]
         );
@@ -399,7 +416,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name' => 'Salaries & Wages',
                 'name_ar' => 'الرواتب والأجور',
                 'type' => 'expense',
-                'parent_id' => $expenses->id,
+                'parent_id' => $expensesId,
                 'is_active' => true,
             ]
         );
@@ -413,7 +430,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name' => 'Rent Expense',
                 'name_ar' => 'مصروف الإيجار',
                 'type' => 'expense',
-                'parent_id' => $expenses->id,
+                'parent_id' => $expensesId,
                 'is_active' => true,
             ]
         );
@@ -427,7 +444,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name' => 'Utilities Expense',
                 'name_ar' => 'مصروفات المرافق',
                 'type' => 'expense',
-                'parent_id' => $expenses->id,
+                'parent_id' => $expensesId,
                 'is_active' => true,
             ]
         );
@@ -441,7 +458,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name' => 'Sales Discount',
                 'name_ar' => 'خصم المبيعات',
                 'type' => 'expense',
-                'parent_id' => $expenses->id,
+                'parent_id' => $expensesId,
                 'is_active' => true,
             ]
         );
@@ -460,7 +477,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'cash_account',
             ],
             [
-                'account_id' => Account::where('account_number', '1010')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '1010'),
                 'is_active' => true,
             ]
         );
@@ -472,7 +489,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'accounts_receivable',
             ],
             [
-                'account_id' => Account::where('account_number', '1100')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '1100'),
                 'is_active' => true,
             ]
         );
@@ -484,7 +501,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'sales_revenue',
             ],
             [
-                'account_id' => Account::where('account_number', '4100')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '4100'),
                 'is_active' => true,
             ]
         );
@@ -496,7 +513,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'tax_payable',
             ],
             [
-                'account_id' => Account::where('account_number', '2200')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '2200'),
                 'is_active' => true,
             ]
         );
@@ -508,7 +525,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'sales_discount',
             ],
             [
-                'account_id' => Account::where('account_number', '5500')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '5500'),
                 'is_active' => true,
             ]
         );
@@ -521,7 +538,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'cash_account',
             ],
             [
-                'account_id' => Account::where('account_number', '1010')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '1010'),
                 'is_active' => true,
             ]
         );
@@ -533,7 +550,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'accounts_payable',
             ],
             [
-                'account_id' => Account::where('account_number', '2100')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '2100'),
                 'is_active' => true,
             ]
         );
@@ -545,7 +562,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'inventory_account',
             ],
             [
-                'account_id' => Account::where('account_number', '1200')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '1200'),
                 'is_active' => true,
             ]
         );
@@ -557,7 +574,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'tax_recoverable',
             ],
             [
-                'account_id' => Account::where('account_number', '1150')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '1150'),
                 'is_active' => true,
             ]
         );
@@ -570,7 +587,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'salaries_expense',
             ],
             [
-                'account_id' => Account::where('account_number', '5200')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '5200'),
                 'is_active' => true,
             ]
         );
@@ -582,7 +599,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'salaries_payable',
             ],
             [
-                'account_id' => Account::where('account_number', '2300')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '2300'),
                 'is_active' => true,
             ]
         );
@@ -595,7 +612,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'rental_revenue',
             ],
             [
-                'account_id' => Account::where('account_number', '4200')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '4200'),
                 'is_active' => true,
             ]
         );
@@ -607,7 +624,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'mapping_key' => 'cash_account',
             ],
             [
-                'account_id' => Account::where('account_number', '1010')->first()->id,
+                'account_id' => $this->getAccountId($branchId, '1010'),
                 'is_active' => true,
             ]
         );

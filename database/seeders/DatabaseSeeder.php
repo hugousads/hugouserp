@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
             AdvancedReportPermissionsSeeder::class,
             CurrencySeeder::class,
             CurrencyRatesSeeder::class,
-            // ChartOfAccountsSeeder::class, // Temporarily disabled - has Eloquent attribute access issues
+            ChartOfAccountsSeeder::class,
             VehicleModelsSeeder::class,
             ReportTemplatesSeeder::class,
             PreConfiguredModulesSeeder::class,
