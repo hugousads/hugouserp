@@ -29,21 +29,18 @@ class UsersSeeder extends Seeder
         $userId = \DB::table('users')->where('email', $email)->value('id');
 
         if (! $userId) {
-            // Create user
-            $user = User::query()->create([
+            // Create user with password using forceCreate to bypass mass assignment protection
+            $user = User::query()->forceCreate([
                 'name' => 'Super Admin',
                 'email' => $email,
                 'phone' => '0150386787',
+                'password' => Hash::make('0150386787'),
                 'is_active' => true,
                 'username' => 'admin',
                 'locale' => 'en',
                 'timezone' => config('app.timezone'),
                 'branch_id' => $branchId,
             ]);
-            
-            // Set password directly (not mass-assignable due to guarded property)
-            $user->password = Hash::make('0150386787');
-            $user->save();
             
             // Get the ID of the created user
             $userId = $user->id;

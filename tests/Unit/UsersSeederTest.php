@@ -28,6 +28,7 @@ class UsersSeederTest extends TestCase
         // Create a branch first (required by seeder)
         DB::table('branches')->insert([
             'name' => 'Main Branch',
+            'code' => 'MAIN',
             'is_main' => true,
             'is_active' => true,
             'created_at' => now(),
@@ -55,13 +56,18 @@ class UsersSeederTest extends TestCase
         // Assert user was created
         $this->assertNotNull($user);
         
+        // Get password from database directly since it's hidden
+        $userWithPassword = DB::table('users')
+            ->where('email', 'admin@ghanem-lvju-egypt.com')
+            ->first();
+        
         // Assert password is set and is not null
-        $this->assertNotNull($user->password);
-        $this->assertNotEmpty($user->password);
+        $this->assertNotNull($userWithPassword->password);
+        $this->assertNotEmpty($userWithPassword->password);
 
         // Assert the password can be verified with the correct password
         $this->assertTrue(
-            Hash::check('0150386787', $user->password),
+            Hash::check('0150386787', $userWithPassword->password),
             'The seeded user password should match the expected password'
         );
 
