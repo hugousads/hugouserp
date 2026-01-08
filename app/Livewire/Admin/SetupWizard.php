@@ -216,17 +216,15 @@ class SetupWizard extends Component
                 }
             }
 
-            // Create admin user (password is set separately as it's guarded)
-            $user = new User([
+            // Create admin user
+            $user = User::create([
                 'name' => $this->adminName,
                 'email' => $this->adminEmail,
+                'password' => Hash::make($this->adminPassword),
                 'branch_id' => $branch->id,
                 'locale' => $this->locale,
-                'timezone' => $this->timezone,
                 'is_active' => true,
             ]);
-            $user->password = Hash::make($this->adminPassword);
-            $user->save();
 
             // Get or create super-admin role (using firstOrCreate is safe within transaction)
             $superAdminRole = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);

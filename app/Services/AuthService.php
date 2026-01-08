@@ -166,7 +166,7 @@ class AuthService implements AuthServiceInterface
                     ];
                 }
 
-                if (! Hash::check($password, $user->getAuthPassword())) {
+                if (! Hash::check($password, $user->password)) {
                     return [
                         'success' => false,
                         'error' => 'invalid_password',

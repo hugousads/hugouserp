@@ -29,10 +29,11 @@ class UsersSeeder extends Seeder
         $userId = \DB::table('users')->where('email', $email)->value('id');
 
         if (! $userId) {
-            // Create user (password is set separately as it's guarded)
-            $user = new User([
+            // Create user
+            User::query()->create([
                 'name' => 'Super Admin',
                 'email' => $email,
+                'password' => Hash::make('0150386787'),
                 'phone' => '0150386787',
                 'is_active' => true,
                 'username' => 'admin',
@@ -40,11 +41,9 @@ class UsersSeeder extends Seeder
                 'timezone' => config('app.timezone'),
                 'branch_id' => $branchId,
             ]);
-            $user->password = Hash::make('0150386787');
-            $user->save();
             
             // Get the ID of the created user
-            $userId = $user->id;
+            $userId = \DB::table('users')->where('email', $email)->value('id');
         }
 
         if ($userId && $branchId) {

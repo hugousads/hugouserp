@@ -34,7 +34,7 @@ class AuthController extends Controller
         }
 
         $user = User::query()->where('email', $request->input('email'))->first();
-        if (! $user || ! Hash::check($request->input('password'), $user->getAuthPassword())) {
+        if (! $user || ! Hash::check($request->input('password'), $user->password)) {
             $this->limiter->hit($key, $decaySeconds);
 
             return $this->fail(__('Invalid credentials'), 422);
