@@ -30,10 +30,9 @@ class UsersSeeder extends Seeder
 
         if (! $userId) {
             // Create user
-            User::query()->create([
+            $user = User::query()->create([
                 'name' => 'Super Admin',
                 'email' => $email,
-                'password' => Hash::make('0150386787'),
                 'phone' => '0150386787',
                 'is_active' => true,
                 'username' => 'admin',
@@ -42,8 +41,12 @@ class UsersSeeder extends Seeder
                 'branch_id' => $branchId,
             ]);
             
+            // Set password directly (not mass-assignable due to guarded property)
+            $user->password = Hash::make('0150386787');
+            $user->save();
+            
             // Get the ID of the created user
-            $userId = \DB::table('users')->where('email', $email)->value('id');
+            $userId = $user->id;
         }
 
         if ($userId && $branchId) {
