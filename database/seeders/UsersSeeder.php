@@ -16,14 +16,21 @@ class UsersSeeder extends Seeder
     {
         $email = 'admin@ghanem-lvju-egypt.com';
 
-        /** @var User|null $existing */
-        $existing = User::query()->where('email', $email)->first();
+        // Get branch ID directly from database
+        $branchId = \DB::table('branches')
+            ->where('is_main', true)
+            ->value('id');
+        
+        if (! $branchId) {
+            $branchId = \DB::table('branches')->value('id');
+        }
 
-        /** @var Branch|null $branch */
-        $branch = Branch::query()->where('is_main', true)->first() ?? Branch::query()->first();
+        // Check if user already exists using DB::table to avoid model issues
+        $userId = \DB::table('users')->where('email', $email)->value('id');
 
-        if (! $existing) {
-            $existing = User::query()->create([
+        if (! $userId) {
+            // Create user
+            User::query()->create([
                 'name' => 'Super Admin',
                 'email' => $email,
                 'password' => Hash::make('0150386787'),
@@ -32,23 +39,56 @@ class UsersSeeder extends Seeder
                 'username' => 'admin',
                 'locale' => 'en',
                 'timezone' => config('app.timezone'),
-                'branch_id' => $branch?->id,
+                'branch_id' => $branchId,
             ]);
+            
+            // Get the ID of the created user
+            $userId = \DB::table('users')->where('email', $email)->value('id');
         }
 
-        if ($branch && method_exists($existing, 'branches')) {
-            $existing->branches()->syncWithoutDetaching([$branch->id]);
+        if ($userId && $branchId) {
+            // Sync branches using DB::table to avoid model issues
+            $existing = \DB::table('branch_user')
+                ->where('user_id', $userId)
+                ->where('branch_id', $branchId)
+                ->exists();
+            
+            if (! $existing) {
+                \DB::table('branch_user')->insert([
+                    'user_id' => $userId,
+                    'branch_id' => $branchId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
-        /** @var Role|null $superAdmin */
-        $superAdmin = Role::query()
+        // Assign role - use DB to get model_id to avoid the attribute issue
+        $userId = \DB::table('users')->where('email', $email)->value('id');
+        
+        if (! $userId) {
+            return;
+        }
+
+        $superAdminRoleId = \DB::table('roles')
             ->where('name', 'Super Admin')
             ->where('guard_name', 'web')
-            ->first();
+            ->value('id');
 
-        if ($superAdmin && method_exists($existing, 'assignRole')) {
-            if (! $existing->hasRole($superAdmin->name)) {
-                $existing->assignRole($superAdmin);
+        if ($superAdminRoleId) {
+            // Check if role is already assigned
+            $hasRole = \DB::table('model_has_roles')
+                ->where('role_id', $superAdminRoleId)
+                ->where('model_type', 'App\\Models\\User')
+                ->where('model_id', $userId)
+                ->exists();
+            
+            if (! $hasRole) {
+                \DB::table('model_has_roles')->insert([
+                    'role_id' => $superAdminRoleId,
+                    'model_type' => 'App\\Models\\User',
+                    'model_id' => $userId,
+                ]);
             }
         }
     }

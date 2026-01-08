@@ -97,11 +97,20 @@ return new class extends Migration
         Schema::create('report_definitions', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
-            $table->string('name', 255);
-            $table->string('slug', 100)->unique();
+            $table->string('report_key', 100)->unique(); // Unique key for the report
+            $table->string('name', 255)->nullable();
+            $table->string('report_name', 255)->nullable(); // Alternative name field
+            $table->string('report_name_ar', 255)->nullable(); // Arabic name
+            $table->string('slug', 100)->nullable(); // Made nullable
             $table->text('description')->nullable();
+            $table->text('description_ar')->nullable(); // Arabic description
+            $table->string('report_type', 50)->default('table'); // table, chart, pivot, etc.
             $table->string('category', 100)->nullable()->index();
-            $table->string('data_source', 255);
+            $table->string('data_source', 255)->nullable();
+            $table->foreignId('module_id')->nullable()->constrained()->nullOnDelete(); // Associated module
+            $table->boolean('is_branch_specific')->default(true);
+            $table->boolean('supports_export')->default(true);
+            $table->json('export_formats')->nullable(); // Supported export formats
             $table->json('columns')->nullable();
             $table->json('filters')->nullable();
             $table->json('grouping')->nullable();
@@ -125,7 +134,16 @@ return new class extends Migration
             $table->foreignId('report_definition_id')->nullable()
                 ->constrained('report_definitions')
                 ->nullOnDelete();
+            $table->string('key', 100)->unique(); // Unique key for the report template
             $table->string('name', 255);
+            $table->text('description')->nullable();
+            $table->string('route_name', 255)->nullable(); // Route name for generating the report
+            $table->json('default_filters')->nullable(); // Default filter values
+            $table->string('output_type', 50)->default('web'); // web, pdf, excel, csv
+            $table->json('export_columns')->nullable(); // Columns to export
+            $table->string('module', 100)->nullable(); // Module this report belongs to
+            $table->string('required_permission', 255)->nullable(); // Permission required to view
+            $table->boolean('is_active')->default(true);
             $table->string('format', 50)->default('pdf'); // pdf, excel, csv
             $table->string('page_size', 20)->default('A4');
             $table->string('orientation', 20)->default('portrait');
@@ -683,12 +701,21 @@ return new class extends Migration
             $this->setTableOptions($table);
             $table->id();
             $table->foreignId('module_id')->constrained()->cascadeOnDelete();
-            $table->string('name', 255);
+            $table->string('name', 255)->nullable();
             $table->string('name_ar', 255)->nullable();
             $table->string('field_key', 100);
+            $table->string('field_label', 255)->nullable(); // Display label
+            $table->string('field_label_ar', 255)->nullable(); // Arabic display label
+            $table->string('placeholder', 255)->nullable(); // Placeholder text
+            $table->string('placeholder_ar', 255)->nullable(); // Arabic placeholder
             $table->string('field_type', 50);
+            $table->string('field_group', 100)->nullable(); // Group fields together (e.g., 'details', 'specs')
             $table->json('options')->nullable();
+            $table->json('field_options')->nullable(); // Options for select fields
             $table->boolean('is_required')->default(false);
+            $table->boolean('is_searchable')->default(false);
+            $table->boolean('is_filterable')->default(false);
+            $table->boolean('show_in_list')->default(false);
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->timestamps();

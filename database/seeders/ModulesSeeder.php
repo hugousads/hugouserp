@@ -90,17 +90,23 @@ class ModulesSeeder extends Seeder
             $createdModules[$row['key']] = $module;
         }
 
-        /** @var Branch|null $branch */
-        $branch = Branch::query()->where('is_main', true)->first() ?? Branch::query()->first();
+        // Get the first branch (preferably the main one)
+        $branchId = \DB::table('branches')
+            ->where('is_main', true)
+            ->value('id');
+        
+        if (! $branchId) {
+            $branchId = \DB::table('branches')->value('id');
+        }
 
-        if (! $branch) {
+        if (! $branchId) {
             return;
         }
 
         foreach ($createdModules as $key => $module) {
             BranchModule::query()->updateOrCreate(
                 [
-                    'branch_id' => $branch->id,
+                    'branch_id' => $branchId,
                     'module_key' => $key,
                 ],
                 [

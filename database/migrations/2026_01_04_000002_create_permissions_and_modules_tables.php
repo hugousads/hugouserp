@@ -132,12 +132,19 @@ return new class extends Migration
             $this->setTableOptions($table);
             $table->id();
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('module_id')->constrained()->cascadeOnDelete();
-            $table->boolean('is_active')->default(true);
+            $table->foreignId('module_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->string('module_key', 100)->nullable()->index(); // Module key reference
+            $table->boolean('enabled')->default(true); // Renamed from is_active for consistency
+            $table->boolean('is_active')->default(true); // Keep for backwards compatibility
             $table->json('settings')->nullable();
+            $table->json('activation_constraints')->nullable();
+            $table->json('permission_overrides')->nullable();
+            $table->boolean('inherit_settings')->default(false);
+            $table->timestamp('activated_at')->nullable();
             $table->timestamps();
 
             $table->unique(['branch_id', 'module_id']);
+            $table->index(['branch_id', 'module_key']);
         });
 
         // Module fields (dynamic fields configuration)
@@ -209,7 +216,7 @@ return new class extends Migration
             $table->string('nav_key', 100)->nullable(); // Navigation key
             $table->string('nav_label', 255)->nullable(); // Navigation label
             $table->string('nav_label_ar', 255)->nullable(); // Arabic label
-            $table->string('label', 255); // Legacy label field
+            $table->string('label', 255)->nullable(); // Legacy label field (made nullable)
             $table->string('label_ar', 255)->nullable();
             $table->string('route_name', 255)->nullable(); // Route name
             $table->string('route', 255)->nullable(); // Legacy route field
@@ -237,22 +244,20 @@ return new class extends Migration
             $table->unique(['module_id', 'key']);
         });
 
-        // Module operations audit
+        // Module operations (CRUD operations configuration)
         Schema::create('module_operations', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
             $table->foreignId('module_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('operation', 100);
-            $table->string('model_type', 255)->nullable();
-            $table->unsignedBigInteger('model_id')->nullable();
-            $table->json('old_values')->nullable();
-            $table->json('new_values')->nullable();
-            $table->string('ip_address', 45)->nullable();
-            $table->timestamp('created_at')->useCurrent();
+            $table->string('operation_key', 100); // create, read, update, delete, etc.
+            $table->string('operation_name', 255); // Display name
+            $table->string('operation_type', 50); // create, read, update, delete, custom
+            $table->json('required_permissions')->nullable(); // Array of permission keys
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
 
-            $table->index(['module_id', 'created_at']);
-            $table->index(['model_type', 'model_id']);
+            $table->unique(['module_id', 'operation_key']);
+            $table->index(['module_id', 'is_active']);
         });
 
         // Module policies

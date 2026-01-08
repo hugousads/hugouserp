@@ -291,13 +291,17 @@ return new class extends Migration
         Schema::create('currency_rates', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
-            $table->foreignId('currency_id')->constrained()->cascadeOnDelete();
+            $table->string('from_currency', 3)->index();
+            $table->string('to_currency', 3)->index();
             $table->decimal('rate', 18, 8);
             $table->date('effective_date')->index();
+            $table->boolean('is_active')->default(true);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('source', 100)->nullable();
             $table->timestamps();
 
-            $table->unique(['currency_id', 'effective_date']);
+            $table->unique(['from_currency', 'to_currency', 'effective_date']);
+            $table->index(['effective_date', 'is_active']);
         });
     }
 

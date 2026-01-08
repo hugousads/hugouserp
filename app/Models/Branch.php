@@ -15,10 +15,12 @@ class Branch extends BaseModel
 
     protected $fillable = [
         'name',
+        'name_ar',
         'code',
         'is_active',
         'address',
         'phone',
+        'email',
         'timezone',
         'currency',
         'is_main',

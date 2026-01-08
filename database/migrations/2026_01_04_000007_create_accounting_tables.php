@@ -74,12 +74,13 @@ return new class extends Migration
             $this->setTableOptions($table);
             $table->id();
             $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('module_name', 100)->nullable(); // Module this mapping belongs to
             $table->string('mapping_key', 100); // sales_revenue, purchase_expense, inventory, etc.
             $table->foreignId('account_id')->constrained();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['branch_id', 'mapping_key']);
+            $table->unique(['branch_id', 'module_name', 'mapping_key']);
         });
 
         // Journal entries

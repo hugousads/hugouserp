@@ -33,12 +33,19 @@ return new class extends Migration
             $table->foreignId('module_id')->nullable()
                 ->constrained()
                 ->nullOnDelete();
-            $table->string('name', 255);
+            $table->string('period_key', 50)->unique(); // Unique key for the period
+            $table->string('name', 255)->nullable();
+            $table->string('period_name', 255)->nullable(); // Alternative name
             $table->string('name_ar', 255)->nullable();
-            $table->string('unit', 50); // hour, day, week, month, year
-            $table->integer('duration');
+            $table->string('period_name_ar', 255)->nullable(); // Alternative Arabic name
+            $table->string('period_type', 50)->nullable(); // hourly, daily, weekly, monthly
+            $table->string('unit', 50)->nullable(); // hour, day, week, month, year
+            $table->string('duration_unit', 50)->nullable(); // hours, days, weeks, months, years
+            $table->integer('duration')->nullable();
+            $table->integer('duration_value')->nullable(); // Alternative duration field
             $table->decimal('price_multiplier', 8, 4)->default(1);
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_default')->default(false);
             $table->integer('sort_order')->default(0);
             $table->timestamps();
             $table->softDeletes();
@@ -300,11 +307,15 @@ return new class extends Migration
             $table->id();
             $table->string('brand', 100);
             $table->string('model', 100);
-            $table->string('type', 50); // car, suv, truck, van, motorcycle
-            $table->string('year', 4)->nullable();
+            $table->string('type', 50)->nullable(); // car, suv, truck, van, motorcycle
+            $table->string('category', 50)->nullable(); // sedan, suv, truck, van, motorcycle
+            $table->year('year')->nullable();
+            $table->year('year_from')->nullable();
+            $table->year('year_to')->nullable();
             $table->integer('seats')->nullable();
             $table->string('transmission', 50)->nullable();
             $table->string('fuel_type', 50)->nullable();
+            $table->string('engine_type', 50)->nullable(); // gasoline, diesel, electric, hybrid
             $table->decimal('daily_rate', 18, 4)->nullable();
             $table->string('image', 500)->nullable();
             $table->boolean('is_active')->default(true);
