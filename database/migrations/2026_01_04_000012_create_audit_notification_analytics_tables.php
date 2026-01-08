@@ -125,7 +125,16 @@ return new class extends Migration
             $table->foreignId('report_definition_id')->nullable()
                 ->constrained('report_definitions')
                 ->nullOnDelete();
+            $table->string('key', 100)->unique(); // Unique key for the report template
             $table->string('name', 255);
+            $table->text('description')->nullable();
+            $table->string('route_name', 255)->nullable(); // Route name for generating the report
+            $table->json('default_filters')->nullable(); // Default filter values
+            $table->string('output_type', 50)->default('web'); // web, pdf, excel, csv
+            $table->json('export_columns')->nullable(); // Columns to export
+            $table->string('module', 100)->nullable(); // Module this report belongs to
+            $table->string('required_permission', 255)->nullable(); // Permission required to view
+            $table->boolean('is_active')->default(true);
             $table->string('format', 50)->default('pdf'); // pdf, excel, csv
             $table->string('page_size', 20)->default('A4');
             $table->string('orientation', 20)->default('portrait');

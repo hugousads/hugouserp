@@ -300,11 +300,15 @@ return new class extends Migration
             $table->id();
             $table->string('brand', 100);
             $table->string('model', 100);
-            $table->string('type', 50); // car, suv, truck, van, motorcycle
-            $table->string('year', 4)->nullable();
+            $table->string('type', 50)->nullable(); // car, suv, truck, van, motorcycle
+            $table->string('category', 50)->nullable(); // sedan, suv, truck, van, motorcycle
+            $table->year('year')->nullable();
+            $table->year('year_from')->nullable();
+            $table->year('year_to')->nullable();
             $table->integer('seats')->nullable();
             $table->string('transmission', 50)->nullable();
             $table->string('fuel_type', 50)->nullable();
+            $table->string('engine_type', 50)->nullable(); // gasoline, diesel, electric, hybrid
             $table->decimal('daily_rate', 18, 4)->nullable();
             $table->string('image', 500)->nullable();
             $table->boolean('is_active')->default(true);

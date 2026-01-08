@@ -61,6 +61,12 @@ class ChartOfAccountsSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+        
+        // Get ID from database to avoid Eloquent attribute issues
+        $currentAssetsId = \DB::table('accounts')
+            ->where('branch_id', $branchId)
+            ->where('account_number', '1000')
+            ->value('id');
 
         Account::updateOrCreate(
             [
@@ -72,7 +78,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name_ar' => 'النقدية',
                 'type' => 'asset',
                 'account_category' => 'current',
-                'parent_id' => $currentAssets->id,
+                'parent_id' => $currentAssetsId,
                 'is_active' => true,
             ]
         );
@@ -87,7 +93,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'name_ar' => 'الحسابات البنكية',
                 'type' => 'asset',
                 'account_category' => 'current',
-                'parent_id' => $currentAssets->id,
+                'parent_id' => $currentAssetsId,
                 'is_active' => true,
             ]
         );
