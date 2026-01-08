@@ -33,12 +33,19 @@ return new class extends Migration
             $table->foreignId('module_id')->nullable()
                 ->constrained()
                 ->nullOnDelete();
-            $table->string('name', 255);
+            $table->string('period_key', 50)->unique(); // Unique key for the period
+            $table->string('name', 255)->nullable();
+            $table->string('period_name', 255)->nullable(); // Alternative name
             $table->string('name_ar', 255)->nullable();
-            $table->string('unit', 50); // hour, day, week, month, year
-            $table->integer('duration');
+            $table->string('period_name_ar', 255)->nullable(); // Alternative Arabic name
+            $table->string('period_type', 50)->nullable(); // hourly, daily, weekly, monthly
+            $table->string('unit', 50)->nullable(); // hour, day, week, month, year
+            $table->string('duration_unit', 50)->nullable(); // hours, days, weeks, months, years
+            $table->integer('duration')->nullable();
+            $table->integer('duration_value')->nullable(); // Alternative duration field
             $table->decimal('price_multiplier', 8, 4)->default(1);
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_default')->default(false);
             $table->integer('sort_order')->default(0);
             $table->timestamps();
             $table->softDeletes();
