@@ -329,7 +329,7 @@ return new class extends Migration
             $table->date('expiry_date')->nullable()->index();
             $table->string('supplier_batch_ref', 100)->nullable(); // Supplier batch reference
             $table->string('supplier_batch', 100)->nullable();
-            $table->foreignId('purchase_id')->nullable()->constrained()->nullOnDelete(); // Purchase reference
+            $table->unsignedBigInteger('purchase_id')->nullable()->index(); // Purchase reference (no FK - purchases table created later)
             $table->string('status', 50)->default('active'); // Status field
             $table->text('notes')->nullable(); // Notes field
             $table->json('meta')->nullable(); // Meta field
