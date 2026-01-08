@@ -340,49 +340,7 @@ return new class extends Migration
             $table->index(['document_id', 'created_at']);
         });
 
-        // Ticket categories
-        Schema::create('ticket_categories', function (Blueprint $table) {
-            $this->setTableOptions($table);
-            $table->id();
-            $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('name', 255);
-            $table->string('name_ar', 255)->nullable();
-            $table->string('slug', 255)->unique(); // Slug field
-            $table->text('description')->nullable();
-            $table->foreignId('parent_id')->nullable()->constrained('ticket_categories')->nullOnDelete(); // Parent category
-            $table->string('color', 20)->nullable();
-            $table->foreignId('default_assignee_id')->nullable()
-                ->constrained('users')
-                ->nullOnDelete();
-            $table->foreignId('sla_policy_id')->nullable()->constrained('ticket_sla_policies')->nullOnDelete(); // SLA policy
-            $table->string('icon', 100)->nullable(); // Icon field
-            $table->boolean('is_active')->default(true);
-            $table->integer('sort_order')->default(0);
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
-            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
-            $table->timestamps();
-            $table->softDeletes();
-        });
-
-        // Ticket priorities
-        Schema::create('ticket_priorities', function (Blueprint $table) {
-            $this->setTableOptions($table);
-            $table->id();
-            $table->string('name', 100);
-            $table->string('name_ar', 100)->nullable();
-            $table->string('slug', 255)->unique(); // Slug field
-            $table->string('color', 20)->nullable();
-            $table->integer('level')->default(0);
-            $table->integer('response_time_hours')->nullable();
-            $table->integer('response_time_minutes')->nullable(); // Response time in minutes
-            $table->integer('resolution_time_hours')->nullable();
-            $table->integer('resolution_time_minutes')->nullable(); // Resolution time in minutes
-            $table->boolean('is_active')->default(true);
-            $table->integer('sort_order')->default(0);
-            $table->timestamps();
-        });
-
-        // SLA policies
+        // SLA policies (must be created before ticket_categories)
         Schema::create('ticket_sla_policies', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
@@ -407,6 +365,48 @@ return new class extends Migration
             $table->foreignId('escalate_to_user_id')->nullable()->constrained('users')->nullOnDelete(); // Escalate to user
             $table->boolean('is_default')->default(false);
             $table->boolean('is_active')->default(true);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // Ticket priorities
+        Schema::create('ticket_priorities', function (Blueprint $table) {
+            $this->setTableOptions($table);
+            $table->id();
+            $table->string('name', 100);
+            $table->string('name_ar', 100)->nullable();
+            $table->string('slug', 255)->unique(); // Slug field
+            $table->string('color', 20)->nullable();
+            $table->integer('level')->default(0);
+            $table->integer('response_time_hours')->nullable();
+            $table->integer('response_time_minutes')->nullable(); // Response time in minutes
+            $table->integer('resolution_time_hours')->nullable();
+            $table->integer('resolution_time_minutes')->nullable(); // Resolution time in minutes
+            $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
+            $table->timestamps();
+        });
+
+        // Ticket categories
+        Schema::create('ticket_categories', function (Blueprint $table) {
+            $this->setTableOptions($table);
+            $table->id();
+            $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('name', 255);
+            $table->string('name_ar', 255)->nullable();
+            $table->string('slug', 255)->unique(); // Slug field
+            $table->text('description')->nullable();
+            $table->foreignId('parent_id')->nullable()->constrained('ticket_categories')->nullOnDelete(); // Parent category
+            $table->string('color', 20)->nullable();
+            $table->foreignId('default_assignee_id')->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+            $table->foreignId('sla_policy_id')->nullable()->constrained('ticket_sla_policies')->nullOnDelete(); // SLA policy
+            $table->string('icon', 100)->nullable(); // Icon field
+            $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete(); // Created by
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete(); // Updated by
             $table->timestamps();
@@ -529,9 +529,9 @@ return new class extends Migration
         Schema::dropIfExists('ticket_attachments');
         Schema::dropIfExists('ticket_replies');
         Schema::dropIfExists('tickets');
-        Schema::dropIfExists('ticket_sla_policies');
-        Schema::dropIfExists('ticket_priorities');
         Schema::dropIfExists('ticket_categories');
+        Schema::dropIfExists('ticket_priorities');
+        Schema::dropIfExists('ticket_sla_policies');
         Schema::dropIfExists('document_activities');
         Schema::dropIfExists('document_shares');
         Schema::dropIfExists('document_versions');
