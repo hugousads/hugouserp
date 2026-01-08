@@ -73,6 +73,18 @@ class Module extends Model
         'supports_items' => 'bool',
     ];
 
+    protected static function booted(): void
+    {
+        parent::booted();
+
+        static::creating(function ($model): void {
+            // Auto-generate slug from key if not provided
+            if (empty($model->slug) && ! empty($model->key)) {
+                $model->slug = $model->key;
+            }
+        });
+    }
+
     public function branches(): BelongsToMany
     {
         return $this->belongsToMany(Branch::class, 'branch_modules')
