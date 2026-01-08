@@ -127,6 +127,32 @@ return new class extends Migration
             $table->index(['created_at']);
         });
 
+        // Departments - Core organizational unit
+        Schema::create('departments', function (Blueprint $table) {
+            $this->setTableOptions($table);
+            $table->id();
+            $table->string('name', 255);
+            $table->string('name_ar', 255)->nullable();
+            $table->string('code', 50)->unique();
+            $table->foreignId('branch_id')->nullable()
+                ->constrained('branches')
+                ->nullOnDelete();
+            $table->foreignId('parent_id')->nullable()
+                ->constrained('departments')
+                ->nullOnDelete();
+            $table->unsignedBigInteger('manager_id')->nullable();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true)->index();
+            $table->integer('sort_order')->default(0);
+            $table->json('settings')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index(['branch_id', 'is_active']);
+            $table->index(['manager_id']);
+            $table->index(['created_at']);
+        });
+
         // Users table
         Schema::create('users', function (Blueprint $table) {
             $this->setTableOptions($table);
@@ -284,6 +310,7 @@ return new class extends Migration
         Schema::dropIfExists('user_sessions');
         Schema::dropIfExists('branch_user');
         Schema::dropIfExists('users');
+        Schema::dropIfExists('departments');
         Schema::dropIfExists('branches');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
