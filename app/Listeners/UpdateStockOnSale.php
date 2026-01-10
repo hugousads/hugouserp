@@ -81,7 +81,7 @@ class UpdateStockOnSale implements ShouldQueue
                 'reference_id' => $sale->getKey(),
                 'qty' => abs($baseQuantity),
                 'direction' => 'out',
-                'notes' => 'Sale completed (UoM: '.($item->unit?->name ?? 'base').', Factor: '.$conversionFactor.')',
+                'notes' => sprintf('Sale completed (UoM: %s, Factor: %s)', $item->unit?->name ?? 'base', $conversionFactor),
                 'created_by' => $sale->created_by,
             ]);
         }

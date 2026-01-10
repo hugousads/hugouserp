@@ -325,6 +325,7 @@ class CriticalBugFixesTest extends TestCase
         $tax3 = $this->taxService->compute($lineAmount3, $tax->id);
 
         // Each line should be rounded to 2 decimals
+        // Note: bcmath calculation: 33.33 * 0.15 = 4.9995 with 4 decimals, then rounded to 2 decimals = 5.00
         $this->assertEquals(5.00, $tax1, 'Line 1 tax should be 5.00 (33.33 * 0.15 = 4.9995 rounded to 5.00)');
         $this->assertEquals(5.00, $tax2, 'Line 2 tax should be 5.00');
         $this->assertEquals(5.00, $tax3, 'Line 3 tax should be 5.00 (33.34 * 0.15 = 5.001 rounded to 5.00)');

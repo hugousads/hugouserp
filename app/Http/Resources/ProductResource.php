@@ -13,6 +13,7 @@ class ProductResource extends JsonResource
     {
         // BUG FIX #4: Removed per-row permission checks to avoid N+1 performance issue
         // Permission checks should be done at the controller/query level, not per resource item
+        // However, cost remains protected for security reasons
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -23,7 +24,7 @@ class ProductResource extends JsonResource
             'brand' => $this->brand,
             'uom' => $this->uom,
             'price' => (float) $this->default_price,
-            'cost' => (float) $this->cost,
+            'cost' => $this->when($request->user()?->can('products.view-cost'), (float) $this->cost),
             // Inventory fields
             'min_stock' => $this->min_stock ? (float) $this->min_stock : 0.0,
             'max_stock' => $this->max_stock ? (float) $this->max_stock : null,
