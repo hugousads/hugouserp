@@ -21,7 +21,7 @@ class PosCheckoutRequest extends FormRequest
         return [
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id'],
-            'items.*.qty' => ['required', 'numeric', 'gt:0'],
+            'items.*.qty' => ['required', 'numeric', 'gt:0', 'lte:999999'],
             'items.*.price' => ['sometimes', 'numeric', 'gte:0'],
             'items.*.discount' => ['sometimes', 'numeric', 'gte:0'],
             'items.*.percent' => ['sometimes', 'boolean'],

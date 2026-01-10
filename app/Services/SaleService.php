@@ -51,6 +51,14 @@ class SaleService implements SaleServiceInterface
                 $sale = $this->findBranchSaleOrFail($saleId)->load('items');
 
                 return DB::transaction(function () use ($sale, $items, $reason) {
+    /** Return items (full/partial). Negative movement is handled in listeners. */
+    public function handleReturn(int $saleId, array $items, ?string $reason = null): ReturnNote
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($saleId, $items, $reason) {
+                $sale = $this->findBranchSaleOrFail($saleId)->load('items');
+
+                return DB::transaction(function () use ($sale, $items, $reason) {
                     // Calculate refund amount first
                     $refund = '0.00';
                     foreach ($items as $it) {
@@ -58,15 +66,21 @@ class SaleService implements SaleServiceInterface
                         if (! isset($it['product_id']) || ! isset($it['qty'])) {
                             continue;
                         }
+                        
+                        // Prevent negative quantity exploit in returns
+                        $requestedQty = (float) $it['qty'];
+                        if ($requestedQty <= 0) {
+                            throw new \InvalidArgumentException(__('Return quantity must be positive. Received: :qty', ['qty' => $requestedQty]));
+                        }
 
                         $si = $sale->items->firstWhere('product_id', $it['product_id']);
                         if (! $si) {
                             continue;
                         }
-                        // Use quantity column (not qty)
-                        $qty = min((float) $it['qty'], (float) $si->quantity);
+                        // Use quantity column (not qty) - cap at original sale quantity
+                        $qty = min($requestedQty, (float) $si->quantity);
 
-                        // Skip if qty is zero or negative
+                        // Skip if qty is zero or negative (additional safety check)
                         if ($qty <= 0) {
                             continue;
                         }

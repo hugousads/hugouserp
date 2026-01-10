@@ -52,6 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\AutoLogout::class,
             \App\Http\Middleware\ModuleContext::class,
+            \App\Http\Middleware\SetUserBranchContext::class,
         ]);
 
         $middleware->group('api-core', [
