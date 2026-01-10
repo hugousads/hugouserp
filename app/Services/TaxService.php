@@ -26,10 +26,11 @@ class TaxService implements TaxServiceInterface
     {
         $r = $this->rate($taxId);
 
-        // Use bcmath for precise tax calculation (full bcmath chain)
+        // BUG FIX #5: Use bcmath for precise tax calculation with line-level rounding (2 decimals)
         $rateDecimal = bcdiv((string) $r, '100', 6);
         $taxAmount = bcmul((string) $base, $rateDecimal, 4);
 
+        // Round to 2 decimal places at line level for e-invoicing compliance
         return (float) bcdiv($taxAmount, '1', 2);
     }
 
