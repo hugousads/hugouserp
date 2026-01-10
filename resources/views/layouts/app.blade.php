@@ -114,7 +114,8 @@
 {{-- Main Layout Container with new sidebar --}}
 <div class="erp-layout">
     {{-- New Sidebar (includes overlay) - Persist across navigation for smoother UX --}}
-    @persist('sidebar')
+    {{-- Dynamic persist key includes locale and branch context to ensure sidebar refreshes when these change --}}
+    @persist('sidebar-'.app()->getLocale().'-'.(session('admin_branch_context') ?? session('selected_branch_id') ?? 'default'))
     @includeIf('layouts.sidebar-new')
     @endpersist
 
@@ -220,9 +221,23 @@
 @stack('scripts')
 
 <script>
-    // CSRF Token Refresh - Prevents 419 Session Expired Errors
-    // Refreshes the CSRF token every 30 minutes to keep sessions alive
+    // Unified Session Expired Handler
+    // Single source of truth for 419/401 error handling across Livewire, Axios, and fetch
     (function() {
+        // Global handler for session expired errors
+        window.erpHandleSessionExpired = function(status) {
+            if (status === 419) {
+                // Use Livewire.navigate for SPA-friendly refresh if available
+                if (window.Livewire && typeof Livewire.navigate === 'function') {
+                    Livewire.navigate(window.location.href);
+                } else {
+                    window.location.reload();
+                }
+            } else if (status === 401) {
+                window.location.href = '/login';
+            }
+        };
+        
         const updateCsrfToken = (token) => {
             // Update meta tag
             const metaTag = document.querySelector('meta[name="csrf-token"]');
@@ -255,8 +270,7 @@
                         @endif
                     }
                 } else if (response.status === 401) {
-                    // User is no longer authenticated, redirect to login
-                    window.location.href = '/login';
+                    window.erpHandleSessionExpired(401);
                 }
             } catch (error) {
                 @if(config('app.debug'))
@@ -266,7 +280,6 @@
         };
         
         // Refresh token every 30 minutes (1800000 ms)
-        // This ensures the token is always fresh even during long sessions
         setInterval(refreshCsrfToken, 30 * 60 * 1000);
         
         // Also refresh on page visibility change (user comes back to tab)
@@ -276,14 +289,13 @@
             }
         });
         
-        // Handle 419 errors silently - auto-refresh instead of showing error
+        // Axios interceptor for 419/401 handling
         if (window.axios) {
             window.axios.interceptors.response.use(
                 response => response,
                 error => {
-                    if (error.response && error.response.status === 419) {
-                        // Silently refresh the page on 419 error
-                        window.location.reload();
+                    if (error.response && (error.response.status === 419 || error.response.status === 401)) {
+                        window.erpHandleSessionExpired(error.response.status);
                         return Promise.reject(error);
                     }
                     return Promise.reject(error);
@@ -291,20 +303,13 @@
             );
         }
         
-        // Livewire 4: Handle 419/401 errors using commit hooks
-        // This replaces the deprecated Livewire.hook('request') API
+        // Livewire 4: Unified error handling using commit hooks
         document.addEventListener('livewire:init', () => {
             Livewire.hook('commit', ({ fail }) => {
                 fail(({ status, preventDefault }) => {
-                    if (status === 419) {
+                    if (status === 419 || status === 401) {
                         preventDefault();
-                        // Silently refresh the page on CSRF mismatch
-                        window.location.reload();
-                    }
-                    if (status === 401) {
-                        preventDefault();
-                        // Redirect to login on authentication failure
-                        window.location.href = '/login';
+                        window.erpHandleSessionExpired(status);
                     }
                 });
             });
@@ -376,8 +381,7 @@
         });
     });
 
-    // Note: 419 session expiry is handled in the CSRF Token Refresh section above
-    // with a unified Livewire.hook('request') handler that silently refreshes.
+    // Note: 419 session expiry is handled in the Unified Session Expired Handler section above.
 </script>
 
     <div id="erp-toast-root" class="toast-container flex flex-col items-end justify-start px-4 py-6 space-y-2 inset-inline-end-0 inset-block-start-0 inset-inline-start-auto inset-block-end-auto"></div>
@@ -387,29 +391,43 @@
 
 <script>
     // Intelligent prefetching - preload links on hover
-    // Uses a Set to track prefetched URLs to avoid duplicates
-    document.addEventListener('DOMContentLoaded', function() {
+    // This function is called on initial load and after Livewire Navigate
+    (function() {
         const prefetchedUrls = new Set();
         const MAX_PREFETCHES = 20; // Limit to prevent memory issues
         
-        document.querySelectorAll('a[href^="/"]').forEach(link => {
-            link.addEventListener('mouseenter', function() {
-                const href = this.getAttribute('href');
-                if (href && !prefetchedUrls.has(href) && !href.includes('#') && prefetchedUrls.size < MAX_PREFETCHES) {
-                    prefetchedUrls.add(href);
-                    const prefetch = document.createElement('link');
-                    prefetch.rel = 'prefetch';
-                    prefetch.href = href;
-                    document.head.appendChild(prefetch);
-                    
-                    // Remove prefetch link after 30 seconds to free memory
-                    setTimeout(() => {
-                        prefetch.remove();
-                    }, 30000);
-                }
-            }, { once: true, passive: true });
-        });
-    });
+        function initPrefetching() {
+            document.querySelectorAll('a[href^="/"]').forEach(link => {
+                // Skip links that already have prefetch listener
+                if (link.dataset.prefetchInit) return;
+                link.dataset.prefetchInit = 'true';
+                
+                link.addEventListener('mouseenter', function() {
+                    const href = this.getAttribute('href');
+                    if (href && !prefetchedUrls.has(href) && !href.includes('#') && prefetchedUrls.size < MAX_PREFETCHES) {
+                        prefetchedUrls.add(href);
+                        const prefetch = document.createElement('link');
+                        prefetch.rel = 'prefetch';
+                        prefetch.href = href;
+                        document.head.appendChild(prefetch);
+                        
+                        // Remove prefetch link after 30 seconds to free memory
+                        setTimeout(() => {
+                            if (prefetch.parentNode) {
+                                prefetch.remove();
+                            }
+                        }, 30000);
+                    }
+                }, { once: true, passive: true });
+            });
+        }
+        
+        // Initialize on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', initPrefetching);
+        
+        // Re-initialize after Livewire Navigate completes
+        document.addEventListener('livewire:navigated', initPrefetching);
+    })();
     
     // Livewire Navigate loading indicator
     document.addEventListener('livewire:navigating', () => {
