@@ -23,6 +23,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Maximum Combined Discount Percentage
+    |--------------------------------------------------------------------------
+    |
+    | The maximum total discount percentage when stacking multiple discounts.
+    | Prevents excessive discount combinations.
+    |
+    */
+    'max_combined_discount_percent' => env('MAX_COMBINED_DISCOUNT', 80),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Incompatible Discount Type Combinations
+    |--------------------------------------------------------------------------
+    |
+    | Discount type pairs that cannot be combined together.
+    | Format: ['type1' => ['type2', 'type3'], ...]
+    |
+    */
+    'incompatible_discount_types' => [
+        'coupon' => ['seasonal'],
+        'seasonal' => ['coupon'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Invoice Auto-numbering
     |--------------------------------------------------------------------------
     |

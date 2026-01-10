@@ -129,14 +129,23 @@ class DiscountService implements DiscountServiceInterface
         // Extract discount types
         $types = array_column($discounts, 'type');
         
-        // Check for incompatible combinations
-        // Rule: Cannot combine coupon with seasonal discounts
-        if (in_array('coupon', $types) && in_array('seasonal', $types)) {
-            return [
-                'allowed' => false,
-                'reason' => 'Cannot combine coupon discounts with seasonal discounts',
-                'total_discount' => 0.0,
-            ];
+        // Check for incompatible combinations using configuration
+        $incompatibleTypes = config('sales.incompatible_discount_types', [
+            'coupon' => ['seasonal'],
+            'seasonal' => ['coupon'],
+        ]);
+
+        foreach ($types as $type) {
+            if (isset($incompatibleTypes[$type])) {
+                $conflictingTypes = array_intersect($types, $incompatibleTypes[$type]);
+                if (!empty($conflictingTypes)) {
+                    return [
+                        'allowed' => false,
+                        'reason' => "Cannot combine {$type} discounts with " . implode(', ', $conflictingTypes) . " discounts",
+                        'total_discount' => 0.0,
+                    ];
+                }
+            }
         }
 
         // Calculate total discount by applying them sequentially
