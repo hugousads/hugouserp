@@ -426,4 +426,46 @@ class CriticalBugFixesTest extends TestCase
 
         $this->assertNull($cogsEntry, 'COGS journal entry should not be created for zero-cost products');
     }
+
+    /**
+     * BUG FIX #4: Test that N+1 permission checks are eliminated
+     */
+    public function test_permission_check_cached_per_request(): void
+    {
+        // Reset cache before test
+        \App\Http\Resources\ProductResource::resetPermissionCache();
+
+        // Create multiple products
+        $products = Product::factory()->count(3)->create([
+            'branch_id' => $this->branch->id,
+            'cost' => 50.00,
+        ]);
+
+        // Enable query log to count queries
+        \DB::enableQueryLog();
+        $queriesBefore = count(\DB::getQueryLog());
+
+        // Create a mock request
+        $request = \Illuminate\Http\Request::create('/api/products', 'GET');
+        $request->setUserResolver(fn () => $this->user);
+
+        // Transform products to resources (this triggers toArray)
+        $resources = \App\Http\Resources\ProductResource::collection($products);
+        $resourceArray = $resources->toArray($request);
+
+        $queriesAfter = count(\DB::getQueryLog());
+        
+        // Calculate permission queries (should be 0 or 1, not 3)
+        $permissionQueries = $queriesAfter - $queriesBefore;
+
+        // With the fix, we should have at most 1 permission check, not N checks
+        $this->assertLessThanOrEqual(1, $permissionQueries, 
+            'Permission check should be cached and run at most once, not once per product');
+
+        // Verify products are in the response
+        $this->assertCount(3, $resourceArray);
+
+        // Reset cache after test
+        \App\Http\Resources\ProductResource::resetPermissionCache();
+    }
 }

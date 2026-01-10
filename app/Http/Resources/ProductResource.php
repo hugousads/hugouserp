@@ -9,11 +9,20 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
 {
+    /**
+     * BUG FIX #4: Cache permission check result to avoid N+1 queries
+     * This static property stores the result per request
+     */
+    private static ?bool $canViewCost = null;
+
     public function toArray(Request $request): array
     {
-        // BUG FIX #4: Removed per-row permission checks to avoid N+1 performance issue
-        // Permission checks should be done at the controller/query level, not per resource item
-        // However, cost remains protected for security reasons
+        // BUG FIX #4: Check permission once per request, not per product
+        // This eliminates N+1 query issue while maintaining security
+        if (self::$canViewCost === null) {
+            self::$canViewCost = $request->user()?->can('products.view-cost') ?? false;
+        }
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -24,7 +33,7 @@ class ProductResource extends JsonResource
             'brand' => $this->brand,
             'uom' => $this->uom,
             'price' => (float) $this->default_price,
-            'cost' => $this->when($request->user()?->can('products.view-cost'), (float) $this->cost),
+            'cost' => $this->when(self::$canViewCost, (float) $this->cost),
             // Inventory fields
             'min_stock' => $this->min_stock ? (float) $this->min_stock : 0.0,
             'max_stock' => $this->max_stock ? (float) $this->max_stock : null,
@@ -42,5 +51,13 @@ class ProductResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Reset the cached permission check (useful for testing)
+     */
+    public static function resetPermissionCache(): void
+    {
+        self::$canViewCost = null;
     }
 }

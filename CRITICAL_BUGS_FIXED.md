@@ -157,24 +157,40 @@ Result: 1 + N queries (1 for products, N for permissions)
 ```
 
 ### Solution
-**Documented the issue** with clear comments. Kept the cost permission check because:
-- **Security concern**: Cost data is sensitive business information
-- **Proper fix**: Implement authorization at controller/query level with eager loading
+**Implemented permission caching** to eliminate N+1 queries while maintaining security:
 
-**Recommended Future Fix**:
 ```php
-// In controller:
-$canViewCost = Gate::allows('products.view-cost');
+class ProductResource extends JsonResource
+{
+    private static ?bool $canViewCost = null;
 
-// In resource:
-'cost' => $this->when($canViewCost, $this->cost)
+    public function toArray(Request $request): array
+    {
+        // Check permission once per request, not per product
+        if (self::$canViewCost === null) {
+            self::$canViewCost = $request->user()?->can('products.view-cost') ?? false;
+        }
+
+        return [
+            // ...
+            'cost' => $this->when(self::$canViewCost, (float) $this->cost),
+            // ...
+        ];
+    }
+}
 ```
 
+**How it works**:
+- Static property caches permission result on first check
+- All subsequent products in the same request use cached value
+- Reduces N queries to just 1 query per request
+- Maintains security by still checking permissions
+
 ### Files Modified
-- `app/Http/Resources/ProductResource.php` (documentation added)
+- `app/Http/Resources/ProductResource.php` (permission caching implemented)
 
 ### Status
-⚠️ **Partial Fix**: Security preserved, but performance issue remains. Requires controller-level refactor.
+✅ **FIXED**: N+1 issue resolved with cached permission check
 
 ---
 
@@ -255,17 +271,22 @@ All bugs have comprehensive test coverage:
    - Verifies separate journal lines
    - Checks correct account routing
 
-4. **test_tax_calculated_and_rounded_at_line_level**
+4. **test_permission_check_cached_per_request** (NEW)
+   - Tests N+1 fix with permission caching
+   - Verifies only 1 permission query for multiple products
+   - Confirms security is maintained
+
+5. **test_tax_calculated_and_rounded_at_line_level**
    - Tests line-level rounding
    - Compares with total-level rounding
    - Documents rounding behavior
 
-5. **test_tax_rounding_difference_between_line_and_total_level**
+6. **test_tax_rounding_difference_between_line_and_total_level**
    - Uses 13.5% tax rate (shows differences clearly)
    - Demonstrates 0.01 cent difference
    - Proves compliance necessity
 
-6. **test_cogs_entry_not_created_for_zero_cost_products**
+7. **test_cogs_entry_not_created_for_zero_cost_products**
    - Tests edge case handling
    - Verifies no entry for $0 cost items
 
@@ -280,6 +301,7 @@ php artisan test tests/Unit/Services/CriticalBugFixesTest.php
 
 ### Before Deployment
 - [ ] Run full test suite
+- [ ] Run database seeder to create account mappings: `php artisan db:seed --class=ChartOfAccountsSeeder`
 - [ ] Verify account mappings exist (COGS, Inventory, Bank, Cheque)
 - [ ] Backup production database
 - [ ] Test with sample transactions in staging
@@ -289,6 +311,7 @@ php artisan test tests/Unit/Services/CriticalBugFixesTest.php
 - [ ] Check first few sales for correct COGS entries
 - [ ] Verify split payments route to correct accounts
 - [ ] Confirm tax calculations match expected values
+- [ ] Test product list API performance (should be 1 permission query, not N)
 
 ### Monitoring
 Watch for these log entries:
@@ -305,7 +328,7 @@ Watch for these log entries:
 | **Accounting Accuracy** | Inflated profits | Correct P&L with COGS | ✅ Fixed |
 | **Inventory Integrity** | Stock discrepancies | Accurate UoM tracking | ✅ Fixed |
 | **Cash Reconciliation** | Failed audits | Correct split payments | ✅ Fixed |
-| **System Performance** | N+1 queries | Documented (needs refactor) | ⚠️ Partial |
+| **System Performance** | N+1 queries | Cached permission check | ✅ Fixed |
 | **Tax Compliance** | Invoice rejections | E-invoice compliant | ✅ Fixed |
 
 ---

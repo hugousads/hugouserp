@@ -107,6 +107,22 @@ class ChartOfAccountsSeeder extends Seeder
             ]
         );
 
+        // BUG FIX: Add Cheques Receivable account for cheque payments (Bug #3)
+        Account::updateOrCreate(
+            [
+                'branch_id' => $branchId,
+                'account_number' => '1030',
+            ],
+            [
+                'name' => 'Cheques Receivable',
+                'name_ar' => 'شيكات تحت التحصيل',
+                'type' => 'asset',
+                'account_category' => 'current',
+                'parent_id' => $currentAssetsId,
+                'is_active' => true,
+            ]
+        );
+
         Account::updateOrCreate(
             [
                 'branch_id' => $branchId,
@@ -526,6 +542,58 @@ class ChartOfAccountsSeeder extends Seeder
             ],
             [
                 'account_id' => $this->getAccountId($branchId, '5500'),
+                'is_active' => true,
+            ]
+        );
+
+        // BUG FIX: Add COGS account mapping for sales (Bug #1)
+        AccountMapping::updateOrCreate(
+            [
+                'branch_id' => $branchId,
+                'module_name' => 'sales',
+                'mapping_key' => 'cogs_account',
+            ],
+            [
+                'account_id' => $this->getAccountId($branchId, '5100'), // Cost of Goods Sold
+                'is_active' => true,
+            ]
+        );
+
+        // BUG FIX: Add inventory account mapping for sales (Bug #1)
+        AccountMapping::updateOrCreate(
+            [
+                'branch_id' => $branchId,
+                'module_name' => 'sales',
+                'mapping_key' => 'inventory_account',
+            ],
+            [
+                'account_id' => $this->getAccountId($branchId, '1200'), // Inventory
+                'is_active' => true,
+            ]
+        );
+
+        // BUG FIX: Add bank account mapping for card/transfer payments (Bug #3)
+        AccountMapping::updateOrCreate(
+            [
+                'branch_id' => $branchId,
+                'module_name' => 'sales',
+                'mapping_key' => 'bank_account',
+            ],
+            [
+                'account_id' => $this->getAccountId($branchId, '1020'), // Bank
+                'is_active' => true,
+            ]
+        );
+
+        // BUG FIX: Add cheque account mapping for cheque payments (Bug #3)
+        AccountMapping::updateOrCreate(
+            [
+                'branch_id' => $branchId,
+                'module_name' => 'sales',
+                'mapping_key' => 'cheque_account',
+            ],
+            [
+                'account_id' => $this->getAccountId($branchId, '1030'), // Accounts Receivable - Cheques (using as fallback)
                 'is_active' => true,
             ]
         );
