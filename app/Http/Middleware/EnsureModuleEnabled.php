@@ -52,7 +52,7 @@ class EnsureModuleEnabled
                 if (class_exists(Module::class)) {
                     $query->whereHas('module', function ($w) use ($key) {
                         $w->where('key', $key)
-                          ->where('is_active', true); // Module must also be active
+                            ->where('is_active', true); // Module must also be active
                     });
                 } else {
                     // Fallback schema without Module model
