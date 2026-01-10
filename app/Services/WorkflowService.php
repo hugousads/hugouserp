@@ -163,6 +163,12 @@ class WorkflowService
             throw new Exception('This approval has already been processed');
         }
 
+        // Prevent self-approval: check if the user trying to approve is the same as the initiator
+        $instance = $approval->workflowInstance;
+        if ($instance->initiated_by === $userId) {
+            throw new Exception('You cannot approve your own request');
+        }
+
         return DB::transaction(function () use ($approval, $userId, $comments) {
             // Update approval
             $approval->update([

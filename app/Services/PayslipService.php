@@ -218,14 +218,38 @@ class PayslipService
         $processed = [];
         $errors = [];
 
+        // Parse period to extract year and month
+        $periodParts = explode('-', $period);
+        $year = (int) ($periodParts[0] ?? date('Y'));
+        $month = (int) ($periodParts[1] ?? date('m'));
+
         foreach ($employees as $employee) {
             try {
+                // Check if payroll already exists for this employee in this period
+                // regardless of branch to prevent duplicate payroll when employee changes department
+                $existingPayroll = Payroll::where('employee_id', $employee->id)
+                    ->where('year', $year)
+                    ->where('month', $month)
+                    ->first();
+
+                if ($existingPayroll) {
+                    $errors[] = [
+                        'employee_id' => $employee->id,
+                        'employee_name' => $employee->name,
+                        'error' => __('Payroll already generated for this employee in this period'),
+                    ];
+
+                    continue;
+                }
+
                 $payrollData = $this->calculatePayroll($employee->id, $period);
 
                 // Only store the fields that match the Payroll model
                 $payroll = Payroll::create([
                     'employee_id' => $payrollData['employee_id'],
                     'period' => $payrollData['period'],
+                    'year' => $year,
+                    'month' => $month,
                     'basic' => $payrollData['basic'],
                     'allowances' => $payrollData['allowances'],
                     'deductions' => $payrollData['deductions'],

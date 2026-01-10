@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\Payroll;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PayrollRunRequest extends FormRequest
@@ -26,7 +27,39 @@ class PayrollRunRequest extends FormRequest
             'include_bonuses' => ['boolean'],
             'notes' => ['nullable', 'string'],
             'branch_id' => ['nullable', 'exists:branches,id'],
+            'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
+            'month' => ['nullable', 'integer', 'min:1', 'max:12'],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            // Check for duplicate payroll for any employee
+            if ($this->has('employee_ids') && $this->has('year') && $this->has('month')) {
+                $year = (int) $this->input('year');
+                $month = (int) $this->input('month');
+                $employeeIds = $this->input('employee_ids', []);
+
+                foreach ($employeeIds as $employeeId) {
+                    $existingPayroll = Payroll::where('employee_id', $employeeId)
+                        ->where('year', $year)
+                        ->where('month', $month)
+                        ->first();
+
+                    if ($existingPayroll) {
+                        $validator->errors()->add(
+                            'employee_ids',
+                            __('Payroll already exists for employee ID :id in :month/:year', [
+                                'id' => $employeeId,
+                                'month' => $month,
+                                'year' => $year,
+                            ])
+                        );
+                    }
+                }
+            }
+        });
     }
 
     protected function prepareForValidation(): void

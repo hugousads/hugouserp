@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Http\Requests\Traits\HasMultilingualValidation;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class UserStoreRequest extends FormRequest
@@ -21,8 +22,18 @@ class UserStoreRequest extends FormRequest
     {
         return [
             'name' => $this->multilingualString(required: true, max: 255),
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'username' => ['nullable', 'string', 'max:100', 'unique:users,username'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->whereNull('deleted_at'),
+            ],
+            'username' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('users', 'username')->whereNull('deleted_at'),
+            ],
             'password' => ['required', 'confirmed', Password::defaults()],
             'phone' => ['nullable', 'string', 'max:20'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],

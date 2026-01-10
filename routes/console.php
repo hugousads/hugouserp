@@ -44,6 +44,11 @@ Schedule::command('rental:generate-recurring --date='.now()->toDateString())
     ->dailyAt('00:30')
     ->description('Generate recurring rental invoices');
 
+// Expire rental contracts and release units automatically
+Schedule::command('rental:expire-contracts --date='.now()->toDateString())
+    ->dailyAt('01:00')
+    ->description('Expire rental contracts past their end date and release units');
+
 Schedule::command('system:backup --verify')
     ->dailyAt('02:00')
     ->description('Run verified system backup');

@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use App\Http\Requests\Traits\HasMultilingualValidation;
 use App\Http\Requests\Traits\HasPaymentTermsValidation;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CustomerStoreRequest extends FormRequest
 {
@@ -23,7 +24,12 @@ class CustomerStoreRequest extends FormRequest
         return array_merge([
             'name' => $this->multilingualString(required: true, max: 255),
             'phone' => ['nullable', 'string', 'max:100'],
-            'email' => ['nullable', 'email', 'max:190', 'unique:customers,email'],
+            'email' => [
+                'nullable',
+                'email',
+                'max:190',
+                Rule::unique('customers', 'email')->whereNull('deleted_at'),
+            ],
             'billing_address' => $this->unicodeText(required: false, max: 500),
             'shipping_address' => $this->unicodeText(required: false, max: 500),
             'tax_number' => ['nullable', 'string', 'max:50'],

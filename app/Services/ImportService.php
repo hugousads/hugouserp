@@ -308,11 +308,17 @@ class ImportService
                 $skipDuplicates = $options['skip_duplicates'] ?? true;
                 $branchId = $options['branch_id'] ?? auth()->user()?->branch_id;
 
+                // Use chunked reading to avoid memory issues with large files
                 $spreadsheet = IOFactory::load($filePath);
                 $worksheet = $spreadsheet->getActiveSheet();
-                $rows = $worksheet->toArray();
-
-                if (count($rows) < 2) {
+                
+                // Get headers from first row
+                $headerRow = $worksheet->rangeToArray('A1:'.$worksheet->getHighestColumn().'1')[0];
+                $headers = array_map('strtolower', array_map('trim', $headerRow));
+                
+                $highestRow = $worksheet->getHighestRow();
+                
+                if ($highestRow < 2) {
                     return [
                         'success' => false,
                         'message' => __('File is empty or has no data rows'),
@@ -322,81 +328,105 @@ class ImportService
                     ];
                 }
 
-                $headers = array_map('strtolower', array_map('trim', $rows[0]));
-                unset($rows[0]); // Remove header row
+                // Process in chunks to reduce memory usage
+                $chunkSize = 100;
+                $totalRows = $highestRow - 1; // Exclude header row
+                
+                for ($startRow = 2; $startRow <= $highestRow; $startRow += $chunkSize) {
+                    $endRow = min($startRow + $chunkSize - 1, $highestRow);
+                    
+                    DB::beginTransaction();
+                    
+                    try {
+                        // Read chunk
+                        $range = 'A'.$startRow.':'.$worksheet->getHighestColumn().$endRow;
+                        $rows = $worksheet->rangeToArray($range);
+                        
+                        foreach ($rows as $index => $row) {
+                            $rowNum = $startRow + $index;
+                            $rowData = [];
+                            
+                            foreach ($headers as $colIndex => $header) {
+                                $rowData[$header] = isset($row[$colIndex]) ? trim((string) $row[$colIndex]) : null;
+                            }
 
-                DB::beginTransaction();
+                            // Skip empty rows
+                            if (empty(array_filter($rowData))) {
+                                continue;
+                            }
 
-                try {
-                    foreach ($rows as $rowNum => $row) {
-                        $rowData = [];
-                        foreach ($headers as $index => $header) {
-                            $rowData[$header] = isset($row[$index]) ? trim((string) $row[$index]) : null;
-                        }
+                            // Validate row
+                            $validator = Validator::make($rowData, $entityConfig['validation_rules']);
+                            if ($validator->fails()) {
+                                $this->errors[] = [
+                                    'row' => $rowNum,
+                                    'errors' => $validator->errors()->all(),
+                                ];
+                                $this->failedCount++;
 
-                        // Skip empty rows
-                        if (empty(array_filter($rowData))) {
-                            continue;
-                        }
+                                continue;
+                            }
 
-                        // Validate row
-                        $validator = Validator::make($rowData, $entityConfig['validation_rules']);
-                        if ($validator->fails()) {
-                            $this->errors[] = [
-                                'row' => $rowNum + 1,
-                                'errors' => $validator->errors()->all(),
-                            ];
-                            $this->failedCount++;
+                            // Import based on entity type
+                            try {
+                                $result = match ($entityType) {
+                                    'products' => $this->importProduct($rowData, $branchId, $updateExisting, $skipDuplicates, $moduleId),
+                                    'customers' => $this->importCustomer($rowData, $branchId, $updateExisting, $skipDuplicates),
+                                    'suppliers' => $this->importSupplier($rowData, $branchId, $updateExisting, $skipDuplicates),
+                                    default => false,
+                                };
 
-                            continue;
-                        }
-
-                        // Import based on entity type
-                        try {
-                            $result = match ($entityType) {
-                                'products' => $this->importProduct($rowData, $branchId, $updateExisting, $skipDuplicates, $moduleId),
-                                'customers' => $this->importCustomer($rowData, $branchId, $updateExisting, $skipDuplicates),
-                                'suppliers' => $this->importSupplier($rowData, $branchId, $updateExisting, $skipDuplicates),
-                                default => false,
-                            };
-
-                            if ($result) {
-                                $this->successCount++;
-                            } else {
+                                if ($result) {
+                                    $this->successCount++;
+                                } else {
+                                    $this->failedCount++;
+                                }
+                            } catch (\Exception $e) {
+                                $this->errors[] = [
+                                    'row' => $rowNum,
+                                    'errors' => [$e->getMessage()],
+                                ];
                                 $this->failedCount++;
                             }
-                        } catch (\Exception $e) {
-                            $this->errors[] = [
-                                'row' => $rowNum + 1,
-                                'errors' => [$e->getMessage()],
-                            ];
-                            $this->failedCount++;
                         }
+                        
+                        DB::commit();
+                        
+                        // Clear memory after each chunk
+                        unset($rows);
+                        
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        Log::error('Import chunk failed', [
+                            'start_row' => $startRow,
+                            'end_row' => $endRow,
+                            'error' => $e->getMessage(),
+                        ]);
+                        throw $e;
                     }
+                }
+                
+                // Clear spreadsheet from memory
+                $spreadsheet->disconnectWorksheets();
+                unset($spreadsheet);
 
-                    DB::commit();
-
-                    // Log the import activity
-                    activity()
-                        ->causedBy(auth()->user())
-                        ->withProperties([
-                            'entity_type' => $entityType,
-                            'imported' => $this->successCount,
-                            'failed' => $this->failedCount,
-                        ])
-                        ->log("Imported {$this->successCount} {$entityType} records");
-
-                    return [
-                        'success' => true,
-                        'message' => __(':count records imported successfully', ['count' => $this->successCount]),
+                // Log the import activity
+                activity()
+                    ->causedBy(auth()->user())
+                    ->withProperties([
+                        'entity_type' => $entityType,
                         'imported' => $this->successCount,
                         'failed' => $this->failedCount,
-                        'errors' => $this->errors,
-                    ];
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    throw $e;
-                }
+                    ])
+                    ->log("Imported {$this->successCount} {$entityType} records");
+
+                return [
+                    'success' => true,
+                    'message' => __(':count records imported successfully', ['count' => $this->successCount]),
+                    'imported' => $this->successCount,
+                    'failed' => $this->failedCount,
+                    'errors' => $this->errors,
+                ];
             },
             operation: 'import',
             context: ['entity_type' => $entityType, 'file' => $filePath],

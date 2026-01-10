@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Http\Requests\Traits\HasMultilingualValidation;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProductStoreRequest extends FormRequest
 {
@@ -20,8 +21,18 @@ class ProductStoreRequest extends FormRequest
     {
         return [
             'name' => $this->multilingualString(required: true, max: 255),
-            'sku' => ['nullable', 'string', 'max:100', 'unique:products,sku'],
-            'barcode' => ['nullable', 'string', 'max:100', 'unique:products,barcode'],
+            'sku' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('products', 'sku')->whereNull('deleted_at'),
+            ],
+            'barcode' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('products', 'barcode')->whereNull('deleted_at'),
+            ],
             'default_price' => ['required', 'numeric', 'min:0'],
             'cost' => ['nullable', 'numeric', 'min:0'],
             'description' => $this->unicodeText(required: false),

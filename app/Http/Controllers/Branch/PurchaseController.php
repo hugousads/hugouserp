@@ -75,6 +75,12 @@ class PurchaseController extends Controller
     {
         $this->requireBranchId($request);
 
+        // Prevent self-approval: verify purchase was not created by the current user
+        $purchaseModel = Purchase::findOrFail($purchase);
+        if ($purchaseModel->created_by === auth()->id()) {
+            abort(403, __('You cannot approve your own request.'));
+        }
+
         return $this->ok($this->purchases->approve($purchase), __('Approved'));
     }
 
