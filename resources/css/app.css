@@ -643,6 +643,14 @@
     box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
 }
 
+/* data-current attribute support for Livewire Navigate active state detection */
+.erp-sidebar-item[data-current] {
+    color: #ecfdf5;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+    border-color: rgba(16, 185, 129, 0.3);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+}
+
 .erp-sidebar-item-icon {
     flex-shrink: 0;
     width: 1.25rem;
@@ -688,6 +696,12 @@
     background: rgba(16, 185, 129, 0.1);
 }
 
+/* data-current attribute support for Livewire Navigate active state detection */
+.erp-sidebar-subitem[data-current] {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
 .erp-sidebar-subitem::before {
     content: '';
     width: 4px;
@@ -699,6 +713,12 @@
 }
 
 .erp-sidebar-subitem.active::before {
+    background: #10b981;
+    opacity: 1;
+}
+
+/* data-current attribute support for bullet indicator */
+.erp-sidebar-subitem[data-current]::before {
     background: #10b981;
     opacity: 1;
 }

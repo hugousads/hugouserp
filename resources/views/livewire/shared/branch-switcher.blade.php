@@ -141,8 +141,9 @@
 <script>
     document.addEventListener('livewire:init', () => {
         Livewire.on('branch-switched', () => {
-            // Reload page to apply branch context changes
-            window.location.reload();
+            // Use Livewire.navigate for SPA-friendly navigation instead of full reload
+            // This refreshes the page content while preserving SPA state
+            Livewire.navigate(window.location.href);
         });
     });
 </script>

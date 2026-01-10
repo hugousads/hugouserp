@@ -14,19 +14,21 @@ use App\Models\Supplier;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Attributes\Json;
 use Livewire\Component;
 
+/**
+ * Global Search Component using Livewire 4 Json Actions
+ *
+ * This component uses the #[Json] attribute to return search results
+ * without triggering a full component re-render. The UI is handled
+ * entirely by Alpine.js, making searches fast and smooth.
+ */
 class GlobalSearch extends Component
 {
-    public string $query = '';
-
-    public array $results = [];
-
-    public bool $showResults = false;
-
-    public bool $isSearching = false;
-
     protected static array $columnCache = [];
 
     protected function scopedQuery($query, User $user)
@@ -38,30 +40,51 @@ class GlobalSearch extends Component
         return $query->when($user->branch_id && $hasBranchColumn, fn ($q) => $q->where('branch_id', $user->branch_id));
     }
 
-    public function updatedQuery(): void
+    /**
+     * Safe route helper to avoid exceptions when route doesn't exist.
+     */
+    protected function safeRoute(?string $name, mixed $parameters = []): string
     {
-        $this->search();
+        if (! $name || ! Route::has($name)) {
+            return '#';
+        }
+
+        return route($name, $parameters);
     }
 
-    public function search(): void
+    /**
+     * Json action for search - returns JSON without rerendering the component.
+     * Results are cached for 10 seconds to avoid hammering the DB.
+     */
+    #[Json]
+    public function search(string $query): array
     {
-        $this->results = [];
-        $this->showResults = false;
-        $this->isSearching = false;
-
-        if (strlen($this->query) < 2) {
-            return;
+        if (strlen($query) < 2) {
+            return ['results' => [], 'total' => 0];
         }
 
         /** @var User|null $user */
         $user = Auth::user();
         if (! $user) {
-            return;
+            return ['results' => [], 'total' => 0];
         }
 
-        $this->isSearching = true;
-        $searchTerm = '%'.$this->query.'%';
-        $searchTermLower = '%'.mb_strtolower($this->query, 'UTF-8').'%';
+        // Short cache to avoid repeated DB queries for same search
+        $cacheKey = sprintf('global_search:%d:%s', $user->id, md5($query));
+
+        return Cache::remember($cacheKey, 10, function () use ($query, $user) {
+            return $this->performSearch($query, $user);
+        });
+    }
+
+    /**
+     * Perform the actual search across all entities.
+     */
+    protected function performSearch(string $query, User $user): array
+    {
+        $results = [];
+        $searchTerm = '%'.$query.'%';
+        $searchTermLower = '%'.mb_strtolower($query, 'UTF-8').'%';
 
         if ($user->can('inventory.products.view')) {
             $canEdit = $user->can('inventory.products.manage');
@@ -79,17 +102,17 @@ class GlobalSearch extends Component
                 ->get(['id', 'name', 'sku']);
 
             if ($products->isNotEmpty()) {
-                $this->results['products'] = [
+                $results['products'] = [
                     'label' => __('Products'),
                     'icon' => '📦',
-                    'route' => 'app.inventory.products.index',
+                    'route' => $this->safeRoute('app.inventory.products.index'),
                     'items' => $products->map(fn ($p) => [
                         'id' => $p->id,
                         'title' => $p->name,
                         'subtitle' => 'SKU: '.($p->sku ?: '-'),
                         'route' => $canEdit
-                            ? route('app.inventory.products.edit', $p->id)
-                            : route('app.inventory.products.index', ['search' => $p->sku]),
+                            ? $this->safeRoute('app.inventory.products.edit', $p->id)
+                            : $this->safeRoute('app.inventory.products.index', ['search' => $p->sku]),
                     ])->toArray(),
                 ];
             }
@@ -111,17 +134,17 @@ class GlobalSearch extends Component
                 ->get(['id', 'name']);
 
             if ($customers->isNotEmpty()) {
-                $this->results['customers'] = [
+                $results['customers'] = [
                     'label' => __('Customers'),
                     'icon' => '👥',
-                    'route' => 'customers.index',
+                    'route' => $this->safeRoute('customers.index'),
                     'items' => $customers->map(fn ($c) => [
                         'id' => $c->id,
                         'title' => $c->name,
                         'subtitle' => __('Customer'),
                         'route' => $canEdit
-                            ? route('customers.edit', $c->id)
-                            : route('customers.index', ['search' => $c->name]),
+                            ? $this->safeRoute('customers.edit', $c->id)
+                            : $this->safeRoute('customers.index', ['search' => $c->name]),
                     ])->toArray(),
                 ];
             }
@@ -143,17 +166,17 @@ class GlobalSearch extends Component
                 ->get(['id', 'name']);
 
             if ($suppliers->isNotEmpty()) {
-                $this->results['suppliers'] = [
+                $results['suppliers'] = [
                     'label' => __('Suppliers'),
                     'icon' => '🏭',
-                    'route' => 'suppliers.index',
+                    'route' => $this->safeRoute('suppliers.index'),
                     'items' => $suppliers->map(fn ($s) => [
                         'id' => $s->id,
                         'title' => $s->name,
                         'subtitle' => __('Supplier'),
                         'route' => $canEdit
-                            ? route('suppliers.edit', $s->id)
-                            : route('suppliers.index', ['search' => $s->name]),
+                            ? $this->safeRoute('suppliers.edit', $s->id)
+                            : $this->safeRoute('suppliers.index', ['search' => $s->name]),
                     ])->toArray(),
                 ];
             }
@@ -171,15 +194,15 @@ class GlobalSearch extends Component
                 ->get(['id', 'status', 'reference_number']);
 
             if ($sales->isNotEmpty()) {
-                $this->results['sales'] = [
+                $results['sales'] = [
                     'label' => __('Sales'),
                     'icon' => '💰',
-                    'route' => 'app.sales.index',
+                    'route' => $this->safeRoute('app.sales.index'),
                     'items' => $sales->map(fn ($s) => [
                         'id' => $s->id,
                         'title' => $s->reference_number ?: '#'.$s->id,
                         'subtitle' => ucfirst($s->status ?? 'pending'),
-                        'route' => route('app.sales.show', $s->id),
+                        'route' => $this->safeRoute('app.sales.show', $s->id),
                     ])->toArray(),
                 ];
             }
@@ -198,17 +221,17 @@ class GlobalSearch extends Component
                 ->get(['id', 'reference_number', 'status']);
 
             if ($purchases->isNotEmpty()) {
-                $this->results['purchases'] = [
+                $results['purchases'] = [
                     'label' => __('Purchases'),
                     'icon' => '📋',
-                    'route' => 'app.purchases.index',
+                    'route' => $this->safeRoute('app.purchases.index'),
                     'items' => $purchases->map(fn ($p) => [
                         'id' => $p->id,
                         'title' => $p->reference_number ?: '#'.$p->id,
                         'subtitle' => ucfirst($p->status ?? 'pending'),
                         'route' => $canEdit
-                            ? route('app.purchases.edit', $p->id)
-                            : route('app.purchases.index', ['search' => $p->reference_number]),
+                            ? $this->safeRoute('app.purchases.edit', $p->id)
+                            : $this->safeRoute('app.purchases.index', ['search' => $p->reference_number]),
                     ])->toArray(),
                 ];
             }
@@ -228,15 +251,15 @@ class GlobalSearch extends Component
                 ->get(['id', 'ticket_number', 'subject', 'status']);
 
             if ($tickets->isNotEmpty()) {
-                $this->results['tickets'] = [
+                $results['tickets'] = [
                     'label' => __('Tickets'),
                     'icon' => '🎫',
-                    'route' => 'app.helpdesk.index',
+                    'route' => $this->safeRoute('app.helpdesk.index'),
                     'items' => $tickets->map(fn ($t) => [
                         'id' => $t->id,
                         'title' => $t->ticket_number ?: '#'.$t->id,
                         'subtitle' => $t->subject,
-                        'route' => route('app.helpdesk.tickets.show', $t->id),
+                        'route' => $this->safeRoute('app.helpdesk.tickets.show', $t->id),
                     ])->toArray(),
                 ];
             }
@@ -256,15 +279,15 @@ class GlobalSearch extends Component
                 ->get(['id', 'code', 'name', 'status']);
 
             if ($projects->isNotEmpty()) {
-                $this->results['projects'] = [
+                $results['projects'] = [
                     'label' => __('Projects'),
                     'icon' => '📂',
-                    'route' => 'app.projects.index',
+                    'route' => $this->safeRoute('app.projects.index'),
                     'items' => $projects->map(fn ($p) => [
                         'id' => $p->id,
                         'title' => $p->name,
                         'subtitle' => $p->code ?: strtoupper(__('Project')),
-                        'route' => route('app.projects.show', $p->id),
+                        'route' => $this->safeRoute('app.projects.show', $p->id),
                     ])->toArray(),
                 ];
             }
@@ -284,39 +307,23 @@ class GlobalSearch extends Component
                 ->get(['id', 'title', 'code']);
 
             if ($documents->isNotEmpty()) {
-                $this->results['documents'] = [
+                $results['documents'] = [
                     'label' => __('Documents'),
                     'icon' => '📄',
-                    'route' => 'app.documents.index',
+                    'route' => $this->safeRoute('app.documents.index'),
                     'items' => $documents->map(fn ($d) => [
                         'id' => $d->id,
                         'title' => $d->title ?: ($d->code ?: '#'.$d->id),
                         'subtitle' => $d->code ?: __('Document'),
-                        'route' => route('app.documents.show', $d->id),
+                        'route' => $this->safeRoute('app.documents.show', $d->id),
                     ])->toArray(),
                 ];
             }
         }
 
-        $this->showResults = ! empty($this->results);
-        $this->isSearching = false;
-    }
+        $total = collect($results)->sum(fn ($group) => count($group['items'] ?? []));
 
-    public function clearSearch(): void
-    {
-        $this->query = '';
-        $this->results = [];
-        $this->showResults = false;
-    }
-
-    public function closeResults(): void
-    {
-        $this->showResults = false;
-    }
-
-    public function getTotalResultsProperty(): int
-    {
-        return collect($this->results)->sum(fn ($group) => count($group['items'] ?? []));
+        return ['results' => $results, 'total' => $total];
     }
 
     public function render()

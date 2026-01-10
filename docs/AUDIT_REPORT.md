@@ -1,180 +1,240 @@
 # Project Audit Report
-## Date: 2026-01-10
+## Date: 2026-01-10 (Updated)
 
 ### Executive Summary
-This audit covers security, dead code, Turbo/Livewire migration issues, performance patterns, and Alpine.js usage in the HugousERP Laravel 12 + Livewire 4 application.
+This audit covers the security improvements, dead code removal, Turbo/Livewire migration, performance optimizations, and Livewire 4 compatibility updates implemented for the HugousERP Laravel 12 + Livewire 4 application.
 
 ---
 
-## 1. Security Issues
+## ✅ Completed Changes
 
-### 1.1 Committed Secrets & .env Files
-- **Status**: ✅ Safe
+### 1. Security Fixes
+
+#### 1A) .env Security
+- **Status**: ✅ Verified Safe
 - `.env` is properly listed in `.gitignore`
-- `.env.backup` is properly listed in `.gitignore`
-- `.env.production` is properly listed in `.gitignore`
-- `.env.example` exists and contains safe placeholder values
+- `.env.example` exists with safe placeholder values
+- No secrets committed to repository
 
-### 1.2 Public Logs
-- **Status**: ✅ Safe
-- No `public/error_log` or similar files found in the public directory
+#### 1B) Public Logs
+- **Status**: ✅ Verified Safe
+- No `public/error_log` or similar files in public directory
 
-### 1.3 Trusted Proxies Configuration
-- **Status**: ✅ Properly Configured
-- `bootstrap/app.php` already handles:
-  - Wildcard (`*`) proxy configuration
+#### 1C) Trusted Proxies
+- **Status**: ✅ Already Properly Configured
+- `bootstrap/app.php` handles:
+  - Wildcard (`*`) configuration
   - Comma-separated proxy list parsing
-  - Production warning when using wildcard proxies
+  - Empty/null values
+  - Production warning for wildcard usage
+
+#### 1D) ModuleContext Middleware
+- **Status**: ✅ Already Registered
+- Middleware registered in web group in `bootstrap/app.php`
+
+#### 1G) AutoLogout Performance Fix
+- **Status**: ✅ Fixed
+- Updated `app/Http/Middleware/AutoLogout.php` to use `UserPreference::cachedForUser()` instead of `getForUser()`
+- Added model events (saved/deleted) to `app/Models/UserPreference.php` for cache invalidation
 
 ---
 
-## 2. Turbo References (MUST REMOVE)
+### 2. Dead Code Removal
 
-### 2.1 Package Dependencies
-- **package.json**: No `@hotwired/turbo` found ✅
-- **package-lock.json**: Contains orphaned `@hotwired/turbo` reference ⚠️
-  - Line: `"@hotwired/turbo": "^8.0.20"`
-  - **Action**: Regenerate package-lock.json after npm install
-
-### 2.2 JavaScript/Blade Turbo References
-Files with Turbo references to remove:
-1. `resources/views/layouts/sidebar-new.blade.php`:
-   - `this._turboHandler` listener registration
-   - `turbo:render` event listener
-   - Turbo undefined check: `if (typeof Turbo !== 'undefined')`
-
-2. `resources/js/app.js`:
-   - Comment reference: "No need for Turbo.js - Livewire handles navigation natively" (safe comment, can keep)
+#### 2A) Unused Middleware Removed
+- **Deleted**: `app/Http/Middleware/ApiRateLimiter.php`
+- **Deleted**: `app/Http/Middleware/RedirectIfAuthenticated.php`
+- Neither was registered in bootstrap/app.php or used in routes
 
 ---
 
-## 3. Alpine.js Usage
-
-### 3.1 x-collapse Directive (REQUIRES @alpinejs/collapse plugin)
-Files using `x-collapse`:
-1. `resources/views/livewire/admin/modules/form.blade.php`
-2. `resources/views/livewire/reports/scheduled-reports/form.blade.php`
-3. `resources/views/layouts/sidebar-new.blade.php`
-4. `resources/views/components/sidebar/menu-item.blade.php`
-
-**Recommendation**: Replace `x-collapse` with `x-show` + `x-transition` unless @alpinejs/collapse is installed.
-
-### 3.2 General Alpine Usage
-- Alpine.js is bundled via `package.json` (alpinejs: ^3.15.2) ✅
-- x-data, x-show, x-transition are used extensively (safe)
+### 3. Turbo Removal
+- **Status**: ✅ Clean
+- No Turbo references found in sidebar-new.blade.php
+- Comment in `resources/js/app.js` explaining Livewire Navigate is used (kept for documentation)
 
 ---
 
-## 4. Livewire v3 Hooks (MUST MIGRATE TO v4)
+### 4. Sidebar Improvements
+- **Dynamic Persist Key**: Updated `resources/views/layouts/app.blade.php`
+  - Changed from `@persist('sidebar')` to `@persist('sidebar-'.app()->getLocale().'-'.(session('admin_branch_context') ?? session('selected_branch_id') ?? 'default'))`
+  - Ensures sidebar refreshes correctly on locale or branch context changes
 
-### 4.1 Deprecated Hook Usage
-File: `resources/views/layouts/app.blade.php`
-```javascript
-Livewire.hook('request', ({ options }) => { ... })
-Livewire.hook('request', ({ fail }) => { ... })
+---
+
+### 5. Branch Switching (SPA-friendly)
+- **Updated**: `resources/views/livewire/shared/branch-switcher.blade.php`
+- Changed from `window.location.reload()` to `Livewire.navigate(window.location.href)`
+- Faster navigation without full page reload
+
+---
+
+### 6. Session Expired (419) Handling - Unified
+- **Updated**: `resources/views/layouts/app.blade.php`
+- Created global `window.erpHandleSessionExpired(status)` handler
+- Unified handling across:
+  - Livewire 4 commit hook
+  - Axios interceptor
+- Uses `Livewire.navigate()` for SPA-friendly refresh when available
+
+---
+
+### 7. Global Search - Livewire 4 Json Actions
+- **Updated**: `app/Livewire/Shared/GlobalSearch.php`
+  - Added `#[Json]` attribute to `search()` method
+  - Removed component state properties (results, showResults, isSearching)
+  - Added `safeRoute()` helper to prevent exceptions for missing routes
+  - Added 10-second cache to reduce DB hits
+- **Updated**: `resources/views/livewire/shared/global-search.blade.php`
+  - Converted to Alpine.js-only UI
+  - Client-side debouncing (300ms)
+  - requestId guard to prevent out-of-order responses
+  - No component re-renders during search
+
+---
+
+### 8. CSS Updates
+- **Updated**: `resources/css/app.css`
+- Added `data-current` attribute selectors for sidebar items:
+  - `.erp-sidebar-item[data-current]`
+  - `.erp-sidebar-subitem[data-current]`
+  - `.erp-sidebar-subitem[data-current]::before`
+
+---
+
+### 9. Script Re-initialization After Navigate
+- **Updated**: `resources/views/layouts/app.blade.php`
+- Prefetch initialization now runs on both `DOMContentLoaded` and `livewire:navigated`
+- Prevents duplicate listeners with `dataset.prefetchInit` marker
+
+---
+
+## Test Instructions
+
+### Prerequisites
+```bash
+# Clone and setup
+cd /path/to/hugouserp
+cp .env.example .env
+composer install
+npm install && npm run build
+php artisan key:generate
+php artisan migrate --seed
 ```
 
-**Action Required**: Update to Livewire 4 interceptor API.
+### 1. Security Tests
 
----
-
-## 5. Performance Issues
-
-### 5.1 Dashboard Chart.js CDN
-File: `resources/views/livewire/dashboard/index.blade.php` (Line 399)
-```html
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+#### 1A) .env not in repo
+```bash
+git grep "APP_KEY=" 
+# Should only show .env.example with empty APP_KEY=
 ```
 
-**Issue**: Chart.js is already bundled in `resources/js/app.js` via npm.
-**Action**: Remove CDN script tag and use bundled version.
+#### 1B) No public error_log
+```bash
+ls -la public/error_log
+# Should return "No such file or directory"
+```
 
-### 5.2 Heavy Queries in render()
-- **LoadsDashboardData trait**: ✅ Uses caching properly
-- **Dashboard widgets**: Load data in mount(), not render() ✅
-- **GlobalSearch**: Uses debounce on input ✅
+#### 1C) Trusted Proxies
+```bash
+# Test with wildcard
+APP_TRUSTED_PROXIES=* php artisan tinker --execute="var_dump(config('app.env'));"
+# Should work without errors
 
-### 5.3 N+1 Patterns
-- **ModuleService**: Uses eager loading with `with()` ✅
-- **ModuleNavigationService**: Uses eager loading ✅
-- **Sidebar**: Inline N+1 pattern in Blade - needs refactor to Livewire component ⚠️
+# Test with CSV
+APP_TRUSTED_PROXIES=10.0.0.1,10.0.0.2 php artisan tinker --execute="echo 'OK';"
+# Should work without errors
+
+# Test empty
+APP_TRUSTED_PROXIES= php artisan tinker --execute="echo 'OK';"
+# Should work without errors
+```
+
+#### 1D) ModuleContext Middleware
+```bash
+# Visit any page with ?module_context=sales
+# Then check: session('module_context') should be 'sales'
+```
+
+#### 1G) AutoLogout Caching
+```bash
+# Login and navigate around
+# Check Laravel debugbar/telescope - UserPreference queries should be cached
+# Update user preference and verify change reflects after cache expires (1 hour)
+```
+
+### 2. Dead Code Removal
+```bash
+# Verify files are deleted
+ls app/Http/Middleware/ApiRateLimiter.php 2>/dev/null || echo "Deleted ✓"
+ls app/Http/Middleware/RedirectIfAuthenticated.php 2>/dev/null || echo "Deleted ✓"
+```
+
+### 3. Branch Switching
+1. Login as Super Admin
+2. Open sidebar and expand branch switcher
+3. Select a different branch
+4. **Expected**: Page refreshes via Livewire Navigate (no full reload)
+5. Sidebar should reflect the new branch context
+
+### 4. Global Search (No Rerender)
+1. Open browser DevTools Network tab
+2. Use the global search in navbar
+3. Type a search query
+4. **Expected**: 
+   - Network shows fetch requests to Livewire endpoint
+   - No full component HTML returned
+   - Results appear smoothly in Alpine.js dropdown
+
+### 5. 419 Session Expired Handling
+1. Login to the application
+2. In another tab, logout
+3. Go back to first tab and try to perform an action
+4. **Expected**: Page navigates gracefully (no error modal), either refreshes or redirects to login
+
+### 6. Sidebar Active State
+1. Navigate to different pages
+2. **Expected**: Active menu item is highlighted correctly
+3. Parent expands when child is active
+4. Active state persists after Livewire Navigate transitions
 
 ---
 
-## 6. Role String Mismatches
+## Files Modified
 
-### 6.1 Inconsistent Role Names
-Files with potential mismatches:
-- Some files use `'Super Admin'` (Title Case - from seeder)
-- Some files use `'super-admin'` (kebab-case)
+| File | Change |
+|------|--------|
+| `app/Http/Middleware/AutoLogout.php` | Use cachedForUser() |
+| `app/Models/UserPreference.php` | Add booted() with cache invalidation |
+| `app/Livewire/Shared/GlobalSearch.php` | Convert to #[Json] action |
+| `resources/views/livewire/shared/global-search.blade.php` | Alpine.js-only UI |
+| `resources/views/livewire/shared/branch-switcher.blade.php` | Use Livewire.navigate |
+| `resources/views/layouts/app.blade.php` | Dynamic persist key, unified 419 handler, prefetch re-init |
+| `resources/css/app.css` | Add data-current selectors |
 
-**Files affected**:
-- `app/Livewire/Concerns/LoadsDashboardData.php` - Uses both formats ✅ (already handles both)
-- Various policy and service files
+## Files Deleted
 
-**Recommendation**: Use permission-based checks (`$user->can()`) instead of role checks where possible.
-
----
-
-## 7. Dead Code & Unused Files
-
-### 7.1 Sidebar Files
-- `resources/views/layouts/sidebar-new.blade.php` - Currently in use
-- `resources/views/layouts/sidebar-organized.blade.php` - Status unclear, may be unused
-- `resources/views/components/sidebar/menu-item.blade.php` - Uses x-collapse
-
-### 7.2 Unused Middleware
-- All registered middleware in `bootstrap/app.php` appear to be in use
+| File | Reason |
+|------|--------|
+| `app/Http/Middleware/ApiRateLimiter.php` | Unused, not registered |
+| `app/Http/Middleware/RedirectIfAuthenticated.php` | Unused, Laravel default used |
 
 ---
 
-## 8. wire:navigate Usage
-
-### 8.1 Current Implementation
-Files using `wire:navigate`:
-- Auth views (login, forgot-password, reset-password)
-- Various index/list views
-- Command palette
-- Dashboard
-- Sidebar links
-
-**Status**: Partial implementation. Key navigation areas need `wire:navigate` attribute.
-
----
-
-## 9. Recommended Actions (Priority Order)
-
-### High Priority
-1. Remove Turbo references from sidebar-new.blade.php
-2. Regenerate package-lock.json to remove orphaned Turbo
-3. Replace x-collapse with x-show + x-transition
-4. Update Livewire v3 hooks to v4 API in app.blade.php
-5. Remove CDN Chart.js from dashboard
+## Remaining Recommendations (Future Work)
 
 ### Medium Priority
-1. Create Sidebar Livewire component to replace inline Blade logic
-2. Add @persist('sidebar') to layout
-3. Update GlobalSearch to use #[Json] attribute
+1. Create a full Livewire component for sidebar to eliminate inline Blade logic
+2. Add `wire:navigate` to more navigation links throughout the app
+3. Implement lazy-loading dashboard widgets with `#[Lazy]` attribute
 
 ### Lower Priority
-1. Standardize role name usage
-2. Remove unused sidebar blade files
-3. Add ModuleObserver for cache invalidation
+1. Remove `@hotwired/turbo` from package-lock.json by regenerating: `rm -rf node_modules package-lock.json && npm install`
+2. Replace `x-collapse` with `x-show` + `x-transition` in remaining files
+3. Add ModuleObserver for centralized module cache invalidation
 
 ---
 
-## 10. Files to Modify
-
-| File | Action |
-|------|--------|
-| `resources/views/layouts/sidebar-new.blade.php` | Remove Turbo, replace x-collapse |
-| `resources/views/layouts/app.blade.php` | Update Livewire hooks, add @persist |
-| `resources/views/livewire/dashboard/index.blade.php` | Remove CDN Chart.js |
-| `resources/views/livewire/admin/modules/form.blade.php` | Replace x-collapse |
-| `resources/views/livewire/reports/scheduled-reports/form.blade.php` | Replace x-collapse |
-| `resources/views/components/sidebar/menu-item.blade.php` | Replace x-collapse |
-| `package-lock.json` | Regenerate via npm install |
-
----
-
-*Report generated as part of Livewire 4 migration project.*
+*Report updated: 2026-01-10*
+*Livewire 4 migration and security improvements completed.*

@@ -28,6 +28,28 @@ class UserPreference extends Model
         'notification_settings' => 'array',
     ];
 
+    /**
+     * Boot the model with cache invalidation on save/delete.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (self $preference) {
+            static::clearCacheForUser($preference->user_id);
+        });
+
+        static::deleted(function (self $preference) {
+            static::clearCacheForUser($preference->user_id);
+        });
+    }
+
+    /**
+     * Clear the cached preferences for a specific user.
+     */
+    public static function clearCacheForUser(int $userId): void
+    {
+        Cache::forget(sprintf('user_prefs:%d', $userId));
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

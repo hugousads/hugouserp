@@ -16,7 +16,8 @@ class AutoLogout
     {
         if (Auth::check()) {
             $user = Auth::user();
-            $preferences = UserPreference::getForUser($user->id);
+            // Use cached preferences to avoid DB query on every request
+            $preferences = UserPreference::cachedForUser($user->id);
 
             if ($preferences->auto_logout) {
                 $lastActivity = session('last_activity');
