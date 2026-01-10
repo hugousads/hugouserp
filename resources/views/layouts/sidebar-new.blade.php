@@ -790,24 +790,13 @@
             });
             
             // Store bound handlers for cleanup
-            this._turboHandler = () => this.$nextTick(() => this.scrollToActiveItem());
             this._livewireHandler = () => this.$nextTick(() => this.scrollToActiveItem());
             
-            // Also handle Turbo/SPA navigation if Turbo is loaded
-            if (typeof Turbo !== 'undefined') {
-                document.addEventListener('turbo:render', this._turboHandler);
-            }
-            
-            // Handle Livewire navigation
-            if (typeof Livewire !== 'undefined') {
-                document.addEventListener('livewire:navigated', this._livewireHandler);
-            }
+            // Handle Livewire navigation (Livewire 4 uses wire:navigate)
+            document.addEventListener('livewire:navigated', this._livewireHandler);
         },
         destroy() {
             // Cleanup event listeners
-            if (this._turboHandler) {
-                document.removeEventListener('turbo:render', this._turboHandler);
-            }
             if (this._livewireHandler) {
                 document.removeEventListener('livewire:navigated', this._livewireHandler);
             }
@@ -1112,8 +1101,13 @@
                                 {{-- Sub Items --}}
                                 <div 
                                     x-show="isExpanded('{{ $itemKey }}')"
-                                    x-collapse
-                                    class="erp-sidebar-subitems"
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 max-h-0"
+                                    x-transition:enter-end="opacity-100 max-h-96"
+                                    x-transition:leave="transition ease-in duration-150"
+                                    x-transition:leave-start="opacity-100 max-h-96"
+                                    x-transition:leave-end="opacity-0 max-h-0"
+                                    class="erp-sidebar-subitems overflow-hidden"
                                 >
                                     @foreach($item['children'] as $child)
                                         <a 

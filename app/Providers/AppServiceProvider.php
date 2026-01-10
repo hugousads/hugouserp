@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\BranchModule;
+use App\Models\Module;
+use App\Models\ModuleNavigation;
 use App\Models\Product;
+use App\Observers\BranchModuleObserver;
+use App\Observers\ModuleNavigationObserver;
+use App\Observers\ModuleObserver;
 use App\Observers\PriceAuditObserver;
 use App\Observers\ProductObserver;
 use App\Services\Contracts\ModuleFieldServiceInterface;
@@ -62,5 +68,10 @@ class AppServiceProvider extends ServiceProvider
         // Observers
         Product::observe(ProductObserver::class);
         Product::observe(PriceAuditObserver::class); // Critical ERP: Price audit trail
+
+        // Module cache invalidation observers
+        Module::observe(ModuleObserver::class);
+        BranchModule::observe(BranchModuleObserver::class);
+        ModuleNavigation::observe(ModuleNavigationObserver::class);
     }
 }

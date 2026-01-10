@@ -147,7 +147,14 @@
                     {{ __('Advanced Options') }}
                 </button>
                 
-                <div x-show="showAdvanced" x-collapse class="mt-4 space-y-4 ps-6 border-s-2 border-gray-200 dark:border-gray-700">
+                <div x-show="showAdvanced" 
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 max-h-0"
+                     x-transition:enter-end="opacity-100 max-h-96"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 max-h-96"
+                     x-transition:leave-end="opacity-0 max-h-0"
+                     class="mt-4 space-y-4 ps-6 border-s-2 border-gray-200 dark:border-gray-700 overflow-hidden">
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                         {{ __('Advanced options allow you to customize report filters. These are optional - leave empty to use template defaults.') }}
                     </p>

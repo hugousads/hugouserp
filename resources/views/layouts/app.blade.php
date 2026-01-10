@@ -113,8 +113,10 @@
 
 {{-- Main Layout Container with new sidebar --}}
 <div class="erp-layout">
-    {{-- New Sidebar (includes overlay) --}}
+    {{-- New Sidebar (includes overlay) - Persist across navigation for smoother UX --}}
+    @persist('sidebar')
     @includeIf('layouts.sidebar-new')
+    @endpersist
 
     {{-- Main Content Wrapper --}}
     <div class="erp-main-wrapper">
@@ -221,8 +223,6 @@
     // CSRF Token Refresh - Prevents 419 Session Expired Errors
     // Refreshes the CSRF token every 30 minutes to keep sessions alive
     (function() {
-        let livewireHookRegistered = false;
-        
         const updateCsrfToken = (token) => {
             // Update meta tag
             const metaTag = document.querySelector('meta[name="csrf-token"]');
@@ -233,18 +233,6 @@
             // Update axios default header if available
             if (window.axios) {
                 window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
-            }
-            
-            // Register Livewire hook once to update CSRF token on requests
-            if (window.Livewire && !livewireHookRegistered) {
-                window.Livewire.hook('request', ({ options }) => {
-                    const currentToken = document.querySelector('meta[name="csrf-token"]')?.content;
-                    if (currentToken) {
-                        options.headers = options.headers || {};
-                        options.headers['X-CSRF-TOKEN'] = currentToken;
-                    }
-                });
-                livewireHookRegistered = true;
             }
         };
         
@@ -303,20 +291,24 @@
             );
         }
         
-        // Handle Livewire 419 errors silently
-        if (window.Livewire) {
-            document.addEventListener('livewire:init', () => {
-                Livewire.hook('request', ({ fail }) => {
-                    fail(({ status, preventDefault }) => {
-                        if (status === 419) {
-                            preventDefault();
-                            // Silently refresh the page
-                            window.location.reload();
-                        }
-                    });
+        // Livewire 4: Handle 419/401 errors using commit hooks
+        // This replaces the deprecated Livewire.hook('request') API
+        document.addEventListener('livewire:init', () => {
+            Livewire.hook('commit', ({ fail }) => {
+                fail(({ status, preventDefault }) => {
+                    if (status === 419) {
+                        preventDefault();
+                        // Silently refresh the page on CSRF mismatch
+                        window.location.reload();
+                    }
+                    if (status === 401) {
+                        preventDefault();
+                        // Redirect to login on authentication failure
+                        window.location.href = '/login';
+                    }
                 });
             });
-        }
+        });
     })();
     
     // Handle export downloads - triggered from Livewire components

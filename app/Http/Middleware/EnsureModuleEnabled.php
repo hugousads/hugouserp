@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
  * EnsureModuleEnabled
  *
  * - Checks that the module identified by key is enabled for the current branch.
+ * - Also checks that the module itself is active (is_active=true).
  * - Accepts parameter form: module.enabled:{moduleKey}
  *   OR picks from request attribute 'module.key' set by SetModuleContext.
  *
@@ -35,16 +36,32 @@ class EnsureModuleEnabled
             return $this->error('Module key is required for this route.', 422);
         }
 
-        // Check pivot table branch_modules (or settings table) for enablement
-        $exists = class_exists(BranchModule::class)
-            ? BranchModule::query()
-                ->where('branch_id', $branch->getKey())
-                ->when(class_exists(Module::class), fn ($q) => $q->whereHas('module', fn ($w) => $w->where('key', $key)))
-                ->when(! class_exists(Module::class), fn ($q) => $q->where('module_key', $key)) // fallback schema
-                ->exists()
-            : true; // If schema absent, don't block development flows
+        // Check that:
+        // 1. The module exists and is active (is_active=true)
+        // 2. The module is enabled for this branch (enabled=true in branch_modules pivot)
+        if (! class_exists(BranchModule::class)) {
+            // If schema absent, don't block development flows
+            return $next($request);
+        }
 
-        if (! $exists) {
+        $isEnabled = BranchModule::query()
+            ->where('branch_id', $branch->getKey())
+            ->where('enabled', true) // Must be enabled for this branch
+            ->where(function ($query) use ($key) {
+                // Check module by relationship (module_id) or by key (module_key fallback)
+                if (class_exists(Module::class)) {
+                    $query->whereHas('module', function ($w) use ($key) {
+                        $w->where('key', $key)
+                          ->where('is_active', true); // Module must also be active
+                    });
+                } else {
+                    // Fallback schema without Module model
+                    $query->where('module_key', $key);
+                }
+            })
+            ->exists();
+
+        if (! $isEnabled) {
             return $this->error("Module [$key] is not enabled for this branch.", 403);
         }
 

@@ -250,7 +250,14 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">{{ __('Technical options for developers') }}</span>
             </button>
             
-            <div x-show="showAdvanced" x-collapse class="border-t border-slate-200 dark:border-slate-700">
+            <div x-show="showAdvanced" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 max-h-0"
+                 x-transition:enter-end="opacity-100 max-h-[1000px]"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 max-h-[1000px]"
+                 x-transition:leave-end="opacity-0 max-h-0"
+                 class="border-t border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div class="p-6">
                     <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
                         <p class="text-xs text-amber-700 dark:text-amber-300">

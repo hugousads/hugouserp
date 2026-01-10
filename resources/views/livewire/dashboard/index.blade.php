@@ -396,14 +396,19 @@
 </div>
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{-- Chart.js is bundled via Vite in resources/js/app.js, no CDN needed --}}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize charts after navigation (handles Livewire wire:navigate)
+function initDashboardCharts() {
     const isRTL = document.documentElement.dir === 'rtl';
     
     const salesCtx = document.getElementById('salesChart');
     if (salesCtx) {
-        new Chart(salesCtx.getContext('2d'), {
+        // Destroy existing chart if any to prevent duplicates on navigation
+        if (salesCtx._chart) {
+            salesCtx._chart.destroy();
+        }
+        salesCtx._chart = new Chart(salesCtx.getContext('2d'), {
             type: 'line',
             data: {
                 labels: @json($salesChartData['labels'] ?? []),
@@ -448,7 +453,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const inventoryCtx = document.getElementById('inventoryChart');
     if (inventoryCtx) {
-        new Chart(inventoryCtx.getContext('2d'), {
+        // Destroy existing chart if any to prevent duplicates on navigation
+        if (inventoryCtx._chart) {
+            inventoryCtx._chart.destroy();
+        }
+        inventoryCtx._chart = new Chart(inventoryCtx.getContext('2d'), {
             type: 'doughnut',
             data: {
                 labels: ['{{ __("In Stock") }}', '{{ __("Low Stock") }}', '{{ __("Out of Stock") }}'],
@@ -477,6 +486,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+}
+
+// Initialize on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', initDashboardCharts);
+
+// Re-initialize on Livewire navigation (wire:navigate)
+document.addEventListener('livewire:navigated', initDashboardCharts);
 </script>
 @endpush
