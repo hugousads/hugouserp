@@ -9,8 +9,32 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
 {
+    /**
+     * BUG FIX #4: Cache permission check result to avoid N+1 queries
+     * Note: Static cache is reset between requests in PHP-FPM/CLI environments
+     * Laravel's request lifecycle ensures this doesn't leak between users
+     */
+    private static ?bool $canViewCost = null;
+
+    /**
+     * Track the current request to prevent cache poisoning
+     */
+    private static ?string $requestId = null;
+
     public function toArray(Request $request): array
     {
+        // BUG FIX #4: Check permission once per request, not per product
+        // Reset cache if this is a different request (safety measure)
+        $currentRequestId = spl_object_hash($request);
+        if (self::$requestId !== $currentRequestId) {
+            self::$canViewCost = null;
+            self::$requestId = $currentRequestId;
+        }
+
+        if (self::$canViewCost === null) {
+            self::$canViewCost = $request->user()?->can('products.view-cost') ?? false;
+        }
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -21,7 +45,7 @@ class ProductResource extends JsonResource
             'brand' => $this->brand,
             'uom' => $this->uom,
             'price' => (float) $this->default_price,
-            'cost' => $this->when($request->user()?->can('products.view-cost'), (float) $this->cost),
+            'cost' => $this->when(self::$canViewCost, (float) $this->cost),
             // Inventory fields
             'min_stock' => $this->min_stock ? (float) $this->min_stock : 0.0,
             'max_stock' => $this->max_stock ? (float) $this->max_stock : null,
@@ -39,5 +63,14 @@ class ProductResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Reset the cached permission check (useful for testing)
+     */
+    public static function resetPermissionCache(): void
+    {
+        self::$canViewCost = null;
+        self::$requestId = null;
     }
 }

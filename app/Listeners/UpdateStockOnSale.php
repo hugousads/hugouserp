@@ -23,6 +23,14 @@ class UpdateStockOnSale implements ShouldQueue
         $warehouseId = $sale->warehouse_id;
 
         foreach ($sale->items as $item) {
+            // BUG FIX #2: Apply unit of measure conversion factor
+            // Load the unit relation to get conversion factor
+            $item->load('unit');
+            $conversionFactor = $item->unit?->conversion_factor ?? 1.0;
+            
+            // Calculate actual quantity to deduct in base units
+            $baseQuantity = (float) $item->quantity * (float) $conversionFactor;
+
             // Critical ERP Logic: Check for negative stock
             $allowNegativeStock = (bool) setting('inventory.allow_negative_stock', false);
 
@@ -32,19 +40,18 @@ class UpdateStockOnSale implements ShouldQueue
                     $warehouseId
                 );
 
-                // Use backward compatibility accessor (qty maps to quantity)
-                $requiredQty = (float) $item->quantity;
-
-                if ($currentStock < $requiredQty) {
+                if ($currentStock < $baseQuantity) {
                     Log::warning('Insufficient stock for sale', [
                         'sale_id' => $sale->getKey(),
                         'product_id' => $item->product_id,
-                        'requested' => $requiredQty,
+                        'requested_base_qty' => $baseQuantity,
+                        'item_qty' => $item->quantity,
+                        'conversion_factor' => $conversionFactor,
                         'available' => $currentStock,
                     ]);
 
                     throw new InvalidArgumentException(
-                        "Insufficient stock for product {$item->product_id}. Available: {$currentStock}, Required: {$requiredQty}"
+                        "Insufficient stock for product {$item->product_id}. Available: {$currentStock}, Required: {$baseQuantity}"
                     );
                 }
             }
@@ -65,16 +72,16 @@ class UpdateStockOnSale implements ShouldQueue
                 continue;
             }
 
-            // Use repository for proper schema mapping
+            // Use repository for proper schema mapping with base quantity
             $this->stockMovementRepo->create([
                 'warehouse_id' => $warehouseId,
                 'product_id' => $item->product_id,
                 'movement_type' => 'sale',
                 'reference_type' => 'sale',
                 'reference_id' => $sale->getKey(),
-                'qty' => abs((float) $item->quantity),
+                'qty' => abs($baseQuantity),
                 'direction' => 'out',
-                'notes' => 'Sale completed',
+                'notes' => sprintf('Sale completed (UoM: %s, Factor: %s)', $item->unit?->name ?? 'base', $conversionFactor),
                 'created_by' => $sale->created_by,
             ]);
         }

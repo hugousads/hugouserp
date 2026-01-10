@@ -45,28 +45,52 @@ class AccountingService
 
             $lines = [];
 
-            // Debit: Cash/Bank or Customer Account (Asset)
-            if ($sale->isPaid()) {
-                $cashAccount = AccountMapping::getAccount('sales', 'cash_account', $sale->branch_id);
-                if ($cashAccount) {
-                    $lines[] = [
-                        'journal_entry_id' => $entry->id,
-                        'account_id' => $cashAccount->id,
-                        'debit' => $sale->grand_total,
-                        'credit' => 0,
-                        'description' => 'Cash received from sale',
-                    ];
+            // BUG FIX #3: Handle split payments - create separate debit entries for each payment method
+            $sale->load('payments');
+            if ($sale->payments->isNotEmpty()) {
+                foreach ($sale->payments as $payment) {
+                    $accountKey = match ($payment->payment_method) {
+                        'card', 'credit_card', 'debit_card' => 'bank_account',
+                        'transfer', 'bank_transfer' => 'bank_account',
+                        'cheque', 'check' => 'cheque_account',
+                        default => 'cash_account',
+                    };
+
+                    $paymentAccount = AccountMapping::getAccount('sales', $accountKey, $sale->branch_id);
+                    if ($paymentAccount && $payment->amount > 0) {
+                        $lines[] = [
+                            'journal_entry_id' => $entry->id,
+                            'account_id' => $paymentAccount->id,
+                            'debit' => $payment->amount,
+                            'credit' => 0,
+                            'description' => "Payment received via {$payment->payment_method}",
+                        ];
+                    }
                 }
             } else {
-                $receivableAccount = AccountMapping::getAccount('sales', 'accounts_receivable', $sale->branch_id);
-                if ($receivableAccount) {
-                    $lines[] = [
-                        'journal_entry_id' => $entry->id,
-                        'account_id' => $receivableAccount->id,
-                        'debit' => $sale->grand_total,
-                        'credit' => 0,
-                        'description' => "Account receivable - Customer #{$sale->customer_id}",
-                    ];
+                // Fallback: Debit Cash/Bank or Customer Account (Asset) if no payment records
+                if ($sale->isPaid()) {
+                    $cashAccount = AccountMapping::getAccount('sales', 'cash_account', $sale->branch_id);
+                    if ($cashAccount) {
+                        $lines[] = [
+                            'journal_entry_id' => $entry->id,
+                            'account_id' => $cashAccount->id,
+                            'debit' => $sale->grand_total,
+                            'credit' => 0,
+                            'description' => 'Cash received from sale',
+                        ];
+                    }
+                } else {
+                    $receivableAccount = AccountMapping::getAccount('sales', 'accounts_receivable', $sale->branch_id);
+                    if ($receivableAccount) {
+                        $lines[] = [
+                            'journal_entry_id' => $entry->id,
+                            'account_id' => $receivableAccount->id,
+                            'debit' => $sale->grand_total,
+                            'credit' => 0,
+                            'description' => "Account receivable - Customer #{$sale->customer_id}",
+                        ];
+                    }
                 }
             }
 
@@ -116,6 +140,9 @@ class AccountingService
 
             // Update sale with journal entry
             $sale->update(['journal_entry_id' => $entry->id]);
+
+            // BUG FIX #1: Generate COGS entry immediately after revenue entry
+            $this->recordCogsEntry($sale);
 
             return $entry->fresh('lines');
         });
@@ -495,6 +522,92 @@ class AccountingService
                     'description' => $line['description'] ?? '',
                 ]);
             }
+
+            return $entry->fresh('lines');
+        });
+    }
+
+    /**
+     * Record Cost of Goods Sold (COGS) entry for a sale
+     * BUG FIX #1: Generate COGS journal entry to properly reflect inventory cost
+     * Debit: COGS Expense, Credit: Inventory Asset
+     *
+     * @param  Sale  $sale  The completed sale
+     * @return JournalEntry|null The created COGS journal entry or null if accounts not configured
+     *
+     * @throws Exception If COGS entry generation fails
+     */
+    public function recordCogsEntry(Sale $sale): ?JournalEntry
+    {
+        // Load sale items with product cost information
+        $sale->load('items.product');
+
+        // Calculate total cost of goods sold
+        $totalCost = '0';
+        foreach ($sale->items as $item) {
+            if ($item->product) {
+                // Use cost_price from item if available, otherwise use product cost
+                $itemCost = $item->cost_price ?? $item->product->cost ?? 0;
+                $itemQty = $item->quantity ?? 0;
+
+                // Use bcmath for precise cost calculation
+                $lineCost = bcmul((string) $itemCost, (string) $itemQty, 4);
+                $totalCost = bcadd($totalCost, $lineCost, 4);
+            }
+        }
+
+        // Round to 2 decimal places
+        $totalCost = (float) bcdiv($totalCost, '1', 2);
+
+        // Skip if total cost is zero or negative
+        if ($totalCost <= 0) {
+            return null;
+        }
+
+        // Get COGS and Inventory accounts
+        $cogsAccount = AccountMapping::getAccount('sales', 'cogs_account', $sale->branch_id);
+        $inventoryAccount = AccountMapping::getAccount('sales', 'inventory_account', $sale->branch_id);
+
+        // Skip if accounts are not configured
+        if (! $cogsAccount || ! $inventoryAccount) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($sale, $totalCost, $cogsAccount, $inventoryAccount) {
+            $fiscalPeriod = FiscalPeriod::getCurrentPeriod($sale->branch_id);
+
+            $entry = JournalEntry::create([
+                'branch_id' => $sale->branch_id,
+                'reference_number' => $this->generateReferenceNumber('COGS', $sale->id),
+                'entry_date' => $sale->posted_at ?? $sale->created_at,
+                'description' => "COGS for Sale #{$sale->code}",
+                'status' => 'posted',
+                'source_module' => 'sales',
+                'source_type' => 'Sale',
+                'source_id' => $sale->id,
+                'fiscal_year' => $fiscalPeriod?->year,
+                'fiscal_period' => $fiscalPeriod?->period,
+                'is_auto_generated' => true,
+                'created_by' => auth()->id(),
+            ]);
+
+            // Debit: COGS Expense (increases expense)
+            JournalEntryLine::create([
+                'journal_entry_id' => $entry->id,
+                'account_id' => $cogsAccount->id,
+                'debit' => $totalCost,
+                'credit' => 0,
+                'description' => 'Cost of goods sold',
+            ]);
+
+            // Credit: Inventory Asset (decreases asset)
+            JournalEntryLine::create([
+                'journal_entry_id' => $entry->id,
+                'account_id' => $inventoryAccount->id,
+                'debit' => 0,
+                'credit' => $totalCost,
+                'description' => 'Inventory reduction',
+            ]);
 
             return $entry->fresh('lines');
         });

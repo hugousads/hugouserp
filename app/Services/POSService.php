@@ -158,18 +158,21 @@ class POSService implements POSServiceInterface
                     $lineSub = bcmul((string) $qty, (string) $price, 4);
                     $lineTax = '0';
 
+                    // BUG FIX #5: Apply line-level tax rounding for compliance with e-invoicing regulations
                     if (! empty($it['tax_id']) && class_exists(Tax::class)) {
                         $tax = Tax::find($it['tax_id']);
                         if ($tax) {
                             $taxRate = bcdiv((string) $tax->rate, '100', 6);
                             $taxableAmount = bcsub($lineSub, (string) $lineDisc, 4);
-                            $lineTax = bcmul($taxableAmount, $taxRate, 4);
+                            // Round tax at line level (2 decimal places) before summing
+                            $lineTax = bcdiv(bcmul($taxableAmount, $taxRate, 4), '1', 2);
                         }
                     }
 
                     $subtotal = bcadd((string) $subtotal, $lineSub, 4);
                     $discountTotal = bcadd((string) $discountTotal, (string) $lineDisc, 4);
-                    $taxTotal = bcadd((string) $taxTotal, $lineTax, 4);
+                    // Sum line-level rounded taxes
+                    $taxTotal = bcadd((string) $taxTotal, $lineTax, 2);
 
                     // Calculate line total with bcmath
                     $lineTotal = bcadd(bcsub($lineSub, (string) $lineDisc, 4), $lineTax, 4);
