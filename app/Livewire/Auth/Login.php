@@ -78,6 +78,7 @@ class Login extends Component
                 'user_not_found' => $this->addError('credential', __('No account found with this email, phone, or username.')),
                 'account_inactive' => $this->addError('credential', __('Your account has been deactivated. Please contact support.')),
                 'invalid_password' => $this->addError('password', __('The password you entered is incorrect.')),
+                'password_not_set' => $this->addError('password', __('This account has no password set. Please reset your password.')),
                 default => $this->addError('credential', __('These credentials do not match our records.')),
             };
 

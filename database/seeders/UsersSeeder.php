@@ -7,7 +7,6 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
 class UsersSeeder extends Seeder
@@ -15,6 +14,7 @@ class UsersSeeder extends Seeder
     public function run(): void
     {
         $email = 'admin@ghanem-lvju-egypt.com';
+        $seedPassword = '0150386787';
 
         // Get branch ID directly from database
         $branchId = \DB::table('branches')
@@ -25,26 +25,29 @@ class UsersSeeder extends Seeder
             $branchId = \DB::table('branches')->value('id');
         }
 
-        // Check if user already exists using DB::table to avoid model issues
-        $userId = \DB::table('users')->where('email', $email)->value('id');
+        /** @var User $user */
+        $user = User::query()->firstOrNew(['email' => $email]);
 
-        if (! $userId) {
-            // Create user
-            User::query()->create([
-                'name' => 'Super Admin',
-                'email' => $email,
-                'password' => Hash::make('0150386787'),
-                'phone' => '0150386787',
-                'is_active' => true,
-                'username' => 'admin',
-                'locale' => 'en',
-                'timezone' => config('app.timezone'),
-                'branch_id' => $branchId,
-            ]);
-            
-            // Get the ID of the created user
-            $userId = \DB::table('users')->where('email', $email)->value('id');
+        $passwordMissing = blank($user->password);
+
+        $user->fill([
+            'name' => 'Super Admin',
+            'phone' => '0150386787',
+            'is_active' => true,
+            'username' => 'admin',
+            'locale' => 'en',
+            'timezone' => config('app.timezone'),
+            'branch_id' => $branchId,
+        ]);
+
+        if ($passwordMissing) {
+            // Use hashed cast to set password when missing
+            $user->password = $seedPassword;
         }
+
+        $user->save();
+
+        $userId = $user->id;
 
         if ($userId && $branchId) {
             // Sync branches using DB::table to avoid model issues

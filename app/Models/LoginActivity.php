@@ -12,6 +12,8 @@ class LoginActivity extends Model
 {
     protected $table = 'login_activities';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'user_id',
         'email',
@@ -22,6 +24,8 @@ class LoginActivity extends Model
         'platform',
         'device_type',
         'failure_reason',
+        'status',
+        'metadata',
     ];
 
     public function user(): BelongsTo
@@ -37,6 +41,7 @@ class LoginActivity extends Model
             'user_id' => $user->id,
             'email' => $user->email,
             'event' => 'login',
+            'status' => 'success',
             'ip_address' => $ip,
             'user_agent' => $userAgent,
             'browser' => $parsed['browser'] ?? 'Unknown',
@@ -51,6 +56,7 @@ class LoginActivity extends Model
             'user_id' => $user->id,
             'email' => $user->email,
             'event' => 'logout',
+            'status' => 'success',
             'ip_address' => $ip,
         ]);
     }
@@ -62,6 +68,7 @@ class LoginActivity extends Model
         return self::create([
             'email' => $email,
             'event' => 'failed',
+            'status' => 'failed',
             'ip_address' => $ip,
             'user_agent' => $userAgent,
             'browser' => $parsed['browser'] ?? 'Unknown',

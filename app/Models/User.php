@@ -36,6 +36,7 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
     protected $fillable = [
         'name',
         'email',
+        'password',
         'phone',
         'is_active',
         'username',
@@ -53,7 +54,6 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
     ];
 
     protected $guarded = [
-        'password',
         'two_factor_secret',
         'two_factor_recovery_codes',
         'two_factor_confirmed_at',
@@ -76,6 +76,7 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
         'can_modify_price' => 'bool',
         'password_changed_at' => 'datetime',
         'preferences' => 'array',
+        'password' => 'hashed',
     ];
 
     public function branch(): BelongsTo

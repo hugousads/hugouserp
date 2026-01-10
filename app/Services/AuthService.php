@@ -166,6 +166,14 @@ class AuthService implements AuthServiceInterface
                     ];
                 }
 
+                if (blank($user->password)) {
+                    return [
+                        'success' => false,
+                        'error' => 'password_not_set',
+                        'user' => null,
+                    ];
+                }
+
                 if (! Hash::check($password, $user->password)) {
                     return [
                         'success' => false,
