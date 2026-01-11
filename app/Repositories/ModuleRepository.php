@@ -12,6 +12,12 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ModuleRepository extends EloquentBaseRepository implements ModuleRepositoryInterface
 {
+    /**
+     * Note: We instantiate the model internally rather than injecting it to avoid
+     * circular dependency issues. Since Module has an observer attached and this
+     * repository is registered as a singleton, injecting Module via constructor
+     * parameter could cause infinite recursion during container resolution.
+     */
     public function __construct()
     {
         parent::__construct(new Module());
