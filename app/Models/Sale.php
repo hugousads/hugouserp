@@ -277,32 +277,32 @@ class Sale extends BaseModel
 
     public function getGrandTotalAttribute()
     {
-        return $this->total_amount;
+        return $this->attributes['total_amount'] ?? 0;
     }
 
     public function getSubTotalAttribute()
     {
-        return $this->subtotal;
+        return $this->attributes['subtotal'] ?? 0;
     }
 
     public function getTaxTotalAttribute()
     {
-        return $this->tax_amount;
+        return $this->attributes['tax_amount'] ?? 0;
     }
 
     public function getShippingTotalAttribute()
     {
-        return $this->shipping_amount;
+        return $this->attributes['shipping_amount'] ?? 0;
     }
 
     public function getPaymentDueDateAttribute()
     {
-        return $this->due_date;
+        return $this->attributes['due_date'] ?? null;
     }
 
     public function getAmountPaidAttribute()
     {
-        return $this->paid_amount;
+        return $this->attributes['paid_amount'] ?? 0;
     }
 
     public function getAmountDueAttribute()

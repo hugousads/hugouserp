@@ -68,12 +68,11 @@ class POSService implements POSServiceInterface
                     'status' => 'completed',
                     'channel' => $payload['channel'] ?? 'pos',
                     'currency' => $payload['currency'] ?? 'EGP',
-                    'sub_total' => 0,
-                    'tax_total' => 0,
-                    'discount_total' => 0,
-                    'grand_total' => 0,
-                    'paid_total' => 0,
-                    'due_total' => 0,
+                    'subtotal' => 0,
+                    'tax_amount' => 0,
+                    'discount_amount' => 0,
+                    'total_amount' => 0,
+                    'paid_amount' => 0,
                     'notes' => $payload['notes'] ?? null,
                     'created_by' => $user?->id,
                 ]);
@@ -192,11 +191,14 @@ class POSService implements POSServiceInterface
                     SaleItem::create([
                         'sale_id' => $sale->getKey(),
                         'product_id' => $product->getKey(),
-                        'branch_id' => $branchId,
-                        'qty' => $qty,
+                        'warehouse_id' => $payload['warehouse_id'] ?? null,
+                        'product_name' => $product->name,
+                        'sku' => $product->sku,
+                        'quantity' => $qty,
                         'unit_price' => $price,
-                        'discount' => $lineDisc,
-                        'tax_id' => $it['tax_id'] ?? null,
+                        'cost_price' => $product->cost ?? 0,
+                        'discount_amount' => $lineDisc,
+                        'tax_amount' => $lineTax,
                         'line_total' => (float) bcdiv($lineTotal, '1', 2),
                     ]);
                 }
@@ -204,10 +206,10 @@ class POSService implements POSServiceInterface
                 // Use bcmath for grand total calculation
                 $grandTotal = bcadd(bcsub((string) $subtotal, (string) $discountTotal, 4), (string) $taxTotal, 4);
 
-                $sale->sub_total = (float) bcdiv((string) $subtotal, '1', 2);
-                $sale->discount_total = (float) bcdiv((string) $discountTotal, '1', 2);
-                $sale->tax_total = (float) bcdiv((string) $taxTotal, '1', 2);
-                $sale->grand_total = (float) bcdiv($grandTotal, '1', 2);
+                $sale->subtotal = (float) bcdiv((string) $subtotal, '1', 2);
+                $sale->discount_amount = (float) bcdiv((string) $discountTotal, '1', 2);
+                $sale->tax_amount = (float) bcdiv((string) $taxTotal, '1', 2);
+                $sale->total_amount = (float) bcdiv($grandTotal, '1', 2);
 
                 $payments = $payload['payments'] ?? [];
                 $paidTotal = '0';
@@ -221,19 +223,17 @@ class POSService implements POSServiceInterface
 
                         SalePayment::create([
                             'sale_id' => $sale->getKey(),
-                            'branch_id' => $branchId,
                             'payment_method' => $payment['method'] ?? 'cash',
                             'amount' => $amount,
+                            'payment_date' => now()->toDateString(),
                             'currency' => $payment['currency'] ?? 'EGP',
-                            'reference_no' => $payment['reference_no'] ?? null,
-                            'card_type' => $payment['card_type'] ?? null,
+                            'reference_number' => $payment['reference_no'] ?? null,
                             'card_last_four' => $payment['card_last_four'] ?? null,
                             'bank_name' => $payment['bank_name'] ?? null,
                             'cheque_number' => $payment['cheque_number'] ?? null,
                             'cheque_date' => $payment['cheque_date'] ?? null,
                             'notes' => $payment['notes'] ?? null,
                             'status' => 'completed',
-                            'created_by' => $user?->id,
                         ]);
 
                         $paidTotal = bcadd($paidTotal, (string) $amount, 2);
@@ -241,21 +241,18 @@ class POSService implements POSServiceInterface
                 } else {
                     SalePayment::create([
                         'sale_id' => $sale->getKey(),
-                        'branch_id' => $branchId,
                         'payment_method' => 'cash',
                         'amount' => (float) bcdiv($grandTotal, '1', 2),
+                        'payment_date' => now()->toDateString(),
                         'currency' => 'EGP',
                         'status' => 'completed',
-                        'created_by' => $user?->id,
                     ]);
                     $paidTotal = $grandTotal;
                 }
 
                 // Use bcmath for payment calculations
-                $sale->paid_total = (float) bcdiv($paidTotal, '1', 2);
-                $dueAmount = bcsub($grandTotal, $paidTotal, 2);
-                $sale->due_total = bccomp($dueAmount, '0', 2) < 0 ? 0 : (float) $dueAmount;
-                $sale->status = bccomp($paidTotal, $grandTotal, 2) >= 0 ? 'completed' : 'partial';
+                $sale->paid_amount = (float) bcdiv($paidTotal, '1', 2);
+                $sale->payment_status = bccomp($paidTotal, $grandTotal, 2) >= 0 ? 'paid' : 'partial';
                 $sale->save();
 
                 // Generate accounting journal entry for the sale
