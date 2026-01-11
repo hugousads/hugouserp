@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Traits;
 
 use App\Models\Branch;
+use App\Models\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * Provides:
  *   - Auto-assignment of branch_id on create
+ *   - Global scope for multi-tenancy (filters by user's branch)
  *   - Branch relationship
  *   - Scopes: forBranch, forCurrentBranch, forUserBranches, inRequestBranch
  *   - Helper methods: belongsToBranch, isAccessibleByUser
@@ -22,6 +24,9 @@ trait HasBranch
 {
     public static function bootHasBranch(): void
     {
+        // Apply global branch scope for multi-tenancy isolation
+        static::addGlobalScope(new BranchScope);
+
         static::creating(function (Model $model): void {
             if (! $model->getAttribute('branch_id') && method_exists($model, 'currentBranchId')) {
                 $branchId = $model->currentBranchId();
@@ -30,6 +35,18 @@ trait HasBranch
                 }
             }
         });
+    }
+
+    /**
+     * Disable the branch scope for a query.
+     * Useful for admin interfaces that need to see all branches.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
+     */
+    public function scopeWithoutBranchScope(Builder $query): Builder
+    {
+        return $query->withoutGlobalScope(BranchScope::class);
     }
 
     public function branch(): BelongsTo
