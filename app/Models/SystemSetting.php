@@ -54,6 +54,58 @@ class SystemSetting extends Model
     }
 
     /**
+     * Get a setting value by group and key.
+     *
+     * @param  string|null  $group  The setting group (null for any group)
+     * @param  string  $key  The setting key
+     * @param  mixed  $default  Default value if setting doesn't exist
+     * @return mixed The setting value or default
+     */
+    public static function getValue(?string $group, string $key, $default = null): mixed
+    {
+        $query = static::where('key', $key);
+
+        if ($group !== null) {
+            $query->where('group', $group);
+        }
+
+        $setting = $query->first();
+
+        if (! $setting) {
+            return $default;
+        }
+
+        $value = $setting->value;
+        $type = $setting->type ?? 'string';
+
+        // For array/json types, preserve the full array
+        if (in_array($type, ['array', 'json'], true)) {
+            return is_array($value) ? $value : [$value];
+        }
+
+        // For non-array/json types, unwrap single-value arrays (legacy behavior)
+        // If multiple values exist and type is non-array, return default for safety
+        // (casting an array to bool/int/float would cause unexpected results)
+        if (is_array($value)) {
+            $value = count($value) === 1 ? $value[0] : $default;
+        }
+
+        // If value is still an array after unwrapping, return default
+        // This handles the edge case where stored data doesn't match expected type
+        if (is_array($value)) {
+            return $default;
+        }
+
+        // Cast based on type
+        return match ($type) {
+            'boolean', 'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            'integer', 'int' => is_numeric($value) ? (int) $value : $default,
+            'float', 'decimal' => is_numeric($value) ? (float) $value : $default,
+            default => $value,
+        };
+    }
+
+    /**
      * Get a setting value using cache.
      */
     public static function cachedValue(?string $group, string $key, $default = null, int $ttlSeconds = 1800)
