@@ -26,7 +26,7 @@ class EnsurePermission
     {
         $user = $request->user();
         if (! $user) {
-            return $this->error('Unauthenticated.', 401);
+            return $this->error($request, 'Unauthenticated.', 401);
         }
 
         // allow commas as separators
@@ -48,7 +48,7 @@ class EnsurePermission
         }
 
         if (empty($ops)) {
-            return $this->error('Permission(s) not specified.', 500);
+            return $this->error($request, 'Permission(s) not specified.', 500);
         }
 
         $checker = static function ($ability) use ($user): bool {
@@ -70,7 +70,7 @@ class EnsurePermission
         $result = $negated ? ! $result : $result;
 
         if (! $result) {
-            return $this->error('You do not have the required permission(s).', 403, [
+            return $this->error($request, 'You do not have the required permission(s).', 403, [
                 'required' => $ops,
                 'mode' => $mode,
                 'negated' => $negated,
@@ -80,18 +80,22 @@ class EnsurePermission
         return $next($request);
     }
 
-    protected function error(string $message, int $status, array $meta = []): Response
+    /**
+     * Return an error response for permission failures.
+     *
+     * For API/AJAX requests, returns a JSON response.
+     * For web requests, aborts with an HTTP exception (which renders an error page).
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException For web requests
+     */
+    protected function error(Request $request, string $message, int $status, array $meta = []): Response
     {
-        // Get the current request - using the Request facade to get the actual request
-        // being processed through the middleware
-        $request = request();
-
-        // Check if the request expects JSON (API request)
-        if ($request->expectsJson() || $request->is('api/*')) {
+        // Check if the request expects JSON (API request or AJAX/XHR)
+        if ($request->expectsJson() || $request->is('api/*') || $request->ajax()) {
             return response()->json(['success' => false, 'message' => $message, 'meta' => $meta], $status);
         }
 
-        // For web requests, return a proper HTML response
+        // For web requests, abort to render HTML error page
         abort($status, $message);
     }
 }
