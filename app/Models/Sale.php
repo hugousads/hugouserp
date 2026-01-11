@@ -113,6 +113,7 @@ class Sale extends BaseModel
         });
 
         // Cascading restore for soft-deleted sale items
+        // Note: For sales with many items, consider using queue for large-scale restores
         static::restored(function ($sale) {
             $sale->items()->withTrashed()->restore();
             static::clearSalesStatsCache($sale->branch_id);

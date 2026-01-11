@@ -44,7 +44,8 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
         'branch_id',
         'avatar',
         'preferences',
-        // Admin-controllable fields - should be validated at controller level
+        // Admin-controllable fields - MUST be validated at controller/request level
+        // These fields have security implications and should only be modified by authorized users
         'is_active',
         'last_login_at',
         'max_discount_percent',

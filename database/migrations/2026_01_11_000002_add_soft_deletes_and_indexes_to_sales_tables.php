@@ -32,6 +32,7 @@ return new class extends Migration
         });
 
         // Add performance index to inventory_movements if table exists
+        // Note: This table is created in a separate migration and may not exist in all environments
         if (Schema::hasTable('inventory_movements')) {
             Schema::table('inventory_movements', function (Blueprint $table) {
                 $this->addIndexIfNotExists('inventory_movements', $table, ['branch_id', 'created_at'], 'idx_inv_movements_branch_created');
