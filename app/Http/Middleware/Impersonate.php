@@ -10,6 +10,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Impersonate Middleware
+ *
+ * Allows authorized users (Super Admins or users with impersonate.users permission)
+ * to act as another user for support/debugging purposes.
+ *
+ * SECURITY: All actions performed during impersonation are tracked with both
+ * the actual performer (impersonator) and the impersonated user for audit purposes.
+ */
 class Impersonate
 {
     public function handle(Request $request, Closure $next): Response
@@ -37,10 +46,60 @@ class Impersonate
             return response()->json(['success' => false, 'message' => 'Impersonation target not found.'], 404);
         }
 
-        // ضع علامة في الكونتينر للاستدلال لاحقًا
+        // SECURITY FIX: Store both the actual performer and impersonated user in the container
+        // This ensures audit logs can track who REALLY performed an action
         app()->instance('req.impersonated', $target->getKey());
+        app()->instance('req.impersonated_by', $actor->getKey());  // The ACTUAL user (impersonator)
 
-        // لا نبدّل الـ guard هنا، نكتفي بمعلومة الانتحال لتستخدمها طبقة الخدمة عند الحاجة.
+        // Also set on request attributes for easy access
+        $request->attributes->set('impersonating', true);
+        $request->attributes->set('impersonated_user_id', $target->getKey());
+        $request->attributes->set('impersonated_by_user_id', $actor->getKey());
+
         return $next($request);
+    }
+
+    /**
+     * Get the ID of the actual user performing actions (the impersonator).
+     * Returns null if not in an impersonation session.
+     */
+    public static function getActualPerformerId(): ?int
+    {
+        if (app()->has('req.impersonated_by')) {
+            return (int) app('req.impersonated_by');
+        }
+
+        $req = request();
+        if ($req && $req->attributes->has('impersonated_by_user_id')) {
+            return (int) $req->attributes->get('impersonated_by_user_id');
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the ID of the user being impersonated.
+     * Returns null if not in an impersonation session.
+     */
+    public static function getImpersonatedUserId(): ?int
+    {
+        if (app()->has('req.impersonated')) {
+            return (int) app('req.impersonated');
+        }
+
+        $req = request();
+        if ($req && $req->attributes->has('impersonated_user_id')) {
+            return (int) $req->attributes->get('impersonated_user_id');
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if the current request is being performed during impersonation.
+     */
+    public static function isImpersonating(): bool
+    {
+        return self::getImpersonatedUserId() !== null;
     }
 }

@@ -32,4 +32,12 @@ interface AuthServiceInterface
     public function resetPassword(string $email, string $token, string $password): array;
 
     public function validateResetToken(string $email, string $token): array;
+
+    /**
+     * Change user password with security validations.
+     * Invalidates all other sessions and trusted devices.
+     *
+     * @return array{success: bool, error: ?string}
+     */
+    public function changePassword(User $user, string $currentPassword, string $newPassword): array;
 }

@@ -16,6 +16,8 @@ class AuditLog extends Model
 
     protected $fillable = [
         'user_id',
+        'performed_by_id',
+        'impersonating_as_id',
         'target_user_id',
         'branch_id',
         'module_key',
@@ -63,6 +65,22 @@ class AuditLog extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * The user who actually performed the action (may be different from user_id during impersonation).
+     */
+    public function performedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'performed_by_id');
+    }
+
+    /**
+     * The user being impersonated when this action was performed (if any).
+     */
+    public function impersonatingAs(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'impersonating_as_id');
+    }
+
     public function targetUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'target_user_id');
@@ -71,6 +89,30 @@ class AuditLog extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    /**
+     * Check if this action was performed during an impersonation session.
+     */
+    public function wasImpersonated(): bool
+    {
+        return $this->impersonating_as_id !== null;
+    }
+
+    /**
+     * Scope query to actions performed during impersonation.
+     */
+    public function scopeImpersonated(Builder $query): Builder
+    {
+        return $query->whereNotNull('impersonating_as_id');
+    }
+
+    /**
+     * Scope query to actions performed by a specific actual user (including impersonated actions).
+     */
+    public function scopePerformedBy(Builder $query, int $userId): Builder
+    {
+        return $query->where('performed_by_id', $userId);
     }
 
     public function scopeForUser(Builder $query, int $userId): Builder

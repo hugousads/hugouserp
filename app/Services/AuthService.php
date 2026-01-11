@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Services\Contracts\AuthServiceInterface;
 use App\Traits\HandlesServiceErrors;
+use App\Traits\InvalidatesUserSessions;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,7 @@ use Laravel\Sanctum\NewAccessToken;
 class AuthService implements AuthServiceInterface
 {
     use HandlesServiceErrors;
+    use InvalidatesUserSessions;
 
     public function guard(?string $name = null)
     {
@@ -305,6 +307,9 @@ class AuthService implements AuthServiceInterface
     /**
      * Reset user password.
      * Returns: ['success' => bool, 'error' => ?string]
+     *
+     * SECURITY FIX: Invalidates all trusted devices and sessions on password reset
+     * to prevent "remember 2FA" bypass attacks on stolen/compromised devices.
      */
     public function resetPassword(string $email, string $token, string $password): array
     {
@@ -331,11 +336,17 @@ class AuthService implements AuthServiceInterface
                 $user->password = Hash::make($password);
                 $user->save();
 
+                // SECURITY FIX: Full security invalidation on password reset
+                $this->performFullSecurityInvalidation($user);
+
                 DB::table('password_reset_tokens')
                     ->where('email', $email)
                     ->delete();
 
-                $this->logServiceInfo('resetPassword', 'Password reset successful', ['email' => $email]);
+                // Log with user_id instead of email for security (avoid exposing PII in logs)
+                $this->logServiceInfo('resetPassword', 'Password reset successful - all sessions invalidated', [
+                    'user_id' => $user->getKey(),
+                ]);
 
                 return [
                     'success' => true,
@@ -343,8 +354,51 @@ class AuthService implements AuthServiceInterface
                 ];
             },
             operation: 'resetPassword',
-            context: ['email' => $email],
+            context: ['has_email' => true], // Avoid logging actual email
             defaultValue: ['success' => false, 'error' => 'reset_failed']
+        );
+    }
+
+    /**
+     * Change user password (for logged-in users).
+     * Returns: ['success' => bool, 'error' => ?string]
+     *
+     * SECURITY FIX: Invalidates all other sessions and trusted devices on password change.
+     */
+    public function changePassword(User $user, string $currentPassword, string $newPassword): array
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($user, $currentPassword, $newPassword) {
+                // Verify current password
+                if (! Hash::check($currentPassword, $user->password)) {
+                    return [
+                        'success' => false,
+                        'error' => 'invalid_current_password',
+                    ];
+                }
+
+                $user->password = Hash::make($newPassword);
+                $user->save();
+
+                // SECURITY FIX: Invalidate other sessions, keeping current session
+                $currentSessionId = session()->getId();
+                $currentTokenId = $user->currentAccessToken()?->id ?? null;
+
+                $this->invalidateUserSessions($user, $currentSessionId, $currentTokenId);
+                $this->invalidateTrustedDevices($user);
+
+                $this->logServiceInfo('changePassword', 'Password changed - other sessions invalidated', [
+                    'user_id' => $user->getKey(),
+                ]);
+
+                return [
+                    'success' => true,
+                    'error' => null,
+                ];
+            },
+            operation: 'changePassword',
+            context: ['user_id' => $user->getKey()],
+            defaultValue: ['success' => false, 'error' => 'change_failed']
         );
     }
 }
