@@ -11,9 +11,9 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class ProductRepository extends EloquentBaseRepository implements ProductRepositoryInterface
 {
-    public function __construct(Product $model)
+    public function __construct()
     {
-        parent::__construct($model);
+        parent::__construct(new Product());
     }
 
     protected function baseBranchQuery(int $branchId): Builder

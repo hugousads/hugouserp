@@ -12,9 +12,9 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ModuleRepository extends EloquentBaseRepository implements ModuleRepositoryInterface
 {
-    public function __construct(Module $model)
+    public function __construct()
     {
-        parent::__construct($model);
+        parent::__construct(new Module());
     }
 
     public function findBySlug(string $slug): ?Module
