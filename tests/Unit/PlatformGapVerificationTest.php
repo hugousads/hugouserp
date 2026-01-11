@@ -247,17 +247,17 @@ class PlatformGapVerificationTest extends TestCase
         $content = file_get_contents($migrationPath);
         $this->assertNotEmpty($content, 'Migration file should not be empty');
         
-        // Verify cascadeOnDelete is used for critical relationships
+        // Verify cascadeOnDelete is used for referential integrity
         $this->assertStringContainsString(
             'cascadeOnDelete()',
             $content,
             'Migration must use cascadeOnDelete() for referential integrity'
         );
         
-        // Verify specific critical relationships have cascade deletes
-        // These are the relationships mentioned in the bug report
-        $this->assertStringContainsString(
-            "foreignId('sale_id')->constrained()->cascadeOnDelete()",
+        // Verify specific critical relationships have cascade deletes (mentioned in bug report)
+        // Check for sale_items relationship - allow for whitespace variations
+        $this->assertMatchesRegularExpression(
+            "/foreignId\s*\(\s*['\"]sale_id['\"]\s*\)\s*->\s*constrained\s*\(\s*\)\s*->\s*cascadeOnDelete\s*\(\s*\)/",
             $content,
             'sale_items must cascade delete when sale is deleted'
         );
