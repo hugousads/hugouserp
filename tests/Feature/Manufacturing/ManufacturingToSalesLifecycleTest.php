@@ -111,12 +111,13 @@ class ManufacturingToSalesLifecycleTest extends TestCase
         ]);
 
         // Setup: Create raw material product (Wood)
+        // Note: default_price is sale price (markup for profit), cost is purchase/manufacturing cost
         $this->rawMaterial = Product::create([
             'name' => 'Wood',
             'sku' => 'RAW-WOOD-001',
             'type' => 'stock',
-            'default_price' => 30.00,
-            'cost' => self::WOOD_UNIT_COST,
+            'default_price' => 30.00, // Sale price if sold directly (not used in this test)
+            'cost' => self::WOOD_UNIT_COST, // Cost used for COGS calculation
             'standard_cost' => self::WOOD_UNIT_COST,
             'branch_id' => $this->branch->id,
             'status' => 'active',
