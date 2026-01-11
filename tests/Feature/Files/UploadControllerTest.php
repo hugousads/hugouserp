@@ -107,4 +107,47 @@ class UploadControllerTest extends TestCase
         $response->assertOk();
         Storage::disk('public')->assertMissing($path);
     }
+
+    public function test_it_uploads_file_with_public_visibility_when_context_is_profile(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $user->givePermissionTo('files.upload');
+
+        $response = $this->actingAs($user, 'web')->postJson('/api/v1/files/upload', [
+            'file' => UploadedFile::fake()->image('avatar.jpg'),
+            'context' => 'profile',
+        ]);
+
+        $response->assertOk();
+
+        $path = $response->json('data.path');
+
+        Storage::disk('public')->assertExists($path);
+        $this->assertSame('public', Storage::disk('public')->getVisibility($path));
+        $this->assertEquals('public', $response->json('data.visibility'));
+    }
+
+    public function test_it_ignores_visibility_request_parameter_and_uses_context(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $user->givePermissionTo('files.upload');
+
+        // Attempt to set visibility=public should be ignored when context is not allowed
+        $response = $this->actingAs($user, 'web')->postJson('/api/v1/files/upload', [
+            'file' => UploadedFile::fake()->create('contract.pdf', 50, 'application/pdf'),
+            'visibility' => 'public', // This should be ignored
+        ]);
+
+        $response->assertOk();
+
+        $path = $response->json('data.path');
+
+        // Should still be private because no valid public context was provided
+        $this->assertSame('private', Storage::disk('public')->getVisibility($path));
+        $this->assertEquals('private', $response->json('data.visibility'));
+    }
 }

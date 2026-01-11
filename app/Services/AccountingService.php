@@ -296,10 +296,19 @@ class AccountingService
                 'approved_at' => now(),
             ]);
 
-            // Update account balances - eager load to avoid N+1
-            $entry->load('lines.account');
+            // Load lines first to get account IDs
+            $entry->load('lines');
+            $accountIds = $entry->lines->pluck('account_id')->unique()->toArray();
+
+            // Lock all accounts involved in this journal entry to prevent race conditions
+            // This ensures consistent balance reporting even during concurrent transactions
+            $accounts = Account::whereIn('id', $accountIds)->lockForUpdate()->get()->keyBy('id');
+
             foreach ($entry->lines as $line) {
-                $account = $line->account;
+                $account = $accounts->get($line->account_id);
+                if (! $account) {
+                    continue;
+                }
                 $netChange = $line->debit - $line->credit;
 
                 // For asset and expense accounts, debit increases balance
@@ -346,8 +355,14 @@ class AccountingService
                 'approved_at' => now(),
             ]);
 
-            // Create reversed lines (swap debit and credit) - eager load to avoid N+1
-            $entry->load('lines.account');
+            // Load lines to get account IDs
+            $entry->load('lines');
+            $accountIds = $entry->lines->pluck('account_id')->unique()->toArray();
+
+            // Lock all accounts involved to prevent race conditions
+            $accounts = Account::whereIn('id', $accountIds)->lockForUpdate()->get()->keyBy('id');
+
+            // Create reversed lines (swap debit and credit)
             foreach ($entry->lines as $line) {
                 JournalEntryLine::create([
                     'journal_entry_id' => $reversalEntry->id,
@@ -357,8 +372,11 @@ class AccountingService
                     'description' => "Reversal: {$line->description}",
                 ]);
 
-                // Update account balance
-                $account = $line->account;
+                // Update account balance using locked account
+                $account = $accounts->get($line->account_id);
+                if (! $account) {
+                    continue;
+                }
                 $netChange = $line->credit - $line->debit; // Reversed
 
                 if (in_array($account->type, ['asset', 'expense'], true)) {

@@ -147,7 +147,7 @@ class UploadController extends Controller
             ],
             'disk' => ['sometimes', 'string', 'in:public,local,private'], // Limit allowed disks
             'dir' => ['sometimes', 'string', 'max:100'], // Prevent path traversal with length limit
-            'visibility' => ['sometimes', 'in:public,private'],
+            'context' => ['sometimes', 'string', 'in:profile,avatar,public_asset'], // Context for public files
         ]);
 
         $disk = $this->resolveDisk($request);
@@ -170,10 +170,12 @@ class UploadController extends Controller
         // Generate secure random filename
         $name = Str::random(32).($ext ? ('.'.$ext) : '');
 
-        $visibility = $request->input('visibility', 'private');
-        if (! in_array($visibility, ['public', 'private'], true)) {
-            $visibility = 'private';
-        }
+        // Determine visibility based on context, NOT user input
+        // Only specific contexts allow public visibility (profile pictures, avatars, public assets)
+        // All other uploads default to private for security
+        $context = $request->input('context');
+        $publicContexts = ['profile', 'avatar', 'public_asset'];
+        $visibility = in_array($context, $publicContexts, true) ? 'public' : 'private';
 
         // Store file with secure settings
         $path = $uploaded->storeAs($dir, $name, [
@@ -191,6 +193,7 @@ class UploadController extends Controller
             'mime' => $uploaded->getMimeType(),
             'size' => $uploaded->getSize(),
             'visibility' => $visibility,
+            'context' => $context,
         ]);
 
         return $this->ok([

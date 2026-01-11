@@ -253,13 +253,14 @@ class InventoryService implements InventoryServiceInterface
                         ->lockForUpdate()
                         ->findOrFail($productId);
 
+                    // Source warehouse must belong to current branch
                     $fromWh = Warehouse::query()
                         ->where('branch_id', $branchId)
                         ->lockForUpdate()
                         ->findOrFail($fromWarehouse);
 
+                    // Destination warehouse can be in any branch to allow inter-branch transfers
                     $toWh = Warehouse::query()
-                        ->where('branch_id', $branchId)
                         ->lockForUpdate()
                         ->findOrFail($toWarehouse);
 
@@ -289,8 +290,9 @@ class InventoryService implements InventoryServiceInterface
                         'created_by' => $userId,
                     ]);
 
+                    // Use destination warehouse's branch for the incoming movement
                     $inMovement = $this->movements->create([
-                        'branch_id' => $branchId,
+                        'branch_id' => $toWh->branch_id,
                         'product_id' => $product->getKey(),
                         'warehouse_id' => $toWh->getKey(),
                         'qty' => $qty,
