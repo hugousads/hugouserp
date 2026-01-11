@@ -169,14 +169,38 @@ class PayslipService
     }
 
     /**
-     * Calculate payroll for employee
+     * Calculate payroll for employee with pro-rata support for mid-month salary changes.
+     *
+     * BUG FIX: Handles promotions/salary changes that occur mid-month.
+     * Previously, the system would use the current salary for the entire month,
+     * leading to overpayment when an employee gets promoted late in the month.
+     *
+     * @param int $employeeId Employee ID
+     * @param string $period Period in Y-m format
+     * @param array|null $salaryChanges Optional array of salary changes in format:
+     *                   [['effective_date' => 'Y-m-d', 'new_salary' => float], ...]
+     * @return array Payroll calculation result
      */
-    public function calculatePayroll(int $employeeId, string $period): array
+    public function calculatePayroll(int $employeeId, string $period, ?array $salaryChanges = null): array
     {
         $employee = \App\Models\HREmployee::findOrFail($employeeId);
 
-        // Basic salary from employee record
-        $basic = (float) $employee->salary;
+        // Parse period to get the first and last day of the month
+        $periodParts = explode('-', $period);
+        $year = (int) ($periodParts[0] ?? date('Y'));
+        $month = (int) ($periodParts[1] ?? date('m'));
+        $periodStart = \Carbon\Carbon::create($year, $month, 1)->startOfDay();
+        $periodEnd = $periodStart->copy()->endOfMonth();
+        $daysInMonth = $periodStart->daysInMonth;
+
+        // BUG FIX: Calculate pro-rata salary if there are mid-month changes
+        $basic = $this->calculateProRataBasicSalary(
+            $employee,
+            $periodStart,
+            $periodEnd,
+            $daysInMonth,
+            $salaryChanges
+        );
 
         // Calculate allowances based on configurable company rules
         $allowanceResult = $this->calculateAllowances($basic);
@@ -204,6 +228,147 @@ class PayslipService
             'net' => (float) $net,
             'status' => 'draft',
         ];
+    }
+
+    /**
+     * Calculate pro-rata basic salary for mid-month salary changes.
+     *
+     * Example: If employee had salary 5000 for days 1-24 and got promoted to 10000 on day 25,
+     * the calculation would be: (5000 * 24/30) + (10000 * 6/30) = 4000 + 2000 = 6000
+     *
+     * @param \App\Models\HREmployee $employee The employee
+     * @param \Carbon\Carbon $periodStart Start of the payroll period
+     * @param \Carbon\Carbon $periodEnd End of the payroll period
+     * @param int $daysInMonth Total days in the month
+     * @param array|null $salaryChanges Explicit salary changes, or null to try auto-detection
+     * @return float The pro-rata basic salary
+     */
+    protected function calculateProRataBasicSalary(
+        \App\Models\HREmployee $employee,
+        \Carbon\Carbon $periodStart,
+        \Carbon\Carbon $periodEnd,
+        int $daysInMonth,
+        ?array $salaryChanges = null
+    ): float {
+        // Get current salary
+        $currentSalary = (float) $employee->basic_salary;
+
+        // If no salary changes provided, try to get from activity log
+        if ($salaryChanges === null) {
+            $salaryChanges = $this->getSalaryChangesFromActivityLog($employee, $periodStart, $periodEnd);
+        }
+
+        // If no changes in the period, return full current salary
+        if (empty($salaryChanges)) {
+            return $currentSalary;
+        }
+
+        // Sort changes by date
+        usort($salaryChanges, function ($a, $b) {
+            return strcmp($a['effective_date'], $b['effective_date']);
+        });
+
+        // Calculate pro-rata salary
+        $proRataSalary = '0';
+        $previousDate = $periodStart;
+        $previousSalary = null;
+
+        // Determine the salary at the start of the period
+        // This would be the salary before the first change, or the old_salary if tracked
+        $salaryAtPeriodStart = $currentSalary;
+        if (! empty($salaryChanges[0]['old_salary'])) {
+            $salaryAtPeriodStart = (float) $salaryChanges[0]['old_salary'];
+        }
+
+        // If first change is after period start, calculate days at initial salary
+        $firstChangeDate = \Carbon\Carbon::parse($salaryChanges[0]['effective_date']);
+        if ($firstChangeDate->gt($periodStart)) {
+            $daysAtInitialSalary = $periodStart->diffInDays($firstChangeDate);
+            $dailyRate = bcdiv((string) $salaryAtPeriodStart, (string) $daysInMonth, 6);
+            $portion = bcmul($dailyRate, (string) $daysAtInitialSalary, 4);
+            $proRataSalary = bcadd($proRataSalary, $portion, 4);
+            $previousDate = $firstChangeDate;
+        }
+
+        // Process each salary change
+        foreach ($salaryChanges as $index => $change) {
+            $changeDate = \Carbon\Carbon::parse($change['effective_date']);
+            $newSalary = (float) $change['new_salary'];
+
+            // Skip changes outside the period
+            if ($changeDate->gt($periodEnd)) {
+                continue;
+            }
+
+            // Determine the end date for this salary rate
+            $nextChangeDate = isset($salaryChanges[$index + 1])
+                ? \Carbon\Carbon::parse($salaryChanges[$index + 1]['effective_date'])
+                : $periodEnd->copy()->addDay();
+
+            // Cap at period end
+            $endForThisSalary = $nextChangeDate->gt($periodEnd)
+                ? $periodEnd->copy()->addDay()
+                : $nextChangeDate;
+
+            $daysAtThisSalary = $changeDate->diffInDays($endForThisSalary);
+
+            if ($daysAtThisSalary > 0) {
+                $dailyRate = bcdiv((string) $newSalary, (string) $daysInMonth, 6);
+                $portion = bcmul($dailyRate, (string) $daysAtThisSalary, 4);
+                $proRataSalary = bcadd($proRataSalary, $portion, 4);
+            }
+        }
+
+        return (float) bcdiv($proRataSalary, '1', 2);
+    }
+
+    /**
+     * Attempt to get salary changes from activity log.
+     *
+     * @param \App\Models\HREmployee $employee The employee
+     * @param \Carbon\Carbon $periodStart Start of the payroll period
+     * @param \Carbon\Carbon $periodEnd End of the payroll period
+     * @return array Array of salary changes
+     */
+    protected function getSalaryChangesFromActivityLog(
+        \App\Models\HREmployee $employee,
+        \Carbon\Carbon $periodStart,
+        \Carbon\Carbon $periodEnd
+    ): array {
+        // Try to find salary changes from activity log (Spatie ActivityLog)
+        if (! class_exists(\Spatie\Activitylog\Models\Activity::class)) {
+            return [];
+        }
+
+        try {
+            $activities = \Spatie\Activitylog\Models\Activity::query()
+                ->where('subject_type', \App\Models\HREmployee::class)
+                ->where('subject_id', $employee->id)
+                ->where('event', 'updated')
+                ->whereBetween('created_at', [$periodStart, $periodEnd])
+                ->get();
+
+            $changes = [];
+            foreach ($activities as $activity) {
+                $properties = $activity->properties->toArray();
+                $attributes = $properties['attributes'] ?? [];
+                $old = $properties['old'] ?? [];
+
+                // Check if basic_salary was changed
+                if (isset($attributes['basic_salary']) && isset($old['basic_salary'])) {
+                    $changes[] = [
+                        'effective_date' => $activity->created_at->format('Y-m-d'),
+                        'old_salary' => (float) $old['basic_salary'],
+                        'new_salary' => (float) $attributes['basic_salary'],
+                    ];
+                }
+            }
+
+            return $changes;
+        } catch (\Exception $e) {
+            // If activity log is not available or throws error, return empty
+            return [];
+        }
     }
 
     /**
