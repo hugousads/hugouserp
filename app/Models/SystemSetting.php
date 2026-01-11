@@ -84,6 +84,8 @@ class SystemSetting extends Model
         }
 
         // For non-array/json types, unwrap single-value arrays (legacy behavior)
+        // If multiple values exist and type is non-array, return default for safety
+        // (casting an array to bool/int/float would cause unexpected results)
         if (is_array($value)) {
             $value = count($value) === 1 ? $value[0] : $default;
         }
