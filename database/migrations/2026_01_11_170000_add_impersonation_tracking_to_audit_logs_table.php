@@ -21,10 +21,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('audit_logs', function (Blueprint $table) {
+        // Check for existing columns before migration
+        $hasPerformedById = Schema::hasColumn('audit_logs', 'performed_by_id');
+        $hasImpersonatingAsId = Schema::hasColumn('audit_logs', 'impersonating_as_id');
+
+        // Only run migration if at least one column is missing
+        if ($hasPerformedById && $hasImpersonatingAsId) {
+            return;
+        }
+
+        Schema::table('audit_logs', function (Blueprint $table) use ($hasPerformedById, $hasImpersonatingAsId) {
             // Add performed_by_id: The actual user who performed the action
             // This will differ from user_id when impersonation is active
-            if (! Schema::hasColumn('audit_logs', 'performed_by_id')) {
+            if (! $hasPerformedById) {
                 $table->foreignId('performed_by_id')
                     ->nullable()
                     ->after('user_id')
@@ -34,7 +43,7 @@ return new class extends Migration
             }
 
             // Add impersonating_as_id: The user being impersonated
-            if (! Schema::hasColumn('audit_logs', 'impersonating_as_id')) {
+            if (! $hasImpersonatingAsId) {
                 $table->foreignId('impersonating_as_id')
                     ->nullable()
                     ->after('performed_by_id')
@@ -50,24 +59,30 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('audit_logs', function (Blueprint $table) {
-            // Drop the index first
-            try {
+        // Check if index exists before dropping
+        $indexes = Schema::getIndexes('audit_logs');
+        $indexNames = array_column($indexes, 'name');
+
+        Schema::table('audit_logs', function (Blueprint $table) use ($indexNames) {
+            // Drop the index first if it exists
+            if (in_array('idx_audit_impersonation', $indexNames, true)) {
                 $table->dropIndex('idx_audit_impersonation');
-            } catch (\Throwable $e) {
-                // Index may not exist
-            }
-
-            // Drop foreign key constraints and columns
-            if (Schema::hasColumn('audit_logs', 'impersonating_as_id')) {
-                $table->dropForeign(['impersonating_as_id']);
-                $table->dropColumn('impersonating_as_id');
-            }
-
-            if (Schema::hasColumn('audit_logs', 'performed_by_id')) {
-                $table->dropForeign(['performed_by_id']);
-                $table->dropColumn('performed_by_id');
             }
         });
+
+        // Drop columns if they exist
+        if (Schema::hasColumn('audit_logs', 'impersonating_as_id')) {
+            Schema::table('audit_logs', function (Blueprint $table) {
+                $table->dropForeign(['impersonating_as_id']);
+                $table->dropColumn('impersonating_as_id');
+            });
+        }
+
+        if (Schema::hasColumn('audit_logs', 'performed_by_id')) {
+            Schema::table('audit_logs', function (Blueprint $table) {
+                $table->dropForeign(['performed_by_id']);
+                $table->dropColumn('performed_by_id');
+            });
+        }
     }
 };

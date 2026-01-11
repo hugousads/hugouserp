@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use App\Services\SettingsService;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -123,25 +124,25 @@ class Require2FA
      * Safely parse a timestamp value to Carbon instance.
      *
      * @param  mixed  $value  The timestamp value to parse
-     * @return \Illuminate\Support\Carbon|null
+     * @return Carbon|null
      */
-    protected function parseTimestamp(mixed $value): ?\Illuminate\Support\Carbon
+    protected function parseTimestamp(mixed $value): ?Carbon
     {
         if ($value === null) {
             return null;
         }
 
-        if ($value instanceof \Illuminate\Support\Carbon || $value instanceof \Carbon\Carbon) {
+        if ($value instanceof Carbon || $value instanceof \Carbon\Carbon) {
             return $value;
         }
 
         if ($value instanceof \DateTimeInterface) {
-            return \Illuminate\Support\Carbon::instance($value);
+            return Carbon::instance($value);
         }
 
         if (is_string($value) || is_numeric($value)) {
             try {
-                return \Illuminate\Support\Carbon::parse($value);
+                return Carbon::parse($value);
             } catch (\Throwable) {
                 return null;
             }

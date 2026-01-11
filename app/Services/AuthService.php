@@ -343,7 +343,10 @@ class AuthService implements AuthServiceInterface
                     ->where('email', $email)
                     ->delete();
 
-                $this->logServiceInfo('resetPassword', 'Password reset successful - all sessions invalidated', ['email' => $email]);
+                // Log with user_id instead of email for security (avoid exposing PII in logs)
+                $this->logServiceInfo('resetPassword', 'Password reset successful - all sessions invalidated', [
+                    'user_id' => $user->getKey(),
+                ]);
 
                 return [
                     'success' => true,
@@ -351,7 +354,7 @@ class AuthService implements AuthServiceInterface
                 ];
             },
             operation: 'resetPassword',
-            context: ['email' => $email],
+            context: ['has_email' => true], // Avoid logging actual email
             defaultValue: ['success' => false, 'error' => 'reset_failed']
         );
     }

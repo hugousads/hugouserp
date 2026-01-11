@@ -45,16 +45,22 @@ class SetBranchContext
         if ($this->isMutatingRequest($request) && $payloadBranchId !== null) {
             $contextBranchId = $routeBranchId ?? $headerBranchId;
 
-            if ($contextBranchId !== null && (int) $payloadBranchId !== (int) $contextBranchId) {
-                return $this->error(
-                    'Branch context mismatch. The form was submitted for a different branch than your current context. Please refresh the page and try again.',
-                    409,
-                    [
-                        'payload_branch_id' => (int) $payloadBranchId,
-                        'context_branch_id' => (int) $contextBranchId,
-                        'suggestion' => 'This can happen when you have multiple tabs open with different branches. Please ensure you are working on the correct branch.',
-                    ]
-                );
+            // Validate both values are numeric before comparing
+            if ($contextBranchId !== null) {
+                $payloadId = is_numeric($payloadBranchId) ? (int) $payloadBranchId : null;
+                $contextId = is_numeric($contextBranchId) ? (int) $contextBranchId : null;
+
+                if ($payloadId === null || $contextId === null || $payloadId !== $contextId) {
+                    return $this->error(
+                        'Branch context mismatch. The form was submitted for a different branch than your current context. Please refresh the page and try again.',
+                        409,
+                        [
+                            'payload_branch_id' => $payloadId,
+                            'context_branch_id' => $contextId,
+                            'suggestion' => 'This can happen when you have multiple tabs open with different branches. Please ensure you are working on the correct branch.',
+                        ]
+                    );
+                }
             }
         }
 

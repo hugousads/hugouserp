@@ -44,6 +44,16 @@ class WriteAuditTrail implements ShouldQueue
                 $performedById = $userId;
             }
 
+            // Build meta array consistently
+            $meta = [];
+            if ($impersonatingAsId !== null) {
+                $meta['impersonation_session'] = true;
+            }
+            // Allow events to provide additional meta
+            if (method_exists($event, 'meta')) {
+                $meta = array_merge($meta, (array) $event->meta());
+            }
+
             AuditLog::create([
                 'user_id' => $userId,
                 'performed_by_id' => $performedById,
@@ -55,7 +65,7 @@ class WriteAuditTrail implements ShouldQueue
                 'user_agent' => (string) $req?->userAgent(),
                 'old_values' => method_exists($event, 'old') ? (array) $event->old() : [],
                 'new_values' => method_exists($event, 'new') ? (array) $event->new() : [],
-                'meta' => $impersonatingAsId ? ['impersonation_session' => true] : null,
+                'meta' => ! empty($meta) ? $meta : null,
             ]);
         } catch (\Throwable) {
             // swallow errors
