@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\Impersonate;
 use Illuminate\Support\Facades\Auth;
 
 if (! function_exists('current_user')) {
@@ -32,6 +33,57 @@ if (! function_exists('current_branch_id')) {
         }
 
         return null;
+    }
+}
+
+if (! function_exists('is_impersonating')) {
+    /**
+     * Check if the current request is being performed during an impersonation session.
+     *
+     * @return bool True if impersonation is active
+     */
+    function is_impersonating(): bool
+    {
+        return Impersonate::isImpersonating();
+    }
+}
+
+if (! function_exists('actual_user_id')) {
+    /**
+     * Get the ID of the actual user performing actions.
+     * During impersonation, this returns the impersonator's ID.
+     * Otherwise, returns the current authenticated user's ID.
+     *
+     * @return int|null The actual user's ID
+     */
+    function actual_user_id(): ?int
+    {
+        // If impersonating, return the impersonator's ID
+        $performerId = Impersonate::getActualPerformerId();
+        if ($performerId !== null) {
+            return $performerId;
+        }
+
+        // Otherwise, return the authenticated user's ID
+        return Auth::id();
+    }
+}
+
+if (! function_exists('impersonation_context')) {
+    /**
+     * Get the full impersonation context for audit logging.
+     *
+     * @return array{performed_by_id: int|null, impersonating_as_id: int|null, is_impersonating: bool}
+     */
+    function impersonation_context(): array
+    {
+        $isImpersonating = Impersonate::isImpersonating();
+
+        return [
+            'performed_by_id' => $isImpersonating ? Impersonate::getActualPerformerId() : Auth::id(),
+            'impersonating_as_id' => $isImpersonating ? Impersonate::getImpersonatedUserId() : null,
+            'is_impersonating' => $isImpersonating,
+        ];
     }
 }
 

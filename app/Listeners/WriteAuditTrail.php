@@ -4,9 +4,19 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
+use App\Http\Middleware\Impersonate;
 use App\Models\AuditLog;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
+/**
+ * WriteAuditTrail Listener
+ *
+ * Writes audit log entries for domain events.
+ * Implements ShouldQueue for non-blocking audit operations.
+ *
+ * SECURITY: Properly tracks impersonation context by recording both
+ * the actual performer (performed_by_id) and the impersonated user (impersonating_as_id).
+ */
 class WriteAuditTrail implements ShouldQueue
 {
     public function handle(object $event): void
@@ -14,8 +24,30 @@ class WriteAuditTrail implements ShouldQueue
         // Generic fallback writer for domain events.
         try {
             $req = request();
+            $user = auth()->user();
+            $userId = $user?->getKey();
+
+            // SECURITY FIX: Track impersonation context
+            // If impersonation is active, record both the actual performer and impersonated user
+            $performedById = null;
+            $impersonatingAsId = null;
+
+            if (Impersonate::isImpersonating()) {
+                // During impersonation:
+                // - performed_by_id: The actual user (impersonator) who performed the action
+                // - impersonating_as_id: The user being impersonated
+                // - user_id: The user context visible to the application (impersonated user)
+                $performedById = Impersonate::getActualPerformerId();
+                $impersonatingAsId = Impersonate::getImpersonatedUserId();
+            } else {
+                // Normal operation: performed_by_id equals user_id
+                $performedById = $userId;
+            }
+
             AuditLog::create([
-                'user_id' => optional(auth()->user())->getKey(),
+                'user_id' => $userId,
+                'performed_by_id' => $performedById,
+                'impersonating_as_id' => $impersonatingAsId,
                 'action' => class_basename($event),
                 'subject_type' => method_exists($event, 'subjectType') ? $event->subjectType() : null,
                 'subject_id' => method_exists($event, 'subjectId') ? $event->subjectId() : null,
@@ -23,6 +55,7 @@ class WriteAuditTrail implements ShouldQueue
                 'user_agent' => (string) $req?->userAgent(),
                 'old_values' => method_exists($event, 'old') ? (array) $event->old() : [],
                 'new_values' => method_exists($event, 'new') ? (array) $event->new() : [],
+                'meta' => $impersonatingAsId ? ['impersonation_session' => true] : null,
             ]);
         } catch (\Throwable) {
             // swallow errors

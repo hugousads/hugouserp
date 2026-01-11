@@ -305,6 +305,9 @@ class AuthService implements AuthServiceInterface
     /**
      * Reset user password.
      * Returns: ['success' => bool, 'error' => ?string]
+     *
+     * SECURITY FIX: Invalidates all trusted devices and sessions on password reset
+     * to prevent "remember 2FA" bypass attacks on stolen/compromised devices.
      */
     public function resetPassword(string $email, string $token, string $password): array
     {
@@ -329,13 +332,38 @@ class AuthService implements AuthServiceInterface
                 }
 
                 $user->password = Hash::make($password);
+
+                // SECURITY FIX: Update password_changed_at to invalidate all "trusted device" cookies
+                // This ensures that 2FA "remember me" tokens are invalidated on password change
+                $user->password_changed_at = now();
+
+                // SECURITY FIX: Clear remember_token to force re-login on all devices
+                $user->remember_token = null;
+
                 $user->save();
+
+                // SECURITY FIX: Revoke all existing API tokens
+                if (method_exists($user, 'tokens')) {
+                    $user->tokens()->delete();
+                }
+
+                // SECURITY FIX: Invalidate all database sessions
+                if (config('session.driver') === 'database') {
+                    DB::table('sessions')
+                        ->where('user_id', $user->getKey())
+                        ->delete();
+                }
+
+                // Clean up user_sessions tracking
+                if (method_exists($user, 'sessions')) {
+                    $user->sessions()->delete();
+                }
 
                 DB::table('password_reset_tokens')
                     ->where('email', $email)
                     ->delete();
 
-                $this->logServiceInfo('resetPassword', 'Password reset successful', ['email' => $email]);
+                $this->logServiceInfo('resetPassword', 'Password reset successful - all sessions invalidated', ['email' => $email]);
 
                 return [
                     'success' => true,
@@ -345,6 +373,65 @@ class AuthService implements AuthServiceInterface
             operation: 'resetPassword',
             context: ['email' => $email],
             defaultValue: ['success' => false, 'error' => 'reset_failed']
+        );
+    }
+
+    /**
+     * Change user password (for logged-in users).
+     * Returns: ['success' => bool, 'error' => ?string]
+     *
+     * SECURITY FIX: Invalidates all other sessions and trusted devices on password change.
+     */
+    public function changePassword(User $user, string $currentPassword, string $newPassword): array
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($user, $currentPassword, $newPassword) {
+                // Verify current password
+                if (! Hash::check($currentPassword, $user->password)) {
+                    return [
+                        'success' => false,
+                        'error' => 'invalid_current_password',
+                    ];
+                }
+
+                $user->password = Hash::make($newPassword);
+
+                // SECURITY FIX: Update password_changed_at to invalidate all "trusted device" cookies
+                $user->password_changed_at = now();
+
+                $user->save();
+
+                // SECURITY FIX: Revoke all API tokens except the current one (if any)
+                $currentTokenId = $user->currentAccessToken()?->id ?? null;
+                if (method_exists($user, 'tokens')) {
+                    $query = $user->tokens();
+                    if ($currentTokenId) {
+                        $query->where('id', '!=', $currentTokenId);
+                    }
+                    $query->delete();
+                }
+
+                // SECURITY FIX: Invalidate all other database sessions
+                $currentSessionId = session()->getId();
+                if (config('session.driver') === 'database' && $currentSessionId) {
+                    DB::table('sessions')
+                        ->where('user_id', $user->getKey())
+                        ->where('id', '!=', $currentSessionId)
+                        ->delete();
+                }
+
+                $this->logServiceInfo('changePassword', 'Password changed - other sessions invalidated', [
+                    'user_id' => $user->getKey(),
+                ]);
+
+                return [
+                    'success' => true,
+                    'error' => null,
+                ];
+            },
+            operation: 'changePassword',
+            context: ['user_id' => $user->getKey()],
+            defaultValue: ['success' => false, 'error' => 'change_failed']
         );
     }
 }
