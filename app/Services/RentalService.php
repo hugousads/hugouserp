@@ -109,6 +109,21 @@ class RentalService implements RentalServiceInterface
                     Tenant::where('branch_id', $branchId)->findOrFail($tenantId);
                 }
 
+                // BUG FIX: Check unit availability with buffer time before creating contract
+                $availability = $this->checkUnitAvailability(
+                    $unitId,
+                    $payload['start_date'],
+                    $payload['end_date'],
+                    null, // No contract to exclude
+                    $branchId
+                );
+
+                if (! $availability['available']) {
+                    throw new \Exception(
+                        __('Cannot create contract: :message', ['message' => $availability['message']])
+                    );
+                }
+
                 $c = RentalContract::create([
                     'branch_id' => $branchId ?? auth()->user()?->branch_id ?? null,
                     'unit_id' => $unitId,
@@ -513,5 +528,161 @@ class RentalService implements RentalServiceInterface
             'pending_count' => $stats->pending_count ?? 0,
             'collection_rate' => $collectionRate,
         ];
+    }
+
+    /**
+     * Check if a rental unit is available for a given date range.
+     *
+     * BUG FIX: Includes buffer time (turnaround hours) between rentals.
+     * This addresses the issue where a unit could be booked immediately
+     * after another rental ends, without time for maintenance/cleaning.
+     *
+     * @param int $unitId The rental unit ID
+     * @param string $startDate Requested start date (Y-m-d or datetime)
+     * @param string $endDate Requested end date (Y-m-d or datetime)
+     * @param int|null $excludeContractId Contract ID to exclude (for extensions)
+     * @param int|null $branchId Branch ID for branch-scoped queries
+     * @return array ['available' => bool, 'conflicts' => array, 'message' => string|null]
+     */
+    public function checkUnitAvailability(
+        int $unitId,
+        string $startDate,
+        string $endDate,
+        ?int $excludeContractId = null,
+        ?int $branchId = null
+    ): array {
+        return $this->handleServiceOperation(
+            callback: function () use ($unitId, $startDate, $endDate, $excludeContractId, $branchId) {
+                // Get buffer hours from settings (default 4 hours for cleaning/maintenance)
+                $bufferHours = (int) config('rental.buffer_hours', setting('rental.buffer_hours', 4));
+
+                $requestedStart = \Carbon\Carbon::parse($startDate);
+                $requestedEnd = \Carbon\Carbon::parse($endDate);
+
+                // Query for conflicting contracts
+                $query = RentalContract::where('unit_id', $unitId)
+                    ->where('status', 'active');
+
+                if ($excludeContractId !== null) {
+                    $query->where('id', '!=', $excludeContractId);
+                }
+
+                if ($branchId !== null) {
+                    $query->where('branch_id', $branchId);
+                }
+
+                // Check for overlapping contracts with buffer time
+                // A conflict exists if:
+                // - Existing contract end_date + buffer overlaps with requested start
+                // - Existing contract start_date - buffer overlaps with requested end
+                $conflicts = $query->where(function ($q) use ($requestedStart, $requestedEnd, $bufferHours) {
+                    $q->where(function ($inner) use ($requestedStart, $requestedEnd, $bufferHours) {
+                        // Add buffer to existing end dates when checking against requested start
+                        // Subtract buffer from existing start dates when checking against requested end
+                        $inner->whereRaw('DATE_ADD(end_date, INTERVAL ? HOUR) > ?', [$bufferHours, $requestedStart])
+                              ->whereRaw('DATE_SUB(start_date, INTERVAL ? HOUR) < ?', [$bufferHours, $requestedEnd]);
+                    });
+                })->get(['id', 'start_date', 'end_date', 'tenant_id']);
+
+                if ($conflicts->isEmpty()) {
+                    return [
+                        'available' => true,
+                        'conflicts' => [],
+                        'message' => null,
+                        'buffer_hours' => $bufferHours,
+                    ];
+                }
+
+                // Build conflict details
+                $conflictDetails = $conflicts->map(function ($contract) use ($bufferHours) {
+                    return [
+                        'contract_id' => $contract->id,
+                        'start_date' => $contract->start_date?->format('Y-m-d H:i'),
+                        'end_date' => $contract->end_date?->format('Y-m-d H:i'),
+                        'buffer_end' => $contract->end_date?->addHours($bufferHours)->format('Y-m-d H:i'),
+                    ];
+                })->toArray();
+
+                return [
+                    'available' => false,
+                    'conflicts' => $conflictDetails,
+                    'message' => __('Unit is not available for the requested dates. A :hours-hour buffer is required between rentals for maintenance.', [
+                        'hours' => $bufferHours,
+                    ]),
+                    'buffer_hours' => $bufferHours,
+                ];
+            },
+            operation: 'checkUnitAvailability',
+            context: [
+                'unit_id' => $unitId,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'exclude_contract_id' => $excludeContractId,
+            ],
+            defaultValue: ['available' => false, 'conflicts' => [], 'message' => 'Error checking availability']
+        );
+    }
+
+    /**
+     * Extend an existing rental contract.
+     *
+     * BUG FIX: Validates availability before extending to prevent double-booking.
+     * The previous implementation allowed extensions without checking if another
+     * tenant had already booked the unit for the extension period.
+     *
+     * @param int $contractId Contract ID to extend
+     * @param string $newEndDate New end date
+     * @param int|null $branchId Branch ID for branch-scoped queries
+     * @return RentalContract Extended contract
+     * @throws \Exception If extension conflicts with existing bookings
+     */
+    public function extendContract(int $contractId, string $newEndDate, ?int $branchId = null): RentalContract
+    {
+        return $this->handleServiceOperation(
+            callback: function () use ($contractId, $newEndDate, $branchId) {
+                $query = RentalContract::query();
+                if ($branchId !== null) {
+                    $query->where('branch_id', $branchId);
+                }
+                $contract = $query->findOrFail($contractId);
+
+                // BUG FIX: Check availability for the extension period
+                // The extension period is from the current end_date to the new end_date
+                $extensionStart = $contract->end_date->format('Y-m-d');
+                $extensionEnd = \Carbon\Carbon::parse($newEndDate)->format('Y-m-d');
+
+                // Validate the new end date is actually later than current
+                if ($extensionEnd <= $extensionStart) {
+                    throw new \InvalidArgumentException(
+                        __('New end date must be after current end date (:current)', [
+                            'current' => $extensionStart,
+                        ])
+                    );
+                }
+
+                // Check availability for the extension period, excluding current contract
+                $availability = $this->checkUnitAvailability(
+                    $contract->unit_id,
+                    $extensionStart,
+                    $extensionEnd,
+                    $contract->id, // Exclude current contract from conflict check
+                    $branchId
+                );
+
+                if (! $availability['available']) {
+                    throw new \Exception(
+                        __('Cannot extend contract: :message', ['message' => $availability['message']])
+                    );
+                }
+
+                // Update the contract with the new end date
+                $contract->end_date = $newEndDate;
+                $contract->save();
+
+                return $contract;
+            },
+            operation: 'extendContract',
+            context: ['contract_id' => $contractId, 'new_end_date' => $newEndDate, 'branch_id' => $branchId]
+        );
     }
 }

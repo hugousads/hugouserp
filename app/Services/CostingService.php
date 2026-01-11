@@ -246,4 +246,109 @@ class CostingService
 
         return $batch;
     }
+
+    /**
+     * Get total inventory value including goods in transit.
+     *
+     * BUG FIX: Addresses the "ghost inventory" issue where goods in transit
+     * between warehouses were not included in financial reports, causing
+     * temporary drops in asset value during transfers.
+     *
+     * @param int|null $branchId Branch ID to filter by
+     * @param int|null $warehouseId Warehouse ID to filter by (null for all)
+     * @return array ['warehouse_value' => float, 'transit_value' => float, 'total_value' => float]
+     */
+    public function getTotalInventoryValue(?int $branchId = null, ?int $warehouseId = null): array
+    {
+        // Calculate warehouse inventory value
+        $warehouseQuery = InventoryBatch::active();
+        
+        if ($branchId !== null) {
+            $warehouseQuery->where('branch_id', $branchId);
+        }
+        
+        if ($warehouseId !== null) {
+            $warehouseQuery->where('warehouse_id', $warehouseId);
+        }
+        
+        $warehouseStats = $warehouseQuery
+            ->selectRaw('SUM(quantity * unit_cost) as total_value, SUM(quantity) as total_quantity')
+            ->first();
+        
+        $warehouseValue = (float) ($warehouseStats->total_value ?? 0);
+        $warehouseQuantity = (float) ($warehouseStats->total_quantity ?? 0);
+
+        // BUG FIX: Include inventory in transit
+        $transitValue = 0.0;
+        $transitQuantity = 0.0;
+        
+        // Check if InventoryTransit model exists (it may be in StockTransferService)
+        if (class_exists(\App\Models\InventoryTransit::class)) {
+            $transitQuery = \App\Models\InventoryTransit::where('status', 'in_transit');
+            
+            if ($branchId !== null) {
+                // Include transit records where either from or to warehouse belongs to branch
+                $transitQuery->where(function ($q) use ($branchId) {
+                    $q->whereHas('fromWarehouse', function ($wq) use ($branchId) {
+                        $wq->where('branch_id', $branchId);
+                    })->orWhereHas('toWarehouse', function ($wq) use ($branchId) {
+                        $wq->where('branch_id', $branchId);
+                    });
+                });
+            }
+            
+            $transitStats = $transitQuery
+                ->selectRaw('SUM(quantity * unit_cost) as total_value, SUM(quantity) as total_quantity')
+                ->first();
+            
+            $transitValue = (float) ($transitStats->total_value ?? 0);
+            $transitQuantity = (float) ($transitStats->total_quantity ?? 0);
+        }
+
+        // Use bcmath for precise total calculation
+        $totalValue = bcadd((string) $warehouseValue, (string) $transitValue, 2);
+
+        return [
+            'warehouse_value' => $warehouseValue,
+            'warehouse_quantity' => $warehouseQuantity,
+            'transit_value' => $transitValue,
+            'transit_quantity' => $transitQuantity,
+            'total_value' => (float) $totalValue,
+            'total_quantity' => $warehouseQuantity + $transitQuantity,
+            'breakdown' => [
+                'in_warehouses' => $warehouseValue,
+                'in_transit' => $transitValue,
+            ],
+        ];
+    }
+
+    /**
+     * Reset weighted average cost when stock reaches zero.
+     *
+     * BUG FIX: Prevents cost calculation errors when stock depletes and
+     * is then replenished. The old average cost should not be carried
+     * forward when there's no stock to average with.
+     *
+     * @param int $productId Product ID
+     * @param int $warehouseId Warehouse ID
+     */
+    public function resetCostOnZeroStock(int $productId, int $warehouseId): void
+    {
+        // Check if current stock is zero or effectively zero
+        $totalStock = InventoryBatch::where('product_id', $productId)
+            ->where('warehouse_id', $warehouseId)
+            ->active()
+            ->sum('quantity');
+
+        if ((float) $totalStock <= 0.0001) {
+            // Mark all batches as depleted to prevent old costs from affecting new stock
+            InventoryBatch::where('product_id', $productId)
+                ->where('warehouse_id', $warehouseId)
+                ->where('status', 'active')
+                ->update([
+                    'status' => 'depleted',
+                    'quantity' => 0,
+                ]);
+        }
+    }
 }

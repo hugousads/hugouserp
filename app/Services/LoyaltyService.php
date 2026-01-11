@@ -245,4 +245,117 @@ class LoyaltyService
             context: ['customer_id' => $customer->id, 'limit' => $limit]
         );
     }
+
+    /**
+     * Reverse loyalty points when a sale is returned.
+     *
+     * BUG FIX: Addresses the "points mining" loophole where customers could
+     * earn points from a purchase, then return the item while keeping the points.
+     * This method must be called when processing sales returns to deduct the
+     * points that were originally earned from the returned sale.
+     *
+     * @param Customer $customer The customer who made the return
+     * @param Sale $sale The original sale being returned
+     * @param float|null $returnAmount The return amount (if partial return)
+     * @param int|null $userId The user processing the return
+     * @return LoyaltyTransaction|null The reversal transaction, or null if no points to reverse
+     */
+    public function reversePointsForReturn(
+        Customer $customer,
+        Sale $sale,
+        ?float $returnAmount = null,
+        ?int $userId = null
+    ): ?LoyaltyTransaction {
+        return $this->handleServiceOperation(
+            callback: function () use ($customer, $sale, $returnAmount, $userId) {
+                // Find the original earn transaction for this sale
+                $originalTransaction = LoyaltyTransaction::where('customer_id', $customer->id)
+                    ->where('sale_id', $sale->id)
+                    ->where('type', 'earn')
+                    ->where('points', '>', 0)
+                    ->first();
+
+                if (! $originalTransaction) {
+                    // No points were earned from this sale
+                    return null;
+                }
+
+                // Calculate points to reverse
+                if ($returnAmount !== null && $sale->grand_total > 0) {
+                    // Partial return - reverse proportional points
+                    $returnRatio = $returnAmount / $sale->grand_total;
+                    $pointsToReverse = (int) round($originalTransaction->points * $returnRatio);
+                } else {
+                    // Full return - reverse all points from this sale
+                    $pointsToReverse = $originalTransaction->points;
+                }
+
+                if ($pointsToReverse <= 0) {
+                    return null;
+                }
+
+                // Check if points have already been reversed for this sale
+                $existingReversal = LoyaltyTransaction::where('customer_id', $customer->id)
+                    ->where('sale_id', $sale->id)
+                    ->where('type', 'return_reversal')
+                    ->exists();
+
+                if ($existingReversal) {
+                    throw new InvalidArgumentException(
+                        __('Points have already been reversed for this sale return')
+                    );
+                }
+
+                // Cap reversal at customer's current balance to prevent negative
+                $currentPoints = (int) $customer->loyalty_points;
+                $pointsToReverse = min($pointsToReverse, $currentPoints);
+
+                if ($pointsToReverse <= 0) {
+                    // Customer doesn't have enough points to reverse
+                    // Log this as a potential fraud indicator
+                    \Log::warning('Loyalty points reversal skipped - customer has insufficient points', [
+                        'customer_id' => $customer->id,
+                        'sale_id' => $sale->id,
+                        'points_earned' => $originalTransaction->points,
+                        'current_balance' => $currentPoints,
+                    ]);
+
+                    return null;
+                }
+
+                return DB::transaction(function () use ($customer, $sale, $pointsToReverse, $userId, $returnAmount) {
+                    // Deduct the points from customer balance
+                    $customer->decrement('loyalty_points', $pointsToReverse);
+                    $customer->refresh();
+
+                    // Update customer tier based on new balance
+                    $this->updateCustomerTier($customer);
+
+                    // Create reversal transaction record
+                    return LoyaltyTransaction::create([
+                        'customer_id' => $customer->id,
+                        'branch_id' => $sale->branch_id,
+                        'sale_id' => $sale->id,
+                        'type' => 'return_reversal',
+                        'points' => -$pointsToReverse, // Negative to indicate deduction
+                        'balance_after' => $customer->loyalty_points,
+                        'description' => $returnAmount !== null
+                            ? __('Points reversed for partial return of sale #:invoice (:amount)', [
+                                'invoice' => $sale->code,
+                                'amount' => number_format($returnAmount, 2),
+                            ])
+                            : __('Points reversed for return of sale #:invoice', ['invoice' => $sale->code]),
+                        'created_by' => $userId,
+                    ]);
+                });
+            },
+            operation: 'reversePointsForReturn',
+            context: [
+                'customer_id' => $customer->id,
+                'sale_id' => $sale->id,
+                'return_amount' => $returnAmount,
+            ],
+            defaultValue: null
+        );
+    }
 }

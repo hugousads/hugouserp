@@ -40,7 +40,22 @@ class ManufacturingService
             // Add BOM items if provided
             if (! empty($data['items'])) {
                 foreach ($data['items'] as $item) {
+                    // BUG FIX: Validate no circular dependency before adding component
+                    $componentProductId = $item['product_id'] ?? null;
+                    if ($componentProductId && ! $bom->canAddComponent($componentProductId)) {
+                        throw new \Exception(
+                            __('Cannot add product #:id as component - it would create a circular dependency', [
+                                'id' => $componentProductId,
+                            ])
+                        );
+                    }
                     $bom->items()->create($item);
+                }
+                
+                // After all items are added, do a full circular check
+                $circularCheck = $bom->checkCircularDependency();
+                if ($circularCheck['has_circular']) {
+                    throw new \Exception($circularCheck['message']);
                 }
             }
 
@@ -80,7 +95,21 @@ class ManufacturingService
                     if (! isset($item['product_id']) || ! isset($item['quantity'])) {
                         continue;
                     }
+                    // BUG FIX: Validate no circular dependency before adding component
+                    if (! $bom->canAddComponent($item['product_id'])) {
+                        throw new \Exception(
+                            __('Cannot add product #:id as component - it would create a circular dependency', [
+                                'id' => $item['product_id'],
+                            ])
+                        );
+                    }
                     $bom->items()->create($item);
+                }
+                
+                // After all items are updated, do a full circular check
+                $circularCheck = $bom->checkCircularDependency();
+                if ($circularCheck['has_circular']) {
+                    throw new \Exception($circularCheck['message']);
                 }
             }
 
@@ -264,10 +293,24 @@ class ManufacturingService
 
     /**
      * Complete a production order.
+     *
+     * BUG FIX: Ensures raw materials are issued (deducted from inventory) before completing.
+     * This prevents the "free production" loophole where finished goods are added
+     * without deducting the raw materials used to make them.
      */
     public function completeProductionOrder(ProductionOrder $order): ProductionOrder
     {
         DB::transaction(function () use ($order) {
+            // BUG FIX: Ensure all materials are issued before completing
+            // Check if any items haven't been issued yet
+            $unissuedItems = $order->items->where('is_issued', false);
+            if ($unissuedItems->isNotEmpty()) {
+                // Auto-issue materials that haven't been issued yet
+                $this->issueMaterials($order);
+                // Refresh items to get updated is_issued status
+                $order->load('items');
+            }
+
             // Calculate actual cost
             $materialCost = $order->items->sum('total_cost');
             $laborCost = $order->operations->sum(function ($op) {

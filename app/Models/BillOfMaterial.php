@@ -195,4 +195,136 @@ class BillOfMaterial extends BaseModel
 
         return sprintf('%s-%s-%04d', $prefix, $date, $newNumber);
     }
+
+    /**
+     * Check for circular dependencies in the Bill of Materials.
+     *
+     * BUG FIX: Prevents infinite loops during cost calculation.
+     * A circular dependency occurs when:
+     * - Product A uses Product B as a component
+     * - Product B uses Product A as a component (directly or indirectly)
+     *
+     * This would cause infinite recursion when calculating costs or
+     * material requirements, potentially crashing the server.
+     *
+     * @param int|null $productId Product ID to check (defaults to this BOM's product)
+     * @param array $visited Array of already visited product IDs (for recursion)
+     * @return array ['has_circular' => bool, 'path' => array] Detection result
+     */
+    public function checkCircularDependency(?int $productId = null, array $visited = []): array
+    {
+        $productId = $productId ?? $this->product_id;
+
+        // If we've seen this product before, we have a circular dependency
+        if (in_array($productId, $visited, true)) {
+            $visited[] = $productId; // Add for complete path
+            return [
+                'has_circular' => true,
+                'path' => $visited,
+                'message' => __('Circular dependency detected: :path', [
+                    'path' => implode(' → ', array_map(fn($id) => "Product #{$id}", $visited)),
+                ]),
+            ];
+        }
+
+        // Add current product to visited path
+        $visited[] = $productId;
+
+        // Get all components (child products) for this product's BOM
+        $components = $this->items()
+            ->with('product.bom')
+            ->get();
+
+        foreach ($components as $component) {
+            // If the component itself is a manufactured product (has its own BOM)
+            $componentProduct = $component->product;
+            
+            if ($componentProduct && $componentProduct->bom) {
+                // Recursively check the component's BOM
+                $result = $componentProduct->bom->checkCircularDependency(
+                    $componentProduct->id,
+                    $visited
+                );
+
+                if ($result['has_circular']) {
+                    return $result;
+                }
+            }
+        }
+
+        return [
+            'has_circular' => false,
+            'path' => $visited,
+            'message' => null,
+        ];
+    }
+
+    /**
+     * Validate that adding a component won't create a circular dependency.
+     *
+     * @param int $componentProductId The product ID to be added as a component
+     * @return bool True if safe to add, false if it would create a circular dependency
+     */
+    public function canAddComponent(int $componentProductId): bool
+    {
+        // Check if adding this component would create a circle
+        // The component is circular if:
+        // 1. It's the same as the finished product
+        // 2. The component's BOM contains this BOM's product (at any level)
+
+        // Direct self-reference check
+        if ($componentProductId === $this->product_id) {
+            return false;
+        }
+
+        // Check if the component has a BOM that contains our product
+        $componentBom = static::where('product_id', $componentProductId)
+            ->where('status', 'active')
+            ->first();
+
+        if (! $componentBom) {
+            // Component is not a manufactured product, no circular dependency possible
+            return true;
+        }
+
+        // Check if the component's BOM chain eventually leads back to this product
+        return ! $this->wouldCreateCircle($componentBom, [$this->product_id]);
+    }
+
+    /**
+     * Check if a BOM's component chain would lead back to any product in the visited set.
+     *
+     * @param BillOfMaterial $bom The BOM to check
+     * @param array $ancestorProductIds Products that are "upstream" in the chain
+     * @return bool True if adding this would create a circle
+     */
+    protected function wouldCreateCircle(BillOfMaterial $bom, array $ancestorProductIds): bool
+    {
+        // If this BOM's product is in our ancestors, it's a circle
+        if (in_array($bom->product_id, $ancestorProductIds, true)) {
+            return true;
+        }
+
+        // Add this BOM's product to ancestors for deeper checks
+        $ancestorProductIds[] = $bom->product_id;
+
+        // Check each component
+        foreach ($bom->items as $item) {
+            // If the component itself is in ancestors, it's a circle
+            if (in_array($item->product_id, $ancestorProductIds, true)) {
+                return true;
+            }
+
+            // If the component has its own BOM, check recursively
+            $componentBom = static::where('product_id', $item->product_id)
+                ->where('status', 'active')
+                ->first();
+
+            if ($componentBom && $this->wouldCreateCircle($componentBom, $ancestorProductIds)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -507,4 +507,138 @@ class LeaveManagementService
         
         return $statistics;
     }
+
+    /**
+     * Create a leave request with proper holiday deduction.
+     *
+     * BUG FIX: Calculates actual working days excluding public holidays.
+     * Per labor law, public holidays falling within a leave period should NOT
+     * be deducted from the employee's annual leave balance.
+     *
+     * @param int $employeeId Employee ID
+     * @param int $leaveTypeId Leave type ID
+     * @param Carbon $startDate Leave start date
+     * @param Carbon $endDate Leave end date
+     * @param string|null $reason Leave reason
+     * @param int|null $branchId Branch ID for branch-specific holidays
+     * @return LeaveRequest Created leave request
+     * @throws \Exception If insufficient balance
+     */
+    public function createLeaveRequest(
+        int $employeeId,
+        int $leaveTypeId,
+        Carbon $startDate,
+        Carbon $endDate,
+        ?string $reason = null,
+        ?int $branchId = null
+    ): LeaveRequest {
+        return DB::transaction(function () use ($employeeId, $leaveTypeId, $startDate, $endDate, $reason, $branchId) {
+            // Calculate actual working days excluding weekends and holidays
+            $actualDays = $this->calculateWorkingDays($startDate, $endDate, $branchId);
+            
+            // Get employee's leave balance
+            $balance = $this->getOrCreateBalance($employeeId, $leaveTypeId, $startDate->year);
+            
+            // Check if employee has sufficient balance
+            if ($balance->available_balance < $actualDays) {
+                throw new \Exception(
+                    __('Insufficient leave balance. Available: :available days, Required: :required days', [
+                        'available' => $balance->available_balance,
+                        'required' => $actualDays,
+                    ])
+                );
+            }
+            
+            // Get the leave type to determine the leave_type string
+            $leaveType = LeaveType::find($leaveTypeId);
+            $leaveTypeCode = $leaveType?->code ?? 'annual';
+            
+            // Get holidays in the date range for documentation
+            $holidays = LeaveHoliday::inDateRange($startDate, $endDate);
+            if ($branchId) {
+                $holidays = $holidays->forBranch($branchId);
+            }
+            $holidayCount = $holidays->count();
+            $calendarDays = $startDate->diffInDays($endDate) + 1;
+            
+            // Create leave request with calculated actual days
+            $leaveRequest = LeaveRequest::create([
+                'employee_id' => $employeeId,
+                'leave_type' => $leaveTypeCode,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'days_count' => $actualDays, // BUG FIX: Use actual working days, not calendar days
+                'status' => LeaveRequest::STATUS_PENDING,
+                'reason' => $reason,
+                'extra_attributes' => [
+                    'leave_type_id' => $leaveTypeId,
+                    'calendar_days' => $calendarDays,
+                    'holidays_excluded' => $holidayCount,
+                    'weekends_excluded' => $calendarDays - $actualDays - $holidayCount,
+                ],
+            ]);
+            
+            return $leaveRequest;
+        });
+    }
+
+    /**
+     * Approve a leave request and deduct from balance.
+     *
+     * BUG FIX: Uses the pre-calculated days_count (which excludes holidays)
+     * rather than recalculating from raw dates.
+     *
+     * @param int $leaveRequestId Leave request ID
+     * @param int|null $approverId Approver user ID
+     * @param string|null $note Approval note
+     * @return LeaveRequest Approved request
+     */
+    public function approveLeaveRequest(
+        int $leaveRequestId,
+        ?int $approverId = null,
+        ?string $note = null
+    ): LeaveRequest {
+        return DB::transaction(function () use ($leaveRequestId, $approverId, $note) {
+            $leaveRequest = LeaveRequest::findOrFail($leaveRequestId);
+            
+            if (!$leaveRequest->canBeApproved()) {
+                throw new \Exception(__('Leave request cannot be approved in its current status'));
+            }
+            
+            // Get leave type ID from extra_attributes or look up
+            $leaveTypeId = $leaveRequest->extra_attributes['leave_type_id'] 
+                ?? LeaveType::where('code', $leaveRequest->leave_type)->value('id');
+            
+            if ($leaveTypeId) {
+                // Get and update balance
+                $balance = $this->getOrCreateBalance(
+                    $leaveRequest->employee_id,
+                    $leaveTypeId,
+                    $leaveRequest->start_date->year
+                );
+                
+                // Use the pre-calculated days_count which already excludes holidays
+                $daysToDeduct = (float) $leaveRequest->days_count;
+                
+                // Verify balance is still sufficient
+                if ($balance->available_balance < $daysToDeduct) {
+                    throw new \Exception(
+                        __('Insufficient leave balance. Available: :available days', [
+                            'available' => $balance->available_balance,
+                        ])
+                    );
+                }
+                
+                // Deduct from balance
+                $balance->used += $daysToDeduct;
+                $balance->available_balance -= $daysToDeduct;
+                $balance->save();
+            }
+            
+            // Approve the request
+            $leaveRequest->approve($approverId, $note);
+            
+            return $leaveRequest->fresh();
+        });
+    }
 }
