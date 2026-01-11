@@ -11,9 +11,15 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class ProductRepository extends EloquentBaseRepository implements ProductRepositoryInterface
 {
-    public function __construct(Product $model)
+    /**
+     * Note: We instantiate the model internally rather than injecting it to avoid
+     * circular dependency issues. Since Product has observers attached and this
+     * repository is registered as a singleton, injecting Product via constructor
+     * parameter could cause infinite recursion during container resolution.
+     */
+    public function __construct()
     {
-        parent::__construct($model);
+        parent::__construct(new Product());
     }
 
     protected function baseBranchQuery(int $branchId): Builder
