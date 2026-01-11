@@ -76,17 +76,29 @@ class SystemSetting extends Model
         }
 
         $value = $setting->value;
+        $type = $setting->type ?? 'string';
 
-        // Handle array values - unwrap single-value arrays for non-array types
-        if (is_array($value) && ! in_array($setting->type, ['array', 'json'], true)) {
-            $value = count($value) === 1 ? $value[0] : $value;
+        // For array/json types, preserve the full array
+        if (in_array($type, ['array', 'json'], true)) {
+            return is_array($value) ? $value : [$value];
+        }
+
+        // For non-array/json types, unwrap single-value arrays (legacy behavior)
+        if (is_array($value)) {
+            $value = count($value) === 1 ? $value[0] : $default;
+        }
+
+        // If value is still an array after unwrapping, return default
+        // This handles the edge case where stored data doesn't match expected type
+        if (is_array($value)) {
+            return $default;
         }
 
         // Cast based on type
-        return match ($setting->type) {
+        return match ($type) {
             'boolean', 'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
-            'integer', 'int' => (int) $value,
-            'float', 'decimal' => (float) $value,
+            'integer', 'int' => is_numeric($value) ? (int) $value : $default,
+            'float', 'decimal' => is_numeric($value) ? (float) $value : $default,
             default => $value,
         };
     }
