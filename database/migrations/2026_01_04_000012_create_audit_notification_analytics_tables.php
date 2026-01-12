@@ -107,18 +107,27 @@ return new class extends Migration
             $table->string('report_type', 50)->default('table'); // table, chart, pivot, etc.
             $table->string('category', 100)->nullable()->index();
             $table->string('data_source', 255)->nullable();
+            $table->text('query_template')->nullable();
             $table->foreignId('module_id')->nullable()->constrained()->nullOnDelete(); // Associated module
             $table->boolean('is_branch_specific')->default(true);
             $table->boolean('supports_export')->default(true);
+            $table->boolean('supports_scheduling')->default(false);
             $table->json('export_formats')->nullable(); // Supported export formats
             $table->json('columns')->nullable();
+            $table->json('available_columns')->nullable();
+            $table->json('default_columns')->nullable();
             $table->json('filters')->nullable();
+            $table->json('available_filters')->nullable();
+            $table->json('default_filters')->nullable();
             $table->json('grouping')->nullable();
+            $table->json('available_groupings')->nullable();
             $table->json('sorting')->nullable();
             $table->json('calculations')->nullable();
             $table->json('chart_config')->nullable();
+            $table->json('chart_options')->nullable();
             $table->boolean('is_system')->default(false);
             $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
 
             $table->foreignId('created_by')->nullable()
                 ->constrained('users')
@@ -219,13 +228,25 @@ return new class extends Migration
         Schema::create('export_layouts', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('report_definition_id')->nullable()->constrained('report_definitions')->nullOnDelete();
             $table->foreignId('branch_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('model_type', 255);
+            $table->string('layout_name', 255)->nullable();
+            $table->string('model_type', 255)->nullable();
+            $table->string('entity_type', 255)->nullable();
             $table->string('name', 255);
             $table->json('columns')->nullable();
+            $table->json('selected_columns')->nullable();
+            $table->json('column_order')->nullable();
+            $table->json('column_labels')->nullable();
             $table->json('formatting')->nullable();
             $table->string('default_format', 50)->default('xlsx');
+            $table->string('export_format', 50)->nullable();
+            $table->boolean('include_headers')->default(true);
+            $table->string('date_format', 50)->nullable();
+            $table->string('number_format', 50)->nullable();
             $table->boolean('is_default')->default(false);
+            $table->boolean('is_shared')->default(false);
 
             $table->foreignId('created_by')->nullable()
                 ->constrained('users')
@@ -240,14 +261,28 @@ return new class extends Migration
         Schema::create('dashboard_widgets', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
+            $table->string('key', 100)->unique();
             $table->string('name', 255);
-            $table->string('slug', 100)->unique();
-            $table->string('type', 50); // chart, counter, table, list
-            $table->string('data_source', 255);
+            $table->string('name_ar', 255)->nullable();
+            $table->string('slug', 100)->nullable();
+            $table->text('description')->nullable();
+            $table->string('type', 50)->nullable(); // chart, counter, table, list
+            $table->string('component', 255)->nullable();
+            $table->string('icon', 100)->nullable();
+            $table->string('category', 100)->nullable();
+            $table->string('data_source', 255)->nullable();
             $table->json('config')->nullable();
             $table->json('default_settings')->nullable();
+            $table->json('configurable_options')->nullable();
+            $table->integer('default_width')->nullable();
+            $table->integer('default_height')->nullable();
+            $table->integer('min_width')->nullable();
+            $table->integer('min_height')->nullable();
+            $table->boolean('requires_permission')->default(false);
+            $table->string('permission_key', 255)->nullable();
             $table->boolean('is_system')->default(false);
             $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
             $table->timestamps();
         });
 
@@ -306,12 +341,15 @@ return new class extends Migration
         Schema::create('user_preferences', function (Blueprint $table) {
             $this->setTableOptions($table);
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('key', 255);
-            $table->text('value')->nullable();
+            $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
+            $table->string('theme', 50)->default('light');
+            $table->integer('session_timeout')->default(30);
+            $table->boolean('auto_logout')->default(true);
+            $table->string('default_printer', 255)->nullable();
+            $table->json('dashboard_widgets')->nullable();
+            $table->json('pos_shortcuts')->nullable();
+            $table->json('notification_settings')->nullable();
             $table->timestamps();
-
-            $table->unique(['user_id', 'key']);
         });
 
         // User favorites
@@ -319,13 +357,16 @@ return new class extends Migration
             $this->setTableOptions($table);
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('favoritable_type', 255);
-            $table->unsignedBigInteger('favoritable_id');
+            $table->string('favoritable_type', 255)->nullable();
+            $table->unsignedBigInteger('favoritable_id')->nullable();
+            $table->string('route_name', 255)->nullable();
+            $table->string('label', 255)->nullable();
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 
-            $table->unique(['user_id', 'favoritable_type', 'favoritable_id']);
+            $table->index(['user_id', 'favoritable_type', 'favoritable_id']);
             $table->index(['favoritable_type', 'favoritable_id']);
+            $table->index(['user_id', 'route_name']);
         });
 
         // Search history
