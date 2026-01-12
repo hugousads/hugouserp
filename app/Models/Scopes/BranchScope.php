@@ -116,10 +116,10 @@ class BranchScope implements Scope
             return true;
         }
 
-        // Check if model has 'branch' in its $with array (eager loaded relation)
+        // Check if model has 'branch' in its eager loads
         // This is a good indicator that the model has branch_id
-        $with = $model->getWith();
-        if (in_array('branch', $with, true)) {
+        $eagerLoads = $model->getEagerLoads();
+        if (array_key_exists('branch', $eagerLoads)) {
             return true;
         }
 
