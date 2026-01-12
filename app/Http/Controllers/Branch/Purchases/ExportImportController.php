@@ -152,6 +152,16 @@ class ExportImportController extends Controller
 
                 try {
                     // Find or create purchase
+                    $user = auth()->user();
+                    if (! $user || ! $user->branch_id) {
+                        $errors[] = [
+                            'row' => $rowNum + 1,
+                            'errors' => [__('User or branch information is missing')],
+                        ];
+                        $failed++;
+                        continue;
+                    }
+
                     $purchaseData = [
                         'reference' => $rowData['reference'] ?? 'PO-IMP-'.date('Ymd').'-'.\Str::uuid()->toString(),
                         'posted_at' => $rowData['date'],
@@ -162,7 +172,7 @@ class ExportImportController extends Controller
                         'amount_paid' => (float) ($rowData['paid'] ?? 0),
                         'amount_due' => (float) ($rowData['due'] ?? $rowData['total']),
                         'status' => $rowData['status'],
-                        'branch_id' => auth()->user()->branch_id,
+                        'branch_id' => $user->branch_id,
                     ];
 
                     if ($updateExisting && ! empty($rowData['reference'])) {

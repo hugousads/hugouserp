@@ -23,12 +23,12 @@
             <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ __('Annual Leave') }}</h3>
             <div class="mt-2 flex items-end justify-between">
                 <div>
-                    <p class="text-3xl font-bold text-blue-600">{{ $leaveBalance['annual']['remaining'] }}</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ $leaveBalance['annual']['remaining'] ?? 0 }}</p>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Days remaining') }}</p>
                 </div>
                 <div class="text-right text-sm text-gray-500 dark:text-gray-400">
-                    <p>{{ __('Total') }}: {{ $leaveBalance['annual']['total'] }}</p>
-                    <p>{{ __('Used') }}: {{ $leaveBalance['annual']['used'] }}</p>
+                    <p>{{ __('Total') }}: {{ $leaveBalance['annual']['total'] ?? 0 }}</p>
+                    <p>{{ __('Used') }}: {{ $leaveBalance['annual']['used'] ?? 0 }}</p>
                 </div>
             </div>
         </div>
@@ -36,12 +36,12 @@
             <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ __('Sick Leave') }}</h3>
             <div class="mt-2 flex items-end justify-between">
                 <div>
-                    <p class="text-3xl font-bold text-green-600">{{ $leaveBalance['sick']['remaining'] }}</p>
+                    <p class="text-3xl font-bold text-green-600">{{ $leaveBalance['sick']['remaining'] ?? 0 }}</p>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Days remaining') }}</p>
                 </div>
                 <div class="text-right text-sm text-gray-500 dark:text-gray-400">
-                    <p>{{ __('Total') }}: {{ $leaveBalance['sick']['total'] }}</p>
-                    <p>{{ __('Used') }}: {{ $leaveBalance['sick']['used'] }}</p>
+                    <p>{{ __('Total') }}: {{ $leaveBalance['sick']['total'] ?? 0 }}</p>
+                    <p>{{ __('Used') }}: {{ $leaveBalance['sick']['used'] ?? 0 }}</p>
                 </div>
             </div>
         </div>
