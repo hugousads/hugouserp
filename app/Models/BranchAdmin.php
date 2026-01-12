@@ -2,9 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * BranchAdmin - Pivot model for branch administrators
+ *
+ * IMPORTANT: This model is explicitly excluded from BranchScope to prevent
+ * infinite recursion during authentication. BranchAdmin records are used
+ * to determine user permissions, so they must be accessible regardless of
+ * current branch context.
+ *
+ * The exclusion is handled in BranchScope::shouldExcludeModel() method.
+ */
 class BranchAdmin extends BaseModel
 {
     protected $fillable = [

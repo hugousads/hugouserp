@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Scopes;
 
+use App\Services\BranchContextManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Scope;
  *
  * This scope automatically filters queries by the authenticated user's branch_id,
  * ensuring data isolation between branches. Super Admins can bypass this filter.
+ *
+ * IMPORTANT: Uses BranchContextManager to prevent infinite recursion with Auth
  *
  * Usage: Applied automatically via HasBranch trait's bootHasBranch() method
  */
@@ -30,28 +33,37 @@ class BranchScope implements Scope
             return;
         }
 
+        // CRITICAL: Prevent infinite recursion during authentication
+        // When auth is being resolved, don't apply scope
+        if (BranchContextManager::isResolvingAuth()) {
+            return;
+        }
+
         // Skip if the model doesn't have a branch_id column
         if (! $this->hasBranchIdColumn($model)) {
             return;
         }
 
-        // Skip if no authenticated user
-        if (! $this->hasAuthenticatedUser()) {
+        // Skip for models that should never be scoped by branch
+        if ($this->shouldExcludeModel($model)) {
             return;
         }
 
-        $user = $this->getAuthenticatedUser();
+        // Get current user safely through BranchContextManager
+        $user = BranchContextManager::getCurrentUser();
+
+        // Skip if no authenticated user
+        if (! $user) {
+            return;
+        }
 
         // Skip scope for Super Admins (they can see all branches)
-        if ($this->isSuperAdmin($user)) {
+        if (BranchContextManager::isSuperAdmin($user)) {
             return;
         }
 
-        // Get the user's branch_id
-        $branchId = $user->branch_id ?? null;
-
-        // Get additional branches user has access to
-        $accessibleBranchIds = $this->getAccessibleBranchIds($user, $branchId);
+        // Get accessible branch IDs from context manager
+        $accessibleBranchIds = BranchContextManager::getAccessibleBranchIds();
 
         // Apply the branch filter
         $table = $model->getTable();
@@ -60,10 +72,37 @@ class BranchScope implements Scope
             $builder->where("{$table}.branch_id", $accessibleBranchIds[0]);
         } elseif (count($accessibleBranchIds) > 1) {
             $builder->whereIn("{$table}.branch_id", $accessibleBranchIds);
-        } else {
-            // User has no branch access - return empty result
-            $builder->whereRaw('1 = 0');
+        } elseif (count($accessibleBranchIds) === 0) {
+            // User has no branch access - return empty result set
+            // Using a condition that's always false in a database-agnostic way
+            $builder->whereNull("{$table}.id")->whereNotNull("{$table}.id");
         }
+    }
+
+    /**
+     * Check if the model should be excluded from branch scoping.
+     * Some models should never be filtered by branch.
+     */
+    protected function shouldExcludeModel(Model $model): bool
+    {
+        // These models are excluded from branch scoping to prevent recursion
+        // and maintain referential integrity
+        $excludedModels = [
+            \App\Models\User::class,
+            \App\Models\Branch::class,
+            \App\Models\BranchAdmin::class,
+            \App\Models\Module::class,
+            \App\Models\Permission::class,
+            \App\Models\Role::class,
+        ];
+
+        foreach ($excludedModels as $excludedModel) {
+            if ($model instanceof $excludedModel) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -71,11 +110,6 @@ class BranchScope implements Scope
      */
     protected function hasBranchIdColumn(Model $model): bool
     {
-        // Branch model itself doesn't have branch_id - it IS the branch
-        if ($model instanceof \App\Models\Branch) {
-            return false;
-        }
-
         // Check if the model has branch_id in fillable attributes
         $fillable = $model->getFillable();
         if (in_array('branch_id', $fillable, true)) {
@@ -90,84 +124,5 @@ class BranchScope implements Scope
         }
 
         return false;
-    }
-
-    /**
-     * Check if there's an authenticated user.
-     */
-    protected function hasAuthenticatedUser(): bool
-    {
-        if (! function_exists('auth')) {
-            return false;
-        }
-
-        try {
-            return auth()->check();
-        } catch (\Exception) {
-            return false;
-        }
-    }
-
-    /**
-     * Get the authenticated user.
-     */
-    protected function getAuthenticatedUser(): ?object
-    {
-        if (! function_exists('auth')) {
-            return null;
-        }
-
-        try {
-            return auth()->user();
-        } catch (\Exception) {
-            return null;
-        }
-    }
-
-    /**
-     * Check if the user is a Super Admin (can see all branches).
-     */
-    protected function isSuperAdmin(?object $user): bool
-    {
-        if (! $user) {
-            return false;
-        }
-
-        // Check using spatie/laravel-permission's hasAnyRole method
-        if (method_exists($user, 'hasAnyRole')) {
-            return $user->hasAnyRole(['Super Admin', 'super-admin']);
-        }
-
-        return false;
-    }
-
-    /**
-     * Get all branch IDs the user has access to.
-     *
-     * @return array<int>
-     */
-    protected function getAccessibleBranchIds(?object $user, ?int $primaryBranchId): array
-    {
-        $branchIds = [];
-
-        // Add primary branch
-        if ($primaryBranchId !== null) {
-            $branchIds[] = $primaryBranchId;
-        }
-
-        // Add additional branches from relationship
-        if ($user && method_exists($user, 'branches')) {
-            try {
-                if (! $user->relationLoaded('branches')) {
-                    $user->load('branches');
-                }
-                $additionalBranches = $user->branches->pluck('id')->toArray();
-                $branchIds = array_unique(array_merge($branchIds, $additionalBranches));
-            } catch (\Exception) {
-                // Ignore relationship loading errors
-            }
-        }
-
-        return array_values(array_filter($branchIds));
     }
 }

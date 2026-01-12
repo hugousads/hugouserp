@@ -123,15 +123,8 @@ trait HasBranch
      */
     protected function resolveCurrentUser(): ?object
     {
-        if (! function_exists('auth')) {
-            return null;
-        }
-
-        try {
-            return auth()->user();
-        } catch (\Exception $e) {
-            return null;
-        }
+        // Use BranchContextManager for safe auth resolution
+        return \App\Services\BranchContextManager::getCurrentUser();
     }
 
     /**
