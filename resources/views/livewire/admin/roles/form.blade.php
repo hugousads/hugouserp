@@ -34,9 +34,15 @@
                     @if($filterByBranch)
                         <select wire:model.live="filterBranchId" class="erp-input text-sm py-1.5 w-full sm:w-64">
                             <option value="">{{ __('Select a branch...') }}</option>
-                            @foreach($branches as $branch)
-                                <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                            @endforeach
+                            @if(is_array($branches) || is_object($branches))
+                                @foreach($branches as $branch)
+                                    @if(is_object($branch))
+                                        <option value="{{ $branch->id ?? '' }}">{{ $branch->name ?? '' }}</option>
+                                    @elseif(is_array($branch))
+                                        <option value="{{ $branch['id'] ?? '' }}">{{ $branch['name'] ?? '' }}</option>
+                                    @endif
+                                @endforeach
+                            @endif
                         </select>
                     @endif
                 </div>
@@ -63,8 +69,9 @@
             </div>
 
             <div class="space-y-6">
-                @foreach($permissions as $group => $groupPermissions)
-                    @if($this->isGroupVisible($group))
+                @if(is_array($permissions) || is_object($permissions))
+                    @foreach($permissions as $group => $groupPermissions)
+                        @if($this->isGroupVisible($group))
                         @php
                             $groupLabels = [
                                 'dashboard' => __('Dashboard'),
@@ -131,6 +138,7 @@
                         </div>
                     @endif
                 @endforeach
+            @endif
             </div>
         </div>
 

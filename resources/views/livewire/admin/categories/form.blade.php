@@ -37,9 +37,15 @@
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Parent Category') }}</label>
                 <select wire:model="parentId" class="erp-input w-full">
                     <option value="">{{ __('None (Root Category)') }}</option>
-                    @foreach($parentCategories as $parent)
-                        <option value="{{ $parent->id }}">{{ $parent->name }}</option>
-                    @endforeach
+                    @if(is_array($parentCategories) || is_object($parentCategories))
+                        @foreach($parentCategories as $parent)
+                            @if(is_object($parent))
+                                <option value="{{ $parent->id ?? '' }}">{{ $parent->name ?? '' }}</option>
+                            @elseif(is_array($parent))
+                                <option value="{{ $parent['id'] ?? '' }}">{{ $parent['name'] ?? '' }}</option>
+                            @endif
+                        @endforeach
+                    @endif
                 </select>
                 @error('parentId') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
             </div>

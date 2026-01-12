@@ -68,9 +68,15 @@
                     </label>
                     <select wire:model.live="form.branch_id" class="erp-input">
                         <option value="">{{ __('Select branch') }}</option>
-                        @foreach($branches as $branch)
-                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                        @endforeach
+                        @if(is_array($branches) || is_object($branches))
+                            @foreach($branches as $branch)
+                                @if(is_object($branch))
+                                    <option value="{{ $branch->id ?? '' }}">{{ $branch->name ?? '' }}</option>
+                                @elseif(is_array($branch))
+                                    <option value="{{ $branch['id'] ?? '' }}">{{ $branch['name'] ?? '' }}</option>
+                                @endif
+                            @endforeach
+                        @endif
                     </select>
                     @error('form.branch_id')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -99,11 +105,13 @@
                         {{ __('This branch has access to the following modules:') }}
                     </p>
                     <div class="flex flex-wrap gap-2">
-                        @foreach($branchModules as $moduleKey)
-                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded dark:bg-blue-800 dark:text-blue-200">
-                                {{ ucfirst($moduleKey) }}
-                            </span>
-                        @endforeach
+                        @if(is_array($branchModules))
+                            @foreach($branchModules as $moduleKey)
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded dark:bg-blue-800 dark:text-blue-200">
+                                    {{ ucfirst($moduleKey ?? '') }}
+                                </span>
+                            @endforeach
+                        @endif
                     </div>
                 </div>
             @elseif($form['branch_id'])
@@ -198,15 +206,17 @@
                     {{ __('Select one or more roles for this user. Roles define what actions the user can perform.') }}
                 </p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    @foreach ($availableRoles as $role)
-                        <label class="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer">
-                            <input type="checkbox"
-                                   class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600"
-                                   value="{{ $role['id'] }}"
-                                   wire:model="selectedRoles">
-                            <span>{{ $role['name'] }}</span>
+                    @if(is_array($availableRoles))
+                        @foreach ($availableRoles as $role)
+                            <label class="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer">
+                                <input type="checkbox"
+                                       class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600"
+                                       value="{{ $role['id'] ?? '' }}"
+                                       wire:model="selectedRoles">
+                                <span>{{ $role['name'] ?? '' }}</span>
                         </label>
                     @endforeach
+                @endif
                 </div>
             </div>
         @endif
