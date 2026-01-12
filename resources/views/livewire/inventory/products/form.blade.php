@@ -175,9 +175,11 @@
                             <input type="number" step="0.01" min="0" wire:model="form.price" class="erp-input">
                         </div>
                         <select wire:model="form.price_currency" class="erp-input w-24">
-                            @foreach($currencies as $currency)
-                                <option value="{{ $currency['code'] }}">{{ $currency['code'] }}</option>
-                            @endforeach
+                            @if(is_array($currencies))
+                                @foreach($currencies as $currency)
+                                    <option value="{{ $currency['code'] ?? '' }}">{{ $currency['code'] ?? '' }}</option>
+                                @endforeach
+                            @endif
                         </select>
                     </div>
                     @error('form.price')
@@ -194,9 +196,11 @@
                             <input type="number" step="0.01" min="0" wire:model="form.cost" class="erp-input" {{ $form['type'] === 'service' ? 'disabled' : '' }}>
                         </div>
                         <select wire:model="form.cost_currency" class="erp-input w-24" {{ $form['type'] === 'service' ? 'disabled' : '' }}>
-                            @foreach($currencies as $currency)
-                                <option value="{{ $currency['code'] }}">{{ $currency['code'] }}</option>
-                            @endforeach
+                            @if(is_array($currencies))
+                                @foreach($currencies as $currency)
+                                    <option value="{{ $currency['code'] ?? '' }}">{{ $currency['code'] ?? '' }}</option>
+                                @endforeach
+                            @endif
                         </select>
                     </div>
                     @error('form.cost')

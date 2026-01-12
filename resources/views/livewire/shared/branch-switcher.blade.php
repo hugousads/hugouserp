@@ -1,5 +1,5 @@
 {{-- Branch Switcher Component - Fixed Position (Not Floating) --}}
-@if($canSwitch && count($branches) > 0)
+@if($canSwitch && is_array($branches) && count($branches) > 0)
 <div class="px-3 py-3 border-b border-slate-700/50 bg-slate-800/30">
     {{-- Header with Role indicator --}}
     <div class="flex items-center justify-between mb-2">
@@ -28,12 +28,12 @@
                    hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
         >
             <span class="flex items-center gap-2">
-                @if($selectedBranch)
+                @if($selectedBranch && is_object($selectedBranch))
                     <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                     </svg>
-                    <span class="font-medium truncate">{{ $selectedBranch->name }}</span>
-                    @if($selectedBranch->code)
+                    <span class="font-medium truncate">{{ $selectedBranch->name ?? '' }}</span>
+                    @if(!empty($selectedBranch->code))
                         <span class="text-xs opacity-60">({{ $selectedBranch->code }})</span>
                     @endif
                 @else
@@ -84,36 +84,38 @@
             </button>
             
             {{-- Branch Options --}}
-            @foreach($branches as $branch)
-                <button 
-                    wire:click="switchBranch({{ $branch['id'] }})"
-                    @click="open = false"
-                    class="w-full flex items-center gap-2 px-3 py-2 text-sm text-start hover:bg-slate-700/50 transition-colors border-t border-slate-700/50
-                           {{ $selectedBranchId == $branch['id'] ? 'bg-emerald-900/30 border-s-2 border-emerald-500' : '' }}"
-                >
-                    <div class="w-6 h-6 rounded-full bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
-                        <span class="text-[10px] font-bold text-emerald-400">
-                            {{ strtoupper(substr($branch['name'], 0, 2)) }}
-                        </span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="font-medium text-slate-200 text-xs truncate">{{ $branch['name'] }}</p>
-                        @if(!empty($branch['code']))
-                            <p class="text-[10px] text-slate-500">{{ $branch['code'] }}</p>
+            @if(is_array($branches))
+                @foreach($branches as $branch)
+                    <button 
+                        wire:click="switchBranch({{ $branch['id'] ?? 0 }})"
+                        @click="open = false"
+                        class="w-full flex items-center gap-2 px-3 py-2 text-sm text-start hover:bg-slate-700/50 transition-colors border-t border-slate-700/50
+                               {{ $selectedBranchId == ($branch['id'] ?? 0) ? 'bg-emerald-900/30 border-s-2 border-emerald-500' : '' }}"
+                    >
+                        <div class="w-6 h-6 rounded-full bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
+                            <span class="text-[10px] font-bold text-emerald-400">
+                                {{ strtoupper(substr($branch['name'] ?? 'N/A', 0, 2)) }}
+                            </span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-slate-200 text-xs truncate">{{ $branch['name'] ?? 'N/A' }}</p>
+                            @if(!empty($branch['code']))
+                                <p class="text-[10px] text-slate-500">{{ $branch['code'] }}</p>
+                            @endif
+                        </div>
+                        @if($selectedBranchId == ($branch['id'] ?? 0))
+                            <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
                         @endif
-                    </div>
-                    @if($selectedBranchId == $branch['id'])
-                        <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
-                    @endif
-                </button>
-            @endforeach
+                    </button>
+                @endforeach
+            @endif
         </div>
     </div>
     
     {{-- Context Info --}}
-    @if($selectedBranch)
+    @if($selectedBranch && is_object($selectedBranch))
         <div class="mt-2 p-2 rounded-lg bg-emerald-900/20 border border-emerald-800/50">
             <div class="flex items-center gap-2">
                 <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

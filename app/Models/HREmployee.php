@@ -56,6 +56,7 @@ class HREmployee extends BaseModel
         'termination_date',
         'employment_type',
         'status',
+        'is_active',
         // Salary info
         'basic_salary',
         'salary_currency',
@@ -85,6 +86,7 @@ class HREmployee extends BaseModel
     ];
 
     protected $casts = [
+        'is_active' => 'boolean',
         'basic_salary' => 'decimal:4',
         'housing_allowance' => 'decimal:4',
         'transport_allowance' => 'decimal:4',
@@ -186,6 +188,23 @@ class HREmployee extends BaseModel
         static::creating(function (self $employee): void {
             if (empty($employee->employee_code)) {
                 $employee->employee_code = $employee->code ?? 'EMP-'.Str::upper(Str::random(8));
+            }
+            
+            // Sync is_active with status on creation
+            if (isset($employee->status)) {
+                $employee->is_active = ($employee->status === 'active');
+            }
+        });
+
+        static::updating(function (self $employee): void {
+            // Sync is_active with status on update
+            if ($employee->isDirty('status')) {
+                $employee->is_active = ($employee->status === 'active');
+            }
+            
+            // Sync status with is_active if is_active is changed
+            if ($employee->isDirty('is_active') && !$employee->isDirty('status')) {
+                $employee->status = $employee->is_active ? 'active' : 'inactive';
             }
         });
     }
