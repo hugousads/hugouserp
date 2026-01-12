@@ -234,7 +234,7 @@ return new class extends Migration
             $table->string('layout_name', 255)->nullable();
             $table->string('model_type', 255)->nullable();
             $table->string('entity_type', 255)->nullable();
-            $table->string('name', 255);
+            $table->string('name', 255)->nullable();
             $table->json('columns')->nullable();
             $table->json('selected_columns')->nullable();
             $table->json('column_order')->nullable();
