@@ -31,18 +31,22 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('From Currency') }} <span class="text-red-500">*</span></label>
                     <select wire:model="fromCurrency" class="erp-input w-full" required>
-                        @foreach($currencies as $code => $currency)
-                            <option value="{{ $code }}">{{ $code }} - {{ $currency['name'] ?? $code }}</option>
-                        @endforeach
+                        @if(is_array($currencies))
+                            @foreach($currencies as $code => $currency)
+                                <option value="{{ $code }}">{{ $code }} - {{ is_array($currency) ? ($currency['name'] ?? $code) : $code }}</option>
+                            @endforeach
+                        @endif
                     </select>
                     @error('fromCurrency') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('To Currency') }} <span class="text-red-500">*</span></label>
                     <select wire:model="toCurrency" class="erp-input w-full" required>
-                        @foreach($currencies as $code => $currency)
-                            <option value="{{ $code }}">{{ $code }} - {{ $currency['name'] ?? $code }}</option>
-                        @endforeach
+                        @if(is_array($currencies))
+                            @foreach($currencies as $code => $currency)
+                                <option value="{{ $code }}">{{ $code }} - {{ is_array($currency) ? ($currency['name'] ?? $code) : $code }}</option>
+                            @endforeach
+                        @endif
                     </select>
                     @error('toCurrency') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
