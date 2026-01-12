@@ -1,4 +1,8 @@
 {{-- Branch Switcher Component - Enhanced UX --}}
+@php
+    // Ensure $branches is always an array to prevent null access errors
+    $branches = $branches ?? [];
+@endphp
 @if($canSwitch && count($branches) > 0)
 <div class="px-3 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
     {{-- Header with Role indicator --}}
@@ -88,6 +92,7 @@
             
             {{-- Branch Options --}}
             @foreach($branches as $branch)
+                @if(is_array($branch) && isset($branch['id'], $branch['name']))
                 <button 
                     wire:click="switchBranch({{ $branch['id'] }})"
                     @click="open = false"
@@ -101,7 +106,7 @@
                     </div>
                     <div class="flex-1">
                         <p class="font-medium text-slate-700 dark:text-slate-200">{{ $branch['name'] }}</p>
-                        @if($branch['code'])
+                        @if(!empty($branch['code']))
                             <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Code') }}: {{ $branch['code'] }}</p>
                         @endif
                     </div>
@@ -111,6 +116,7 @@
                         </svg>
                     @endif
                 </button>
+                @endif
             @endforeach
         </div>
     </div>
