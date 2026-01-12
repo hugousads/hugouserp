@@ -86,6 +86,13 @@ class BranchSwitcher extends Component
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'code'])
+            ->map(fn ($branch) => [
+                'id' => $branch->id,
+                'name' => $branch->name ?? '',
+                'code' => $branch->code ?? '',
+            ])
+            ->filter(fn ($branch) => ! empty($branch['id']) && ! empty($branch['name']))
+            ->values()
             ->toArray();
     }
 
