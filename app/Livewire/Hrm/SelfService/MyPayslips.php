@@ -77,6 +77,11 @@ class MyPayslips extends Component
     {
         $user = Auth::user();
 
+        if (! $user || ! $user->employee_id) {
+            session()->flash('error', __('User information is missing.'));
+            return;
+        }
+
         $payroll = Payroll::where('id', $payrollId)
             ->where('employee_id', $user->employee_id)
             ->first();

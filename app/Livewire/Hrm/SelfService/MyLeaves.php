@@ -114,6 +114,11 @@ class MyLeaves extends Component
     {
         $user = Auth::user();
 
+        if (! $user || ! $user->employee_id) {
+            session()->flash('error', __('User information is missing.'));
+            return;
+        }
+
         $request = LeaveRequest::where('id', $requestId)
             ->where('employee_id', $user->employee_id)
             ->where('status', 'pending')
