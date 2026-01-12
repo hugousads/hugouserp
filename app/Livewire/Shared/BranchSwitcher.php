@@ -91,7 +91,7 @@ class BranchSwitcher extends Component
                 'name' => $branch->name ?? '',
                 'code' => $branch->code ?? '',
             ])
-            ->filter(fn ($branch) => ! empty($branch['id']) && ! empty($branch['name']))
+            ->filter(fn ($branch) => isset($branch['id']) && ! empty($branch['name']))
             ->values()
             ->toArray();
     }
