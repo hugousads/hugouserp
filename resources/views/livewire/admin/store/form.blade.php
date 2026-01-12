@@ -38,9 +38,11 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Type') }} <span class="text-red-500">*</span></label>
                     <select wire:model.live="type" class="erp-input w-full" required>
-                        @foreach($storeTypes as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
+                        @if(is_array($storeTypes))
+                            @foreach($storeTypes as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        @endif
                     </select>
                     @error('type') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
@@ -57,9 +59,11 @@
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Branch') }}</label>
                     <select wire:model.live="branch_id" class="erp-input w-full">
                         <option value="">{{ __('All Branches') }}</option>
-                        @foreach($branches as $branch)
-                            <option value="{{ $branch['id'] }}">{{ $branch['name'] }}</option>
-                        @endforeach
+                        @if(is_array($branches))
+                            @foreach($branches as $branch)
+                                <option value="{{ $branch['id'] ?? '' }}">{{ $branch['name'] ?? '' }}</option>
+                            @endforeach
+                        @endif
                     </select>
                     @error('branch_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
@@ -134,15 +138,21 @@
                 </div>
             </div>
 
-            @if($modules->isNotEmpty())
+            @if($modules && (is_array($modules) || (is_object($modules) && method_exists($modules, 'isNotEmpty') && $modules->isNotEmpty())))
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ __('Sync Modules') }}</label>
                 <div class="flex flex-wrap gap-2">
                     @foreach($modules as $module)
-                        <label class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition {{ in_array($module->id, $sync_settings['sync_modules'] ?? []) ? 'ring-2 ring-emerald-500' : '' }}">
-                            <input type="checkbox" wire:model="sync_settings.sync_modules" value="{{ $module->id }}" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
-                            <span class="text-sm text-slate-700 dark:text-slate-300">{{ $module->name }}</span>
-                        </label>
+                        @php
+                            $moduleId = is_object($module) ? $module->id : ($module['id'] ?? null);
+                            $moduleName = is_object($module) ? $module->name : ($module['name'] ?? '');
+                        @endphp
+                        @if($moduleId && $moduleName)
+                            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition {{ in_array($moduleId, $sync_settings['sync_modules'] ?? []) ? 'ring-2 ring-emerald-500' : '' }}">
+                                <input type="checkbox" wire:model="sync_settings.sync_modules" value="{{ $moduleId }}" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                                <span class="text-sm text-slate-700 dark:text-slate-300">{{ $moduleName }}</span>
+                            </label>
+                        @endif
                     @endforeach
                 </div>
             </div>

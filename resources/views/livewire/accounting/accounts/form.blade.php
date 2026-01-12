@@ -64,9 +64,15 @@
                         {{ __('Currency') }} <span class="text-red-500">*</span>
                     </label>
                     <select wire:model="form.currency_code" class="erp-input" required>
-                        @foreach($currencies as $currency)
-                            <option value="{{ $currency->code }}">{{ $currency->code }} - {{ $currency->name }}</option>
-                        @endforeach
+                        @if(is_array($currencies) || is_object($currencies))
+                            @foreach($currencies as $currency)
+                                @if(is_object($currency))
+                                    <option value="{{ $currency->code ?? '' }}">{{ $currency->code ?? '' }} - {{ $currency->name ?? '' }}</option>
+                                @elseif(is_array($currency))
+                                    <option value="{{ $currency['code'] ?? '' }}">{{ $currency['code'] ?? '' }} - {{ $currency['name'] ?? '' }}</option>
+                                @endif
+                            @endforeach
+                        @endif
                     </select>
                     @error('form.currency_code')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -89,9 +95,15 @@
                     </label>
                     <select wire:model="form.parent_id" class="erp-input">
                         <option value="">{{ __('None (Top Level)') }}</option>
-                        @foreach($parentAccounts as $parent)
-                            <option value="{{ $parent->id }}">{{ $parent->account_number }} - {{ $parent->name }}</option>
-                        @endforeach
+                        @if(is_array($parentAccounts) || is_object($parentAccounts))
+                            @foreach($parentAccounts as $parent)
+                                @if(is_object($parent))
+                                    <option value="{{ $parent->id ?? '' }}">{{ $parent->account_number ?? '' }} - {{ $parent->name ?? '' }}</option>
+                                @elseif(is_array($parent))
+                                    <option value="{{ $parent['id'] ?? '' }}">{{ $parent['account_number'] ?? '' }} - {{ $parent['name'] ?? '' }}</option>
+                                @endif
+                            @endforeach
+                        @endif
                     </select>
                     @error('form.parent_id')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>

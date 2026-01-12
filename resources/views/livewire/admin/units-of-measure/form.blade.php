@@ -42,9 +42,11 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Type') }} <span class="text-red-500">*</span></label>
                     <select wire:model="type" class="erp-input w-full" required>
-                        @foreach($unitTypes as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
+                        @if(is_array($unitTypes))
+                            @foreach($unitTypes as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        @endif
                     </select>
                     @error('type') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
@@ -63,9 +65,15 @@
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ __('Base Unit') }}</label>
                     <select wire:model="baseUnitId" class="erp-input w-full">
                         <option value="">{{ __('Select base unit') }}</option>
-                        @foreach($baseUnits as $baseUnit)
-                            <option value="{{ $baseUnit->id }}">{{ $baseUnit->name }} ({{ $baseUnit->symbol }})</option>
-                        @endforeach
+                        @if(is_array($baseUnits) || is_object($baseUnits))
+                            @foreach($baseUnits as $baseUnit)
+                                @if(is_object($baseUnit))
+                                    <option value="{{ $baseUnit->id ?? '' }}">{{ $baseUnit->name ?? '' }} ({{ $baseUnit->symbol ?? '' }})</option>
+                                @elseif(is_array($baseUnit))
+                                    <option value="{{ $baseUnit['id'] ?? '' }}">{{ $baseUnit['name'] ?? '' }} ({{ $baseUnit['symbol'] ?? '' }})</option>
+                                @endif
+                            @endforeach
+                        @endif
                     </select>
                     @error('baseUnitId') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>

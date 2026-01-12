@@ -82,9 +82,11 @@
                         {{ __('Currency') }} <span class="text-red-500">*</span>
                     </label>
                     <select wire:model="currency" id="currency" class="erp-input @error('currency') border-red-500 @enderror">
-                        @foreach($currencies as $code => $label)
-                            <option value="{{ $code }}">{{ $label }}</option>
-                        @endforeach
+                        @if(is_array($currencies))
+                            @foreach($currencies as $code => $label)
+                                <option value="{{ $code }}">{{ $label }}</option>
+                            @endforeach
+                        @endif
                     </select>
                     @error('currency') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
                 </div>
