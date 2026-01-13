@@ -35,10 +35,8 @@ yarn-error.log
 /storage/framework/sessions/*
 /storage/framework/testing/*
 /storage/framework/views/*
-/storage/logs/*
 
 # Temporary files
-*.log
 *.tmp
 /tmp/*
 
