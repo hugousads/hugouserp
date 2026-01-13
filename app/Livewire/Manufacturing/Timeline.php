@@ -129,7 +129,7 @@ class Timeline extends Component
             ->map(function ($order) {
                 return [
                     'id' => $order->id,
-                    'order_number' => $order->order_number,
+                    'reference_number' => $order->reference_number,
                     'product_name' => $order->product?->name ?? __('N/A'),
                     'work_center' => $order->workCenter?->name ?? __('N/A'),
                     'status' => $order->status,
