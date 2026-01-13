@@ -62,12 +62,33 @@ class Index extends Component
         );
 
         return Cache::remember($cacheKey, 300, function () use ($baseQuery) {
+            $totalOrders = (clone $baseQuery)->count();
+            $inProgress = 0;
+            $completed = 0;
+            $plannedQuantity = 0;
+            $producedQuantity = 0;
+
+            // Try to get detailed statistics, fallback if columns don't exist
+            try {
+                $inProgress = (clone $baseQuery)->where('status', 'in_progress')->count();
+                $completed = (clone $baseQuery)->where('status', 'completed')->count();
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Status column doesn't exist
+            }
+
+            try {
+                $plannedQuantity = (clone $baseQuery)->sum('quantity_planned');
+                $producedQuantity = (clone $baseQuery)->sum('quantity_produced');
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Quantity columns don't exist
+            }
+
             return [
-                'total_orders' => (clone $baseQuery)->count(),
-                'in_progress' => 0,
-                'completed' => 0,
-                'planned_quantity' => 0,
-                'produced_quantity' => 0,
+                'total_orders' => $totalOrders,
+                'in_progress' => $inProgress,
+                'completed' => $completed,
+                'planned_quantity' => $plannedQuantity,
+                'produced_quantity' => $producedQuantity,
             ];
         });
     }

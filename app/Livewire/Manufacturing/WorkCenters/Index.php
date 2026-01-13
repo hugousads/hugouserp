@@ -65,9 +65,20 @@ class Index extends Component
         );
 
         return Cache::remember($cacheKey, 300, function () use ($baseQuery) {
+            $totalCenters = (clone $baseQuery)->count();
+            $activeCenters = $totalCenters;
+
+            // Try to get active centers count, fallback to total if status column doesn't exist
+            try {
+                $activeCenters = (clone $baseQuery)->where('status', 'active')->count();
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Status column doesn't exist in database, use total count
+                $activeCenters = $totalCenters;
+            }
+
             return [
-                'total_centers' => (clone $baseQuery)->count(),
-                'active_centers' => (clone $baseQuery)->count(), // Count all as active since status column may not exist
+                'total_centers' => $totalCenters,
+                'active_centers' => $activeCenters,
                 'total_capacity' => (clone $baseQuery)->sum('capacity_per_hour'),
                 'avg_cost_per_hour' => (clone $baseQuery)->avg('cost_per_hour'),
             ];
