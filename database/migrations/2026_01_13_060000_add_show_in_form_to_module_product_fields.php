@@ -20,7 +20,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('module_product_fields', function (Blueprint $table) {
-            $table->dropColumn('show_in_form');
+            if (Schema::hasColumn('module_product_fields', 'show_in_form')) {
+                $table->dropColumn('show_in_form');
+            }
         });
     }
 };
