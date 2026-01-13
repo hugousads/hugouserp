@@ -23,14 +23,12 @@ class ProductionOrder extends BaseModel
         'bom_id',
         'product_id',
         'warehouse_id',
-        'order_number',
+        'reference_number',
         'status',
         'priority',
-        'quantity_planned',
-        'quantity_produced',
-        'quantity_scrapped',
-        'start_date',
-        'due_date',
+        'planned_quantity',
+        'produced_quantity',
+        'rejected_quantity',
         'planned_start_date',
         'planned_end_date',
         'actual_start_date',
@@ -42,27 +40,25 @@ class ProductionOrder extends BaseModel
         'overhead_cost',
         'sale_id',
         'notes',
-        'metadata',
+        'custom_fields',
         'created_by',
         'approved_by',
     ];
 
     protected $casts = [
-        'quantity_planned' => 'decimal:4',
-        'quantity_produced' => 'decimal:4',
-        'quantity_scrapped' => 'decimal:4',
+        'planned_quantity' => 'decimal:4',
+        'produced_quantity' => 'decimal:4',
+        'rejected_quantity' => 'decimal:4',
         'estimated_cost' => 'decimal:4',
         'actual_cost' => 'decimal:4',
         'material_cost' => 'decimal:4',
         'labor_cost' => 'decimal:4',
         'overhead_cost' => 'decimal:4',
-        'start_date' => 'date',
-        'due_date' => 'date',
         'planned_start_date' => 'date',
         'planned_end_date' => 'date',
         'actual_start_date' => 'datetime',
         'actual_end_date' => 'datetime',
-        'metadata' => 'array',
+        'custom_fields' => 'array',
     ];
 
     /**
@@ -145,18 +141,44 @@ class ProductionOrder extends BaseModel
         return $this->hasMany(ManufacturingTransaction::class);
     }
 
+    // Backward compatibility accessors
+    public function getOrderNumberAttribute()
+    {
+        return $this->reference_number;
+    }
+
+    public function getQuantityPlannedAttribute()
+    {
+        return $this->planned_quantity;
+    }
+
+    public function getQuantityProducedAttribute()
+    {
+        return $this->produced_quantity;
+    }
+
+    public function getQuantityScrappedAttribute()
+    {
+        return $this->rejected_quantity;
+    }
+
+    public function getMetadataAttribute()
+    {
+        return $this->custom_fields;
+    }
+
     /**
      * Calculate completion percentage.
      */
     public function getCompletionPercentageAttribute(): float
     {
-        $plannedQty = (float) ($this->quantity_planned ?? 0);
+        $plannedQty = (float) ($this->planned_quantity ?? 0);
         // Prevent division by zero
         if ($plannedQty <= 0) {
             return 0.0;
         }
 
-        return ((float) ($this->quantity_produced ?? 0) / $plannedQty) * 100;
+        return ((float) ($this->produced_quantity ?? 0) / $plannedQty) * 100;
     }
 
     /**
@@ -164,7 +186,7 @@ class ProductionOrder extends BaseModel
      */
     public function getRemainingQuantityAttribute(): float
     {
-        return (float) $this->quantity_planned - (float) $this->quantity_produced - (float) $this->quantity_scrapped;
+        return (float) $this->planned_quantity - (float) $this->produced_quantity - (float) $this->rejected_quantity;
     }
 
     /**
@@ -208,12 +230,12 @@ class ProductionOrder extends BaseModel
         $date = now()->format('Ym');
 
         $lastOrder = static::where('branch_id', $branchId)
-            ->where('order_number', 'like', "{$prefix}-{$date}-%")
+            ->where('reference_number', 'like', "{$prefix}-{$date}-%")
             ->orderByDesc('id')
             ->first();
 
         if ($lastOrder) {
-            $lastNumber = (int) substr($lastOrder->order_number, -4);
+            $lastNumber = (int) substr($lastOrder->reference_number, -4);
             $newNumber = $lastNumber + 1;
         } else {
             $newNumber = 1;
