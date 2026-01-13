@@ -134,10 +134,10 @@ class Timeline extends Component
                     'work_center' => $order->workCenter?->name ?? __('N/A'),
                     'status' => $order->status,
                     'priority' => $order->priority,
-                    'quantity_planned' => $order->quantity_planned,
-                    'quantity_produced' => $order->quantity_produced,
-                    'progress' => $order->quantity_planned > 0
-                        ? round(($order->quantity_produced / $order->quantity_planned) * 100)
+                    'planned_quantity' => $order->planned_quantity,
+                    'produced_quantity' => $order->produced_quantity,
+                    'progress' => $order->planned_quantity > 0
+                        ? round(($order->produced_quantity / $order->planned_quantity) * 100)
                         : 0,
                     'start_date' => $order->start_date?->format('Y-m-d'),
                     'due_date' => $order->due_date?->format('Y-m-d'),

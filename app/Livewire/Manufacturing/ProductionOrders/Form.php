@@ -27,7 +27,7 @@ class Form extends Component
 
     public ?int $warehouse_id = null;
 
-    public float $quantity_planned = 1.0;
+    public float $planned_quantity = 1.0;
 
     public string $status = 'draft';
 
@@ -45,7 +45,7 @@ class Form extends Component
             'bom_id' => ['required', 'exists:bills_of_materials,id'],
             'product_id' => ['required', 'exists:products,id'],
             'warehouse_id' => ['required', 'exists:warehouses,id'],
-            'quantity_planned' => ['required', 'numeric', 'min:0.01'],
+            'planned_quantity' => ['required', 'numeric', 'min:0.01'],
             'status' => ['required', 'in:draft,planned,released,in_progress,completed,cancelled'],
             'priority' => ['required', 'in:low,normal,high,urgent'],
             'planned_start_date' => ['nullable', 'date'],
@@ -71,7 +71,7 @@ class Form extends Component
         $this->bom_id = $this->productionOrder->bom_id;
         $this->product_id = $this->productionOrder->product_id;
         $this->warehouse_id = $this->productionOrder->warehouse_id;
-        $this->quantity_planned = (float) $this->productionOrder->quantity_planned;
+        $this->planned_quantity = (float) $this->productionOrder->planned_quantity;
         $this->status = $this->productionOrder->status;
         $this->priority = $this->productionOrder->priority;
         $this->planned_start_date = $this->productionOrder->planned_start_date?->format('Y-m-d');
@@ -97,7 +97,7 @@ class Form extends Component
             'bom_id' => $this->bom_id,
             'product_id' => $this->product_id,
             'warehouse_id' => $this->warehouse_id,
-            'quantity_planned' => $this->quantity_planned,
+            'planned_quantity' => $this->planned_quantity,
             'status' => $this->status,
             'priority' => $this->priority,
             'planned_start_date' => $this->planned_start_date,

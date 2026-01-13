@@ -80,7 +80,7 @@
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{{ $order['product_name'] }}</p>
                             <div class="flex items-center gap-2 mt-1">
-                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ $order['quantity_produced'] }}/{{ $order['quantity_planned'] }}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ $order['produced_quantity'] }}/{{ $order['planned_quantity'] }}</span>
                                 <div class="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                     <div class="h-full {{ $order['progress'] >= 100 ? 'bg-green-500' : 'bg-blue-500' }}" style="width: {{ min(100, $order['progress']) }}%"></div>
                                 </div>
