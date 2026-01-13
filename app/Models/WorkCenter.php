@@ -21,17 +21,20 @@ class WorkCenter extends BaseModel
         'description',
         'type',
         'capacity_per_hour',
-        'cost_per_hour',
-        'status',
+        'hourly_rate',
+        'is_active',
         'operating_hours',
-        'metadata',
+        'location',
+        'manager_id',
+        'setup_time_hours',
     ];
 
     protected $casts = [
-        'capacity_per_hour' => 'decimal:2',
-        'cost_per_hour' => 'decimal:2',
+        'capacity_per_hour' => 'integer',
+        'hourly_rate' => 'decimal:4',
+        'setup_time_hours' => 'decimal:2',
         'operating_hours' => 'array',
-        'metadata' => 'array',
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -63,7 +66,7 @@ class WorkCenter extends BaseModel
      */
     public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
-        return $query->where('status', 'active');
+        return $query->where('is_active', true);
     }
 
     /**
@@ -71,7 +74,7 @@ class WorkCenter extends BaseModel
      */
     public function scopeAvailable(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
-        return $query->whereIn('status', ['active']);
+        return $query->where('is_active', true);
     }
 
     /**
@@ -79,7 +82,7 @@ class WorkCenter extends BaseModel
      */
     public function isAvailableAt(\DateTime $dateTime): bool
     {
-        if ($this->status !== 'active') {
+        if (! $this->is_active) {
             return false;
         }
 

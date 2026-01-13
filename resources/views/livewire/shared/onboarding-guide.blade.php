@@ -7,7 +7,9 @@
             class="hidden p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
             data-onboarding-trigger
         >
-            <x-heroicon-o-question-mark-circle class="h-5 w-5" />
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+            </svg>
         </button>
     @endif
 
@@ -80,7 +82,9 @@
                                         type="button"
                                         class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
                                     >
-                                        <x-heroicon-s-arrow-left class="w-4 h-4 inline-block me-1" />
+                                        <svg class="w-4 h-4 inline-block me-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                                        </svg>
                                         {{ __('Previous') }}
                                     </button>
                                 @else
@@ -102,10 +106,14 @@
                                 >
                                     @if($currentStep === count($steps) - 1)
                                         {{ __('Get Started!') }}
-                                        <x-heroicon-s-rocket-launch class="w-4 h-4 inline-block ms-1" />
+                                        <svg class="w-4 h-4 inline-block ms-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
                                     @else
                                         {{ __('Next') }}
-                                        <x-heroicon-s-arrow-right class="w-4 h-4 inline-block ms-1" />
+                                        <svg class="w-4 h-4 inline-block ms-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
                                     @endif
                                 </button>
                             </div>
@@ -119,7 +127,9 @@
                         class="absolute top-3 end-3 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                         aria-label="{{ __('Close') }}"
                     >
-                        <x-heroicon-o-x-mark class="w-5 h-5" />
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
             </div>

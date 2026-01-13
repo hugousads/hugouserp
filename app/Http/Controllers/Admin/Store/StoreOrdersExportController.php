@@ -122,10 +122,11 @@ class StoreOrdersExportController extends Controller
             $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
 
-            // Set headers
+            // Set headers using coordinate strings (PhpSpreadsheet 2.x compatible)
             $col = 1;
             foreach ($columns as $header) {
-                $sheet->setCellValueByColumnAndRow($col, 1, $header);
+                $coordinate = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col).'1';
+                $sheet->setCellValue($coordinate, $header);
                 $col++;
             }
 
@@ -135,15 +136,17 @@ class StoreOrdersExportController extends Controller
                 $col = 1;
                 foreach ($columns as $column) {
                     $value = $row[$column] ?? '';
-                    $sheet->setCellValueByColumnAndRow($col, $rowNum, is_scalar($value) ? $value : json_encode($value));
+                    $coordinate = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col).$rowNum;
+                    $sheet->setCellValue($coordinate, is_scalar($value) ? $value : json_encode($value));
                     $col++;
                 }
                 $rowNum++;
             }
 
-            // Auto-size columns
+            // Auto-size columns using column letter
             foreach (range(1, count($columns)) as $col) {
-                $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
+                $columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+                $sheet->getColumnDimension($columnLetter)->setAutoSize(true);
             }
 
             // Style header row
