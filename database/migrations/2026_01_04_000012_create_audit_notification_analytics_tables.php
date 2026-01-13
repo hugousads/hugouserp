@@ -757,6 +757,7 @@ return new class extends Migration
             $table->boolean('is_searchable')->default(false);
             $table->boolean('is_filterable')->default(false);
             $table->boolean('show_in_list')->default(false);
+            $table->boolean('show_in_form')->default(true);
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->timestamps();

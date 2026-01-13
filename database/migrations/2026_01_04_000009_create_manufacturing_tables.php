@@ -39,7 +39,7 @@ return new class extends Migration
             $table->decimal('hourly_rate', 18, 4)->default(0);
             $table->decimal('setup_time_hours', 8, 2)->default(0);
             $table->integer('capacity_per_hour')->nullable();
-            $table->boolean('is_active')->default(true)->index();
+            $table->string('status', 50)->default('active'); // active, maintenance, inactive
             $table->string('location', 255)->nullable();
             $table->foreignId('manager_id')->nullable()
                 ->constrained('users')
