@@ -48,11 +48,11 @@ class Index extends Component
     {
         return [
             'created_at',
-            'order_number',
+            'reference_number',
             'status',
             'priority',
-            'quantity_planned',
-            'quantity_produced',
+            'planned_quantity',
+            'produced_quantity',
         ];
     }
 
