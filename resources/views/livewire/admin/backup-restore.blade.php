@@ -20,7 +20,7 @@
                     class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <span wire:loading.remove wire:target="createBackup">
-                        <x-heroicon-o-arrow-down-tray class="w-5 h-5 mr-2" />
+                        <x-icon name="arrow-down-tray" class="w-5 h-5 mr-2" />
                         {{ __('Create Backup Now') }}
                     </span>
                     <span wire:loading wire:target="createBackup" class="flex items-center">
@@ -36,7 +36,7 @@
             @if($lastBackupResult === 'success')
                 <div class="mt-4 p-4 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 rounded-lg">
                     <div class="flex items-center">
-                        <x-heroicon-o-check-circle class="w-5 h-5 mr-2" />
+                        <x-icon name="check-circle" class="w-5 h-5 mr-2" />
                         {{ __('Backup created successfully!') }}
                     </div>
                 </div>
@@ -46,7 +46,9 @@
         <!-- Warning Banner -->
         <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
             <div class="flex">
-                <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-3 flex-shrink-0" />
+                <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
                 <div>
                     <h3 class="font-medium text-yellow-800 dark:text-yellow-200">{{ __('Important') }}</h3>
                     <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
@@ -70,7 +72,9 @@
                                 <div class="flex items-center space-x-4">
                                     <div class="flex-shrink-0">
                                         <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                                            <x-heroicon-o-server-stack class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 17.25v-.228a4.5 4.5 0 00-.12-1.03l-2.268-9.64a3.375 3.375 0 00-3.285-2.602H7.923a3.375 3.375 0 00-3.285 2.602l-2.268 9.64a4.5 4.5 0 00-.12 1.03v.228m19.5 0a3 3 0 01-3 3H5.25a3 3 0 01-3-3m19.5 0a3 3 0 00-3-3H5.25a3 3 0 00-3 3m16.5 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" />
+                                            </svg>
                                         </div>
                                     </div>
                                     <div>
@@ -88,7 +92,7 @@
                                         class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                                         title="{{ __('Download') }}"
                                     >
-                                        <x-heroicon-o-arrow-down-tray class="w-4 h-4 mr-1" />
+                                        <x-icon name="arrow-down-tray" class="w-4 h-4 mr-1" />
                                         {{ __('Download') }}
                                     </button>
                                     <button
@@ -96,7 +100,7 @@
                                         class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 dark:text-blue-200 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 rounded-lg transition-colors"
                                         title="{{ __('Restore') }}"
                                     >
-                                        <x-heroicon-o-arrow-path class="w-4 h-4 mr-1" />
+                                        <x-icon name="refresh" class="w-4 h-4 mr-1" />
                                         {{ __('Restore') }}
                                     </button>
                                     <button
@@ -105,7 +109,7 @@
                                         class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-200 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-colors"
                                         title="{{ __('Delete') }}"
                                     >
-                                        <x-heroicon-o-trash class="w-4 h-4" />
+                                        <x-icon name="trash" class="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
@@ -114,7 +118,9 @@
                 </div>
             @else
                 <div class="p-12 text-center">
-                    <x-heroicon-o-server-stack class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 17.25v-.228a4.5 4.5 0 00-.12-1.03l-2.268-9.64a3.375 3.375 0 00-3.285-2.602H7.923a3.375 3.375 0 00-3.285 2.602l-2.268 9.64a4.5 4.5 0 00-.12 1.03v.228m19.5 0a3 3 0 01-3 3H5.25a3 3 0 01-3-3m19.5 0a3 3 0 00-3-3H5.25a3 3 0 00-3 3m16.5 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" />
+                    </svg>
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ __('No backups found') }}</h3>
                     <p class="text-gray-500 dark:text-gray-400 mb-6">
                         {{ __('Create your first backup to protect your data.') }}
@@ -123,7 +129,7 @@
                         wire:click="createBackup"
                         class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                     >
-                        <x-heroicon-o-plus class="w-5 h-5 mr-2" />
+                        <x-icon name="plus" class="w-5 h-5 mr-2" />
                         {{ __('Create First Backup') }}
                     </button>
                 </div>
@@ -142,7 +148,9 @@
                         <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                             <div class="sm:flex sm:items-start">
                                 <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
-                                    <x-heroicon-o-exclamation-triangle class="h-6 w-6 text-red-600 dark:text-red-400" />
+                                    <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                    </svg>
                                 </div>
                                 <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                                     <h3 class="text-lg font-medium text-gray-900 dark:text-white" id="modal-title">

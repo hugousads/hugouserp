@@ -39,8 +39,10 @@
         font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     
+    /* Dark mode body styles */
+    html.dark body,
     .dark body {
-        @apply bg-slate-950 text-slate-100;
+        @apply bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100;
     }
 
     img, svg, video, canvas {
@@ -74,6 +76,10 @@
 
     .erp-card {
         @apply rounded-2xl border border-emerald-100/60 bg-gradient-to-br from-emerald-50 via-slate-50 to-white shadow-[0_18px_45px_-25px_rgba(16,185,129,0.65)];
+    }
+
+    .dark .erp-card {
+        @apply border-emerald-500/40 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 shadow-[0_18px_45px_-25px_rgba(16,185,129,0.9)];
     }
 
     .erp-card-dark {
