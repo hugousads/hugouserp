@@ -129,15 +129,15 @@ class Timeline extends Component
             ->map(function ($order) {
                 return [
                     'id' => $order->id,
-                    'reference_number' => $order->reference_number,
+                    'order_number' => $order->order_number,
                     'product_name' => $order->product?->name ?? __('N/A'),
                     'work_center' => $order->workCenter?->name ?? __('N/A'),
                     'status' => $order->status,
                     'priority' => $order->priority,
-                    'planned_quantity' => $order->planned_quantity,
-                    'produced_quantity' => $order->produced_quantity,
-                    'progress' => $order->planned_quantity > 0
-                        ? round(($order->produced_quantity / $order->planned_quantity) * 100)
+                    'quantity_planned' => $order->quantity_planned,
+                    'quantity_produced' => $order->quantity_produced,
+                    'progress' => $order->quantity_planned > 0
+                        ? round(($order->quantity_produced / $order->quantity_planned) * 100)
                         : 0,
                     'start_date' => $order->start_date?->format('Y-m-d'),
                     'due_date' => $order->due_date?->format('Y-m-d'),

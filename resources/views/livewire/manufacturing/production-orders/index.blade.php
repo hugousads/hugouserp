@@ -120,9 +120,9 @@
             <table class="erp-table">
                 <thead>
                     <tr>
-                        <th wire:click="sortBy('reference_number')" class="cursor-pointer hover:bg-slate-100">
+                        <th wire:click="sortBy('order_number')" class="cursor-pointer hover:bg-slate-100">
                             {{ __('Order Number') }}
-                            @if($sortField === 'reference_number')
+                            @if($sortField === 'order_number')
                                 <span class="ml-1">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
                             @endif
                         </th>
@@ -140,7 +140,7 @@
                 <tbody>
                     @forelse($orders as $order)
                         <tr wire:key="order-{{ $order->id }}">
-                            <td class="font-medium">{{ $order->reference_number }}</td>
+                            <td class="font-medium">{{ $order->order_number }}</td>
                             <td>
                                 <div class="font-medium">{{ $order->product->name ?? '-' }}</div>
                                 @if($order->product->sku)
@@ -148,12 +148,12 @@
                                 @endif
                             </td>
                             <td>{{ $order->bom->bom_number ?? '-' }}</td>
-                            <td>{{ number_format((float)$order->planned_quantity, 2) }}</td>
-                            <td>{{ number_format((float)$order->produced_quantity, 2) }}</td>
+                            <td>{{ number_format((float)$order->quantity_planned, 2) }}</td>
+                            <td>{{ number_format((float)$order->quantity_produced, 2) }}</td>
                             <td>
                                 @php
-                                    $progress = $order->planned_quantity > 0 
-                                        ? ($order->produced_quantity / $order->planned_quantity) * 100 
+                                    $progress = $order->quantity_planned > 0 
+                                        ? ($order->quantity_produced / $order->quantity_planned) * 100 
                                         : 0;
                                 @endphp
                                 <div class="flex items-center gap-2">

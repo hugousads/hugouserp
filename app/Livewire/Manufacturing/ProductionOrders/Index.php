@@ -48,11 +48,11 @@ class Index extends Component
     {
         return [
             'created_at',
-            'reference_number',
+            'order_number',
             'status',
             'priority',
-            'planned_quantity',
-            'produced_quantity',
+            'quantity_planned',
+            'quantity_produced',
         ];
     }
 
@@ -80,8 +80,8 @@ class Index extends Component
                 'total_orders' => (clone $baseQuery)->count(),
                 'in_progress' => (clone $baseQuery)->where('status', 'in_progress')->count(),
                 'completed' => (clone $baseQuery)->where('status', 'completed')->count(),
-                'planned_quantity' => (clone $baseQuery)->sum('planned_quantity'),
-                'produced_quantity' => (clone $baseQuery)->sum('produced_quantity'),
+                'planned_quantity' => (clone $baseQuery)->sum('quantity_planned'),
+                'produced_quantity' => (clone $baseQuery)->sum('quantity_produced'),
             ];
         });
     }

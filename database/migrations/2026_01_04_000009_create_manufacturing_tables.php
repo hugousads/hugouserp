@@ -132,18 +132,22 @@ return new class extends Migration
                 ->constrained('bills_of_materials');
             $table->foreignId('product_id')->constrained();
             $table->foreignId('warehouse_id')->constrained();
-            $table->string('reference_number', 100)->unique();
+            $table->string('order_number', 100)->unique();
             $table->string('status', 50)->default('draft'); // draft, planned, in_progress, completed, cancelled
             $table->string('priority', 50)->default('normal');
 
             // Quantities
-            $table->decimal('planned_quantity', 18, 4);
-            $table->decimal('produced_quantity', 18, 4)->default(0);
-            $table->decimal('rejected_quantity', 18, 4)->default(0);
+            $table->decimal('quantity_planned', 18, 4);
+            $table->decimal('quantity_produced', 18, 4)->default(0);
+            $table->decimal('quantity_scrapped', 18, 4)->default(0);
 
-            // Dates
-            $table->date('planned_start_date');
+            // Dates - Primary
+            $table->date('start_date')->nullable();
+            $table->date('due_date')->nullable();
+            // Dates - Aliases for form compatibility
+            $table->date('planned_start_date')->nullable();
             $table->date('planned_end_date')->nullable();
+            // Dates - Actual
             $table->timestamp('actual_start_date')->nullable();
             $table->timestamp('actual_end_date')->nullable();
 
@@ -160,7 +164,7 @@ return new class extends Migration
                 ->nullOnDelete();
 
             $table->text('notes')->nullable();
-            $table->json('custom_fields')->nullable();
+            $table->json('metadata')->nullable();
 
             $table->foreignId('created_by')->nullable()
                 ->constrained('users')
@@ -173,7 +177,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['branch_id', 'status']);
-            $table->index(['planned_start_date', 'status']);
+            $table->index(['start_date', 'status']);
         });
 
         // Production order items (material consumption)

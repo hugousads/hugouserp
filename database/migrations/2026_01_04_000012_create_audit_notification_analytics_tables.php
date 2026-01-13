@@ -70,7 +70,18 @@ return new class extends Migration
             $table->string('auditable_type', 255)->nullable();
             $table->unsignedBigInteger('auditable_id')->nullable();
 
+            // Impersonation tracking
+            $table->foreignId('performed_by_id')->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->comment('The user who actually performed the action');
+            $table->foreignId('impersonating_as_id')->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->comment('The user being impersonated when action was performed');
+
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['subject_type', 'subject_id']);
             $table->index(['causer_type', 'causer_id']);

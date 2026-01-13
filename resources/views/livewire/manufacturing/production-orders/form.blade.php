@@ -61,11 +61,11 @@
 
                 {{-- Quantity Planned --}}
                 <div>
-                    <label for="planned_quantity" class="block text-sm font-medium text-slate-700 mb-2">
+                    <label for="quantity_planned" class="block text-sm font-medium text-slate-700 mb-2">
                         {{ __('Quantity to Produce') }} <span class="text-red-500">*</span>
                     </label>
-                    <input type="number" step="0.01" min="0.01" wire:model="planned_quantity" id="planned_quantity" class="erp-input @error('planned_quantity') border-red-500 @enderror">
-                    @error('planned_quantity') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
+                    <input type="number" step="0.01" min="0.01" wire:model="quantity_planned" id="quantity_planned" class="erp-input @error('quantity_planned') border-red-500 @enderror">
+                    @error('quantity_planned') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
                 </div>
 
                 {{-- Priority --}}
