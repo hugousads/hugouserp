@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Translations;
 
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Livewire\Attributes\Layout;
@@ -20,9 +21,21 @@ class Index extends Component
     #[Url]
     public $selectedGroup = '';
 
+    public int $perPage = 50;
+
     public function mount()
     {
         $this->loadGroups();
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSelectedGroup(): void
+    {
+        $this->resetPage();
     }
 
     public function loadGroups()
@@ -98,6 +111,21 @@ class Index extends Component
         }
 
         return collect($translations)->values();
+    }
+
+    public function getPaginatedTranslations(): LengthAwarePaginator
+    {
+        $translations = $this->getTranslations();
+        $page = $this->getPage();
+        $perPage = $this->perPage;
+
+        return new LengthAwarePaginator(
+            $translations->forPage($page, $perPage),
+            $translations->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url()]
+        );
     }
 
     protected function flattenTranslations($array, $group, $locale, &$translations, $prefix = '')
@@ -275,8 +303,12 @@ class Index extends Component
 
     public function render()
     {
+        $allTranslations = $this->getTranslations();
+        $paginatedTranslations = $this->getPaginatedTranslations();
+
         return view('livewire.admin.translations.index', [
-            'translations' => $this->getTranslations(),
+            'translations' => $paginatedTranslations,
+            'totalCount' => $allTranslations->count(),
             'groups' => $this->getTranslationGroups(),
             'missingCount' => count($this->getMissingTranslations()),
         ]);

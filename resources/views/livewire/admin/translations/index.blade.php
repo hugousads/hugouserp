@@ -32,7 +32,7 @@
                 </div>
                 <div class="ml-4 rtl:mr-4 rtl:ml-0">
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Total Keys') }}</p>
-                    <p class="text-xl font-semibold text-gray-800 dark:text-white">{{ count($translations) }}</p>
+                    <p class="text-xl font-semibold text-gray-800 dark:text-white">{{ $totalCount ?? count($translations) }}</p>
                 </div>
             </div>
         </div>
@@ -176,5 +176,12 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination -->
+        @if($translations->hasPages())
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+            {{ $translations->links() }}
+        </div>
+        @endif
     </div>
 </div>
